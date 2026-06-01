@@ -17,23 +17,17 @@ interface MCPContextType {
   selectedMCPServices: MCPService[]
   setSelectedMCPServices: (services: MCPService[]) => void
   
-  // 配置弹窗状态（从MCP市场添加时使用）
-  showConfigModal: boolean
-  setShowConfigModal: (show: boolean) => void
-  configModalService: PlatformMCPService | null
-  setConfigModalService: (service: PlatformMCPService | null) => void
-  
   // 快速创建/编辑弹窗状态
   showQuickCreateModal: boolean
   setShowQuickCreateModal: (show: boolean) => void
   editingService: MCPService | null
   setEditingService: (service: MCPService | null) => void
   
-  // 详情弹窗状态
-  showDetailModal: boolean
-  setShowDetailModal: (show: boolean) => void
-  detailService: PlatformMCPService | null
-  setDetailService: (service: PlatformMCPService | null) => void
+  // 快速配置弹窗状态（MCP市场添加时使用）
+  showQuickConfigModal: boolean
+  setShowQuickConfigModal: (show: boolean) => void
+  quickConfigService: PlatformMCPService | null
+  setQuickConfigService: (service: PlatformMCPService | null) => void
   
   // 服务操作方法
   addService: (service: MCPService) => void
@@ -60,17 +54,13 @@ export function MCPProvider({ children }: { children: ReactNode }) {
   // 当前选中的MCP服务（用于对话时调用）
   const [selectedMCPServices, setSelectedMCPServices] = useState<MCPService[]>([])
   
-  // 配置弹窗状态（从MCP市场添加时使用）
-  const [showConfigModal, setShowConfigModal] = useState(false)
-  const [configModalService, setConfigModalService] = useState<PlatformMCPService | null>(null)
-  
   // 快速创建/编辑弹窗状态
   const [showQuickCreateModal, setShowQuickCreateModal] = useState(false)
   const [editingService, setEditingService] = useState<MCPService | null>(null)
   
-  // 详情弹窗状态
-  const [showDetailModal, setShowDetailModal] = useState(false)
-  const [detailService, setDetailService] = useState<PlatformMCPService | null>(null)
+  // 快速配置弹窗状态（MCP市场添加时使用）
+  const [showQuickConfigModal, setShowQuickConfigModal] = useState(false)
+  const [quickConfigService, setQuickConfigService] = useState<PlatformMCPService | null>(null)
   
   // 添加服务
   const addService = useCallback((service: MCPService) => {
@@ -125,18 +115,14 @@ export function MCPProvider({ children }: { children: ReactNode }) {
     setUserMCPServices,
     selectedMCPServices,
     setSelectedMCPServices,
-    showConfigModal,
-    setShowConfigModal,
-    configModalService,
-    setConfigModalService,
     showQuickCreateModal,
     setShowQuickCreateModal,
     editingService,
     setEditingService,
-    showDetailModal,
-    setShowDetailModal,
-    detailService,
-    setDetailService,
+    showQuickConfigModal,
+    setShowQuickConfigModal,
+    quickConfigService,
+    setQuickConfigService,
     addService,
     updateService,
     deleteService,

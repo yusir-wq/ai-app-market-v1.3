@@ -10,7 +10,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination'
 import { useMCP } from '@/contexts/mcp-context'
 import { MCPService, PlatformMCPService, platformMCPServices, categories, MCPCategory } from '@/lib/mcp-data'
-import { ArrowLeft, Trash2, Plus, Search, ExternalLink, Info } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Search, ExternalLink, Pencil } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,16 +33,14 @@ interface MCPCenterProps {
 function MyMCPServiceCard({
   service,
   onDelete,
-  onDetail,
+  onEdit,
+  onToggle,
 }: {
   service: MCPService
   onDelete: () => void
-  onDetail: () => void
+  onEdit: () => void
+  onToggle: (enabled: boolean) => void
 }) {
-  // 查找对应的平台服务获取points
-  const platformService = platformMCPServices.find(p => p.englishName === service.englishName)
-  const points = platformService?.points || 0
-
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4">
@@ -61,22 +60,26 @@ function MyMCPServiceCard({
             <p className="text-xs text-muted-foreground line-clamp-2">
               {service.description}
             </p>
-            {/* 消耗智点 */}
-            <p className="text-xs text-amber-600 font-medium">
-              {points}智点/次
-            </p>
           </div>
           
           {/* 操作按钮 */}
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            {/* 启用开关 */}
+            <Switch
+              checked={service.status === 'enabled'}
+              onCheckedChange={onToggle}
+              title={service.status === 'enabled' ? '已启用' : '已关闭'}
+            />
+            {/* 编辑按钮 */}
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={onDetail}
-              title="详情"
+              onClick={onEdit}
+              title="编辑MCP服务"
             >
-              <Info className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
+            {/* 删除按钮 */}
             <Button
               variant="ghost"
               size="icon-sm"
@@ -97,12 +100,10 @@ function MCPMarketCard({
   service,
   isAdded,
   onAdd,
-  onDetail,
 }: {
   service: PlatformMCPService
   isAdded: boolean
   onAdd: () => void
-  onDetail: () => void
 }) {
   return (
     <Card className="overflow-hidden">
@@ -123,22 +124,10 @@ function MCPMarketCard({
             <p className="text-xs text-muted-foreground line-clamp-2">
               {service.description}
             </p>
-            {/* 消耗智点 */}
-            <p className="text-xs text-amber-600 font-medium">
-              {service.points}智点/次
-            </p>
           </div>
           
           {/* 操作按钮 */}
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onDetail}
-              title="详情"
-            >
-              <Info className="h-4 w-4" />
-            </Button>
             {!isAdded ? (
               <Button
                 variant="outline"
@@ -166,8 +155,12 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
     userMCPServices,
     addService,
     deleteService,
-    setDetailService,
-    setShowDetailModal,
+    updateService,
+    toggleServiceStatus,
+    setEditingService,
+    setShowQuickCreateModal,
+    setQuickConfigService,
+    setShowQuickConfigModal,
     isServiceAdded,
   } = useMCP()
   
@@ -252,44 +245,22 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
     setServiceToDelete(null)
   }
   
-  // 处理从市场添加
+  // 处理从市场添加 - 打开快速配置弹窗
   const handleAddFromMarket = (platformService: PlatformMCPService) => {
-    // 直接添加，不弹窗
-    const newService = {
-      id: `user-${platformService.id}-${Date.now()}`,
-      name: platformService.name,
-      englishName: platformService.englishName,
-      description: platformService.description,
-      icon: platformService.icon,
-      type: 'HTTP' as const,
-      provider: platformService.provider,
-      status: 'enabled' as const,
-      config: {
-        url: platformService.defaultUrl,
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 60,
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-    
-    addService(newService)
-    toast.success('MCP服务已添加，可到个人中心-我的MCP查看')
+    setQuickConfigService(platformService)
+    setShowQuickConfigModal(true)
   }
-  
-  // 处理查看详情
-  const handleDetail = (service: PlatformMCPService) => {
-    setDetailService(service)
-    setShowDetailModal(true)
+
+  // 处理编辑MCP服务
+  const handleEditService = (service: MCPService) => {
+    setEditingService(service)
+    setShowQuickCreateModal(true)
   }
-  
-  // 处理我的MCP详情（需要转换为PlatformMCPService）
-  const handleMyDetail = (service: MCPService) => {
-    const platformService = platformMCPServices.find(p => p.englishName === service.englishName)
-    if (platformService) {
-      setDetailService(platformService)
-      setShowDetailModal(true)
-    }
+
+  // 处理启用/关闭切换
+  const handleToggleService = (service: MCPService, enabled: boolean) => {
+    toggleServiceStatus(service.id)
+    toast.success(`${service.name}已${enabled ? '启用' : '关闭'}`)
   }
   
   return (
@@ -394,7 +365,8 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                   key={service.id}
                   service={service}
                   onDelete={() => handleDeleteConfirm(service)}
-                  onDetail={() => handleMyDetail(service)}
+                  onEdit={() => handleEditService(service)}
+                  onToggle={(enabled) => handleToggleService(service, enabled)}
                 />
               ))
             ) : (
@@ -451,7 +423,6 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                   service={service}
                   isAdded={isServiceAdded(service.id)}
                   onAdd={() => handleAddFromMarket(service)}
-                  onDetail={() => handleDetail(service)}
                 />
               ))}
             </div>

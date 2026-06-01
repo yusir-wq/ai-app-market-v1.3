@@ -34,7 +34,6 @@ export function RechargeModal() {
   const [customAmount, setCustomAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'qr' | 'processing' | 'success'>('idle')
-  const [agreed, setAgreed] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState('wechat')
 
   const finalAmount = selectedAmount === 'custom' 
@@ -92,7 +91,6 @@ export function RechargeModal() {
         setSelectedAmount(10)
         setCustomAmount('')
         setPaymentStatus('idle')
-        setAgreed(false)
       }, 2000)
     }, 1500)
   }

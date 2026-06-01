@@ -12,8 +12,8 @@ import { RechargeModal } from '@/components/auth/recharge-modal'
 import { BillingUsage } from './billing-usage'
 import { BillingPayments } from './billing-payments'
 import { MCPCenter } from './mcp-center'
-import { MCPServiceDetailModal } from './mcp-service-detail-modal'
 import { MCPQuickCreateModal } from './mcp-quick-create-modal'
+import { MCPQuickConfigModal } from './mcp-quick-config-modal'
 import { useAuth } from '@/contexts/auth-context'
 import { MCPProvider, useMCP } from '@/contexts/mcp-context'
 import { mockModels, mockChatMessages, mockImageMessages, mockVideoMessages, mockChatHistories, mockMCPMessages, type Model, type Message } from '@/lib/mock-data'
@@ -228,8 +228,8 @@ export function Workspace() {
           </div>
           <LoginModal />
           <RechargeModal />
-          <MCPServiceDetailModal />
           <MCPQuickCreateModal />
+          <MCPQuickConfigModal />
         </div>
       </MCPProvider>
     )
@@ -245,8 +245,8 @@ export function Workspace() {
           </div>
           <LoginModal />
           <RechargeModal />
-          <MCPServiceDetailModal />
           <MCPQuickCreateModal />
+          <MCPQuickConfigModal />
         </div>
       </MCPProvider>
     )
@@ -262,8 +262,8 @@ export function Workspace() {
           </div>
           <LoginModal />
           <RechargeModal />
-          <MCPServiceDetailModal />
           <MCPQuickCreateModal />
+          <MCPQuickConfigModal />
         </div>
       </MCPProvider>
     )
@@ -336,8 +336,8 @@ export function Workspace() {
         <RechargeModal />
 
         {/* MCP相关弹窗 */}
-        <MCPServiceDetailModal />
         <MCPQuickCreateModal />
+        <MCPQuickConfigModal />
       </div>
     </MCPProvider>
   )

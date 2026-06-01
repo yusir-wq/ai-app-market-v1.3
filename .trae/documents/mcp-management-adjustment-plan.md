@@ -1,179 +1,223 @@
-# MCP管理区域调整计划
+# MCP管理页面调整实施计划
 
-## 一、需求摘要
+## 概述
+对MCP管理页面进行多项UI和功能调整，包括移除智点显示、详情弹窗，新增编辑功能和快速配置弹窗。
 
-对个人中心-MCP管理区域进行多项调整，包括分类筛选、智点显示、详情弹窗、交互流程优化等。
+## 当前状态分析
 
-## 二、详细变更计划
+### 现有文件结构
+- `components/workspace/mcp-center.tsx` - MCP中心主页面（我的MCP + MCP市场）
+- `components/workspace/mcp-service-detail-modal.tsx` - MCP服务详情弹窗
+- `components/workspace/mcp-quick-create-modal.tsx` - MCP快速创建/编辑弹窗
+- `contexts/mcp-context.tsx` - MCP状态管理上下文
+- `lib/mcp-data.ts` - MCP数据类型定义和mock数据
 
-### 2.1 数据模型调整 (`lib/mcp-data.ts`)
+### 当前功能
+1. **我的MCP页面**: 展示用户已添加的MCP服务卡片，支持删除和查看详情
+2. **MCP市场页面**: 展示平台MCP服务，支持添加和查看详情
+3. **服务卡片**: 显示图标、名称、英文名称、描述、智点消耗、详情按钮
+4. **详情弹窗**: 展示服务完整信息，支持添加服务
+5. **编辑弹窗**: 编辑服务名称、请求头、长时间运行模式、超时时间
 
-#### 变更1：增加分类字段
-- **新增**: `category` 字段到 `PlatformMCPService` 接口
-- **分类枚举**: 'all' | 'seo' | 'whois' | 'security' | 'enterprise' | 'lifestyle' | 'traffic' | 'other'
-- **分类映射**:
-  - 全部: all
-  - SEO指标: seo
-  - whois/备案: whois
-  - 安全检测: security
-  - 企业工商: enterprise
-  - 生活服务: lifestyle
-  - 交通地理: traffic
-  - 其他事务: other
+---
 
-#### 变更2：增加智点消耗字段
-- **新增**: `points` 字段到 `PlatformMCPService` 接口
-- **格式**: 数字，表示每次调用消耗的智点
-- **显示**: "{points}智点/次"
+## 需求确认清单
 
-### 2.2 MCP中心页面调整 (`mcp-center.tsx`)
+在继续之前，请确认以下细节：
 
-#### 变更3：搜索框下方增加分类Tabs
-- **位置**: 搜索框下方
-- **组件**: Tabs 或 Button Group
-- **选项**: 全部，SEO指标，whois/备案，安全检测，企业工商，生活服务，交通地理，其他事务
-- **功能**: 点击后过滤对应分类的MCP服务
-- **过滤逻辑**: 同时支持搜索关键词和分类筛选
+### 问题1: 我的MCP卡片按钮设计
+当前我的MCP卡片右侧有"详情"和"删除"按钮。根据需求需要替换为：
+- **启用开关**（Switch组件）
+- **编辑MCP服务**按钮
 
-#### 变更4：MCP服务卡片调整
-- **新增显示**: 消耗智点（如：5智点/次）
-- **新增按钮**: "详情"按钮
-- **我的MCP卡片删除**:
-  - 删除"启用开关"
-  - 删除"编辑MCP服务"按钮
-- **MCP市场卡片保留**: "添加"按钮（状态变为"已添加"后显示Badge）
+**请确认**: 删除按钮是否保留？还是完全替换为上述两个按钮？
+- 删除按钮保留。
 
-#### 变更5：删除快速配置弹窗
-- **删除**: `mcp-config-modal.tsx` 不再使用
-- **新流程**: MCP市场点击"添加"→卡片状态变为"已添加"→全局提示
+### 问题2: 快速配置MCP服务的触发时机
+需求提到"点击添加按钮后触发"快速配置弹窗。
 
-#### 变更6：Toast提示调整
-- **添加成功**: "MCP服务已添加，可到个人中心-我的MCP查看"
-- **删除成功**: "MCP服务已删除，可到个人中心-MCP市场重新添加"
+**请确认**: 
+- 是指MCP市场页面中每个服务的"添加"按钮吗？
+- 添加成功后是否还需要显示"{服务名}已添加"的Toast提示？
+- 是指MCP市场页面中每个服务的"添加"按钮，添加成功后还需要显示"{服务名}已添加"的Toast提示。
 
-### 2.3 新增MCP服务详情弹窗 (`mcp-service-detail-modal.tsx`)
+### 问题3: 步骤图片
+快速配置弹窗需要3张1:1截图占位图。
 
-#### 变更7：创建详情弹窗组件
-- **触发**: 点击卡片"详情"按钮
-- **窗口内容**:
-  - **基本信息区域**:
-    - 服务icon
-    - 服务名称
-    - 服务英文名
-    - 服务介绍
-    - 消耗智点（N智点/次）
-  - **请求/返回参数信息区域**:
-    - 介绍文本（使用现有的description字段）
-  - **底部按钮**:
-    - MCP市场：显示"添加MCP"按钮（如未添加）
-    - 我的MCP：不显示添加按钮
+**请确认**: 
+- 是否需要我生成3张占位图片？
+- 还是使用纯色/图标占位即可？
+- 生成3张纯色占位图片即可，后续我将提供实际图片给你替换。
 
-#### 变更8：Context状态管理
-- **新增**: `showDetailModal`, `detailService`, `setShowDetailModal`, `setDetailService`
+---
 
-## 三、文件变更清单
+## 待实施变更
 
-| 文件 | 变更类型 | 变更说明 |
-|------|----------|----------|
-| `lib/mcp-data.ts` | 修改 | 增加category和points字段 |
-| `contexts/mcp-context.tsx` | 修改 | 新增详情弹窗状态管理 |
-| `components/workspace/mcp-center.tsx` | 修改 | 分类Tabs、卡片调整、删除配置弹窗调用 |
-| `components/workspace/mcp-service-detail-modal.tsx` | 新增 | 详情弹窗组件 |
-| `components/workspace/mcp-config-modal.tsx` | 删除 | 不再使用 |
+### 变更1: MCP服务卡片移除智点显示和详情按钮
+**文件**: `components/workspace/mcp-center.tsx`
 
-## 四、实现细节
+**修改内容**:
+1. `MyMCPServiceCard` 组件:
+   - 移除第64-67行的智点显示代码
+   - 移除第71-79行的"详情"按钮
 
-### 4.1 分类Tabs组件
+2. `MCPMarketCard` 组件:
+   - 移除第126-129行的智点显示代码
+   - 移除第134-141行的"详情"按钮
 
-```tsx
-const categories = [
-  { id: 'all', name: '全部' },
-  { id: 'seo', name: 'SEO指标' },
-  { id: 'whois', name: 'whois/备案' },
-  { id: 'security', name: '安全检测' },
-  { id: 'enterprise', name: '企业工商' },
-  { id: 'lifestyle', name: '生活服务' },
-  { id: 'traffic', name: '交通地理' },
-  { id: 'other', name: '其他事务' },
-]
+---
+
+### 变更2: 移除MCP服务详情弹窗
+**文件**: 
+- `components/workspace/mcp-service-detail-modal.tsx` - 删除整个文件
+- `components/workspace/workspace.tsx` - 移除详情弹窗组件引用
+- `contexts/mcp-context.tsx` - 移除详情弹窗相关状态
+
+**修改内容**:
+1. 删除 `mcp-service-detail-modal.tsx` 文件
+2. 在 `workspace.tsx` 中移除 `MCPServiceDetailModal` 组件渲染
+3. 在 `mcp-context.tsx` 中移除以下状态:
+   - `showDetailModal`
+   - `setShowDetailModal`
+   - `detailService`
+   - `setDetailService`
+4. 在 `mcp-center.tsx` 中移除详情相关的处理函数和引用
+
+---
+
+### 变更3: 我的MCP卡片增加启用开关和编辑按钮
+**文件**: `components/workspace/mcp-center.tsx`
+
+**修改内容**:
+1. 导入 `Switch` 组件和 `Pencil` 图标
+2. 修改 `MyMCPServiceCard` 组件:
+   - 添加 `onEdit` 和 `onToggle` 回调属性
+   - 在操作区域添加启用开关（Switch组件）
+   - 添加编辑按钮（Pencil图标）
+3. 在 `MCPCenter` 组件中:
+   - 添加处理编辑的函数，打开编辑弹窗
+   - 添加处理开关切换的函数，调用 `toggleServiceStatus`
+
+**卡片按钮布局**（从右到左）:
+```
+[删除按钮] [编辑按钮] [启用开关]
 ```
 
-### 4.2 过滤逻辑
+---
 
-```tsx
-const filteredServices = useMemo(() => {
-  let result = activeTab === 'my' ? userMCPServices : platformMCPServices
-  
-  // 分类过滤
-  if (selectedCategory !== 'all') {
-    result = result.filter(s => s.category === selectedCategory)
-  }
-  
-  // 搜索过滤
-  if (searchQuery.trim()) {
-    const query = searchQuery.toLowerCase()
-    result = result.filter(s => 
-      s.name.toLowerCase().includes(query) ||
-      s.englishName.toLowerCase().includes(query)
-    )
-  }
-  
-  return result
-}, [activeTab, selectedCategory, searchQuery, userMCPServices])
-```
+### 变更4: 编辑MCP服务窗口字段调整
+**文件**: `components/workspace/mcp-quick-create-modal.tsx`
 
-### 4.3 卡片布局
+**当前字段**:
+- 服务名称（可编辑）
+- MCP英文名称（只读）
+- 服务介绍（只读）
+- 服务类型（只读）
+- URL（只读）
+- 请求头（可编辑）
+- 长时间运行模式（可编辑）
+- 超时时间（可编辑）
 
-```tsx
-<Card>
-  <CardContent>
-    <div className="flex items-start gap-3">
-      <div className="icon">{service.icon}</div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2">
-          <span>{service.name}</span>
-          <span>{service.englishName}</span>
-        </div>
-        <p>{service.description}</p>
-        <div className="flex items-center justify-between">
-          <span>{service.points}智点/次</span>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline">详情</Button>
-            {/* 我的MCP：删除开关和编辑 */}
-            {/* MCP市场：添加按钮或已添加Badge */}
-          </div>
-        </div>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-```
+**确认**: 当前字段已满足需求第4点要求，无需修改。
 
-## 五、验证步骤
+---
 
-1. **分类筛选**:
-   - 点击各分类Tabs，正确过滤对应分类的服务
-   - 分类+搜索组合过滤正常
+### 变更5: MCP市场页面增加快速配置弹窗
+**文件**: 
+- `components/workspace/mcp-quick-config-modal.tsx` - 新建文件
+- `components/workspace/mcp-center.tsx` - 集成弹窗
+- `contexts/mcp-context.tsx` - 添加弹窗状态
 
-2. **智点显示**:
-   - 卡片显示"N智点/次"
-   - 详情弹窗显示智点消耗
+**弹窗内容**:
+1. **窗口标题**: "配置MCP服务"
+2. **APIKey输入框**: 文本输入框，placeholder提示
+3. **Steps组件**: 1行3列水平排列
+   - 步骤编号 + 标题 + 图片 上下对应
+   - Step1: 访问chinaz.net官网（可点击域名跳转）
+   - Step2: 购买MCP API接口服务
+   - Step3: 进入控制台复制APIKey
+   - 3张1:1截图占位图
+4. **添加成功提示**: Toast显示 "{服务名}已添加"
 
-3. **详情弹窗**:
-   - 点击"详情"正确打开弹窗
-   - 显示icon、名称、英文名、介绍、智点
-   - 显示参数信息（description）
-   - MCP市场显示"添加MCP"按钮
+**交互流程**:
+1. 在MCP市场点击"添加"按钮
+2. 弹出快速配置弹窗
+3. 用户输入APIKey
+4. 点击确认添加
+5. 关闭弹窗，显示成功Toast
 
-4. **添加流程**:
-   - MCP市场点击"添加"→状态变为"已添加"
-   - 显示Toast："MCP服务已添加，可到个人中心-我的MCP查看"
-   - 不再弹出配置窗口
+---
 
-5. **删除流程**:
-   - 删除后显示Toast："MCP服务已删除，可到个人中心-MCP市场重新添加"
+## 实施步骤
 
-6. **我的MCP卡片**:
-   - 不显示启用开关
-   - 不显示编辑按钮
-   - 显示详情按钮
+### 步骤1: 更新 MCP Context
+**文件**: `contexts/mcp-context.tsx`
+
+1. 移除详情弹窗相关状态
+2. 添加快速配置弹窗状态:
+   - `showQuickConfigModal`
+   - `setShowQuickConfigModal`
+   - `quickConfigService`
+   - `setQuickConfigService`
+
+### 步骤2: 修改 MCP Center 页面
+**文件**: `components/workspace/mcp-center.tsx`
+
+1. 移除智点显示和详情按钮
+2. 修改我的MCP卡片，添加启用开关和编辑按钮
+3. 修改MCP市场添加逻辑，打开快速配置弹窗
+
+### 步骤3: 创建快速配置弹窗
+**文件**: `components/workspace/mcp-quick-config-modal.tsx`
+
+1. 创建新组件
+2. 实现Steps组件布局
+3. 实现APIKey输入
+4. 实现添加逻辑
+
+### 步骤4: 删除详情弹窗文件
+**文件**: `components/workspace/mcp-service-detail-modal.tsx`
+
+1. 删除整个文件
+2. 在 `workspace.tsx` 中移除引用
+
+### 步骤5: 验证测试
+1. 验证我的MCP页面卡片显示正常
+2. 验证启用开关功能正常
+3. 验证编辑按钮打开编辑弹窗
+4. 验证MCP市场添加按钮打开快速配置弹窗
+5. 验证快速配置弹窗步骤显示正确
+6. 验证添加成功Toast提示
+
+---
+
+## 技术细节
+
+### 依赖组件
+- `Switch` - 启用开关
+- `Dialog` - 弹窗基础
+- `Input` - 输入框
+- `Button` - 按钮
+- `Label` - 标签
+- `Steps` - 步骤组件（需要确认项目中是否有现成组件）
+
+### 图标
+- `Pencil` - 编辑按钮
+- `Trash2` - 删除按钮（保留）
+- `Plus` - 添加按钮
+
+### 状态管理
+- 使用现有的 `useMCP` hook
+- 新增状态通过 context 管理
+
+---
+
+## 等待用户确认
+
+请回复确认以下问题，我将开始实施：
+
+1. **删除按钮是否保留？** 我的MCP卡片上除了启用开关和编辑按钮，是否还需要保留删除按钮？
+
+2. **步骤图片如何处理？** 快速配置弹窗的3张步骤图片需要我生成占位图，还是使用其他方式（如图标、纯色块）？
+
+3. **Steps组件**: 项目中是否有现成的Steps/Stepper组件？如果没有，我可以使用简单的自定义布局实现。
