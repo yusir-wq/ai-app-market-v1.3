@@ -403,8 +403,9 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
             </TabsList>
           </Tabs>
           
-          {/* 右侧：联系MCP客服 + 服务商入驻 + 企业级MCP定制 */}
+          {/* 右侧：提示文本 + 联系MCP客服 + 企业级MCP定制 */}
           <div className="flex items-center gap-2">
+            <span className="text-sm text-orange-500 font-medium shrink-0">扫码联系客服，锁定免费名额</span>
             {/* 联系MCP客服按钮 */}
             <TooltipProvider>
               <Tooltip>
@@ -417,14 +418,14 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                     联系MCP客服
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="p-0">
+                <TooltipContent side="bottom" className="p-0 bg-gray-100">
                   <div className="flex flex-col items-center p-3">
                     <img
                       src="/images/customer-service-qrcode.png"
                       alt="客服二维码"
                       className="w-32 h-32 mb-2"
                     />
-                    <p className="text-xs text-muted-foreground">手机扫码加我微信</p>
+                    <p className="text-xs text-black">手机扫码加我微信</p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -487,7 +488,7 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
               ))}
             </div>
             {/* 搜索框 */}
-            <div className="relative w-60 shrink-0">
+            <div className="relative w-80 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="搜索MCP..."
@@ -499,16 +500,16 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
           </div>
         )}
 
-        {/* 我的MCP：搜索框通栏显示 */}
+        {/* 我的MCP：搜索框右对齐，与Tabs同行 */}
         {activeTab === 'my' && (
-          <div className="mb-4">
-            <div className="relative w-full">
+          <div className="flex justify-end mb-4">
+            <div className="relative w-80 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="搜索MCP..."
                 value={mySearchQuery}
                 onChange={(e) => setMySearchQuery(e.target.value)}
-                className="pl-9 h-9 w-full"
+                className="pl-9 h-9"
               />
             </div>
           </div>
