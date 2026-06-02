@@ -43,7 +43,8 @@ export function MCPQuickCreateModal() {
       // 从 Authorization header 中提取 APIKey
       const authHeader = editingService.config.headers?.['Authorization'] || ''
       const extractedKey = authHeader.replace(/^Bearer\s*/i, '')
-      setApiKey(extractedKey)
+      // 如果没有 APIKey，设置默认值
+      setApiKey(extractedKey || 'apiuser_quantity******78bdd')
       setTimeoutValue(editingService.config.timeout || 60)
     } else {
       // 重置表单
@@ -107,7 +108,6 @@ export function MCPQuickCreateModal() {
             <div className="space-y-2">
               <Label>输入此服务的APIKey</Label>
               <Input
-                type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="输入此服务对应的APIKey，例如apiuser_quantity_eff..."

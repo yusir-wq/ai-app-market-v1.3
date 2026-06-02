@@ -14,3 +14,11 @@ node_modules
 .next/
 .DS_Store
 .vercel
+
+# Server logs and temp files
+server-*.log
+server-*.err.log
+server-*.pid
+start-lan-*.cmd
+启动服务器.ps1
+启动服务器.bat
