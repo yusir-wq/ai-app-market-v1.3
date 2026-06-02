@@ -13,27 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useMCP } from '@/contexts/mcp-context'
 import { toast } from 'sonner'
-import { ExternalLink } from 'lucide-react'
-
-// 步骤数据
-const steps = [
-  {
-    number: 1,
-    title: '访问chinaz.net官网',
-    link: 'https://www.chinaz.net',
-    image: '/images/mcp-step1.png',
-  },
-  {
-    number: 2,
-    title: '购买MCP API接口服务',
-    image: '/images/mcp-step2.png',
-  },
-  {
-    number: 3,
-    title: '进入控制台复制APIKey',
-    image: '/images/mcp-step3.png',
-  },
-]
 
 export function MCPQuickConfigModal() {
   const {
@@ -84,11 +63,6 @@ export function MCPQuickConfigModal() {
     handleClose()
   }
 
-  // 处理点击链接
-  const handleLinkClick = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
-
   if (!quickConfigService) return null
 
   return (
@@ -113,40 +87,16 @@ export function MCPQuickConfigModal() {
               />
             </div>
 
-            {/* 步骤区域 */}
-            <div className="space-y-4">
-              <Label>配置步骤</Label>
-              <div className="grid grid-cols-3 gap-4">
-                {steps.map((step) => (
-                  <div key={step.number} className="flex flex-col items-center text-center space-y-2">
-                    {/* 步骤编号 */}
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                      {step.number}
-                    </div>
-                    {/* 步骤标题 */}
-                    <div className="text-sm">
-                      {step.link ? (
-                        <button
-                          onClick={() => handleLinkClick(step.link!)}
-                          className="text-primary hover:underline inline-flex items-center gap-1"
-                        >
-                          {step.title}
-                          <ExternalLink className="h-3 w-3" />
-                        </button>
-                      ) : (
-                        <span className="text-muted-foreground">{step.title}</span>
-                      )}
-                    </div>
-                    {/* 步骤图片 */}
-                    <div className="w-full aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                      <img
-                        src={step.image}
-                        alt={`步骤${step.number}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                ))}
+            {/* 操作演示 */}
+            <div className="space-y-2">
+              <Label>操作演示</Label>
+              <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:bg-muted/80 transition-colors">
+                <div className="text-center px-4">
+                  <div className="text-4xl mb-2">▶️</div>
+                  <p className="text-sm text-muted-foreground">
+                    这是一段自动播放的操作视频教程，支持点击放大查看详情。
+                  </p>
+                </div>
               </div>
             </div>
           </div>

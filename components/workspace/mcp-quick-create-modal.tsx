@@ -11,10 +11,17 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useMCP } from '@/contexts/mcp-context'
 import { MCPService, serviceTypeFullLabels } from '@/lib/mcp-data'
+
+
+// 请求头项类型
+interface HeaderItem {
+  key: string
+  value: string
+  isMasked?: boolean
+}
 
 export function MCPQuickCreateModal() {
   const {
@@ -24,52 +31,76 @@ export function MCPQuickCreateModal() {
     setEditingService,
     updateService,
   } = useMCP()
-  
+
   // 表单状态
   const [serviceName, setServiceName] = useState('')
-  const [requestHeaders, setRequestHeaders] = useState('')
-  const [longRunning, setLongRunning] = useState(false)
+  const [headerItems, setHeaderItems] = useState<HeaderItem[]>([])
   const [timeout, setTimeoutValue] = useState(60)
-  
+
   // 只处理编辑模式（从市场添加由 MCPConfigModal 处理）
   const isEditing = showQuickCreateModal && editingService
-  
+
   // 获取只读字段数据
   const readOnlyData = isEditing ? editingService : null
-  
+
   // 初始化表单
   useEffect(() => {
     if (isEditing && editingService) {
       setServiceName(editingService.name)
-      setRequestHeaders(
-        editingService.config.headers
-          ? JSON.stringify(editingService.config.headers, null, 2)
-          : ''
-      )
-      setLongRunning(editingService.config.longRunning || false)
+      // 将headers对象转换为数组形式
+      const headers = editingService.config.headers || {}
+      const items: HeaderItem[] = Object.entries(headers).map(([key, value]) => ({
+        key,
+        value: String(value),
+        isMasked: key.toLowerCase() === 'authorization',
+      }))
+      setHeaderItems(items.length > 0 ? items : [{ key: 'Authorization', value: 'Bearer token123', isMasked: true }])
       setTimeoutValue(editingService.config.timeout || 60)
     } else {
       // 重置表单
       setServiceName('')
-      setRequestHeaders('')
-      setLongRunning(false)
+      setHeaderItems([])
       setTimeoutValue(60)
     }
   }, [isEditing, editingService])
-  
+
+  // 添加请求头
+  const addHeader = () => {
+    setHeaderItems([...headerItems, { key: 'Authorization', value: 'Bearer token123', isMasked: true }])
+  }
+
+  // 更新请求头
+  const updateHeader = (index: number, field: 'key' | 'value', value: string) => {
+    const newItems = [...headerItems]
+    newItems[index][field] = value
+    setHeaderItems(newItems)
+  }
+
+  // 删除请求头
+  const removeHeader = (index: number) => {
+    setHeaderItems(headerItems.filter((_, i) => i !== index))
+  }
+
+  // 掩码显示值 - 使用固定掩码
+  const maskValue = (value: string) => {
+    // 对于Authorization类型的值，使用固定的掩码格式
+    if (value.includes('Bearer')) {
+      return 'Be*************************************************************************************7a'
+    }
+    if (value.length <= 2) return value
+    return value.substring(0, 2) + '*'.repeat(Math.min(value.length - 2, 30))
+  }
+
   // 处理保存
   const handleSave = () => {
-    // 解析请求头
-    let headers: Record<string, string> = {}
-    if (requestHeaders.trim()) {
-      try {
-        headers = JSON.parse(requestHeaders)
-      } catch (e) {
-        // 如果解析失败，使用空对象
-        headers = {}
+    // 将数组转换为对象
+    const headers: Record<string, string> = {}
+    headerItems.forEach(item => {
+      if (item.key.trim()) {
+        headers[item.key.trim()] = item.value
       }
-    }
-    
+    })
+
     if (isEditing && editingService) {
       // 更新现有服务
       updateService(editingService.id, {
@@ -77,7 +108,6 @@ export function MCPQuickCreateModal() {
         config: {
           ...editingService.config,
           headers,
-          longRunning,
           timeout,
         },
       })
@@ -85,16 +115,16 @@ export function MCPQuickCreateModal() {
       setShowQuickCreateModal(false)
     }
   }
-  
+
   // 处理关闭
   const handleClose = () => {
     setEditingService(null)
     setShowQuickCreateModal(false)
   }
-  
+
   // 弹窗标题
   const dialogTitle = '编辑MCP服务'
-  
+
   return (
     <Dialog open={showQuickCreateModal} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-0 gap-0">
@@ -102,7 +132,7 @@ export function MCPQuickCreateModal() {
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
-        
+
         {/* 可滚动表单区域 */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
@@ -115,7 +145,7 @@ export function MCPQuickCreateModal() {
                 placeholder="请输入服务名称"
               />
             </div>
-            
+
             {/* 2. MCP英文名称（只读） */}
             {readOnlyData && (
               <div className="space-y-2">
@@ -127,7 +157,7 @@ export function MCPQuickCreateModal() {
                 />
               </div>
             )}
-            
+
             {/* 3. 服务介绍（只读） */}
             {readOnlyData && (
               <div className="space-y-2">
@@ -140,7 +170,7 @@ export function MCPQuickCreateModal() {
                 />
               </div>
             )}
-            
+
             {/* 4. 服务类型（只读） */}
             <div className="space-y-2">
               <Label className="text-muted-foreground">服务类型</Label>
@@ -150,7 +180,7 @@ export function MCPQuickCreateModal() {
                 className="bg-muted"
               />
             </div>
-            
+
             {/* 5. URL（只读） */}
             {isEditing && editingService && (
               <div className="space-y-2">
@@ -162,34 +192,69 @@ export function MCPQuickCreateModal() {
                 />
               </div>
             )}
-            
-            {/* 6. 请求头（可编辑） */}
+
+            {/* 6. 请求头（表格形式） */}
             <div className="space-y-2">
-              <Label>请求头（JSON格式）</Label>
-              <Textarea
-                value={requestHeaders}
-                onChange={(e) => setRequestHeaders(e.target.value)}
-                placeholder='{"Content-Type": "application/json"}'
-                className="resize-none font-mono text-sm"
-                rows={4}
-              />
-            </div>
-            
-            {/* 7. 长时间运行模式（可编辑） */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>长时间运行模式</Label>
-                <p className="text-xs text-muted-foreground">
-                  适用于需要长时间处理的任务
-                </p>
+              <Label>请求头</Label>
+              <p className="text-xs text-muted-foreground">
+                发送到 MCP 服务器的额外 HTTP 请求头
+              </p>
+              <p className="text-xs text-muted-foreground">
+                为了安全，请求头值已被掩码处理。修改将更新实际值。
+              </p>
+
+              {/* 请求头表格 */}
+              <div className="border rounded-md overflow-hidden">
+                {/* 表头 */}
+                <div className="grid grid-cols-2 gap-2 px-3 py-2 bg-muted text-xs font-medium text-muted-foreground">
+                  <div>请求头名称</div>
+                  <div>请求头值</div>
+                </div>
+
+                {/* 表体 */}
+                <div className="divide-y">
+                  {headerItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className={`grid grid-cols-2 gap-2 px-3 py-2 items-center ${
+                        item.key.toLowerCase() === 'authorization' ? 'bg-muted/50' : ''
+                      }`}
+                    >
+                      <Input
+                        value={item.key}
+                        onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                        placeholder="例如：Authorization"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={item.isMasked ? maskValue(item.value) : item.value}
+                        onChange={(e) => updateHeader(index, 'value', e.target.value)}
+                        placeholder="Bearer token123"
+                        className="h-8 text-sm font-mono"
+                        onFocus={() => {
+                          // 聚焦时显示真实值
+                          if (item.isMasked) {
+                            const newItems = [...headerItems]
+                            newItems[index].isMasked = false
+                            setHeaderItems(newItems)
+                          }
+                        }}
+                        onBlur={() => {
+                          // 失焦时恢复掩码
+                          if (item.key.toLowerCase() === 'authorization') {
+                            const newItems = [...headerItems]
+                            newItems[index].isMasked = true
+                            setHeaderItems(newItems)
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <Switch
-                checked={longRunning}
-                onCheckedChange={setLongRunning}
-              />
             </div>
-            
-            {/* 8. 超时时间（秒）（可编辑） */}
+
+            {/* 7. 超时时间（秒）（可编辑） */}
             <div className="space-y-2">
               <Label>超时时间（秒）</Label>
               <Input
@@ -202,7 +267,7 @@ export function MCPQuickCreateModal() {
             </div>
           </div>
         </div>
-        
+
         {/* 固定底部按钮 */}
         <DialogFooter className="px-6 py-4 border-t shrink-0 gap-2">
           <Button variant="outline" onClick={handleClose}>

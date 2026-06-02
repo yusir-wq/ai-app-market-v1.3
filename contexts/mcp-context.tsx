@@ -29,6 +29,12 @@ interface MCPContextType {
   quickConfigService: PlatformMCPService | null
   setQuickConfigService: (service: PlatformMCPService | null) => void
   
+  // 服务详情弹窗状态
+  showDetailModal: boolean
+  setShowDetailModal: (show: boolean) => void
+  detailService: PlatformMCPService | null
+  setDetailService: (service: PlatformMCPService | null) => void
+  
   // 服务操作方法
   addService: (service: MCPService) => void
   updateService: (id: string, service: Partial<MCPService>) => void
@@ -61,6 +67,10 @@ export function MCPProvider({ children }: { children: ReactNode }) {
   // 快速配置弹窗状态（MCP市场添加时使用）
   const [showQuickConfigModal, setShowQuickConfigModal] = useState(false)
   const [quickConfigService, setQuickConfigService] = useState<PlatformMCPService | null>(null)
+  
+  // 服务详情弹窗状态
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [detailService, setDetailService] = useState<PlatformMCPService | null>(null)
   
   // 添加服务
   const addService = useCallback((service: MCPService) => {
@@ -123,6 +133,10 @@ export function MCPProvider({ children }: { children: ReactNode }) {
     setShowQuickConfigModal,
     quickConfigService,
     setQuickConfigService,
+    showDetailModal,
+    setShowDetailModal,
+    detailService,
+    setDetailService,
     addService,
     updateService,
     deleteService,

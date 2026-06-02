@@ -23,6 +23,9 @@ export interface MCPServiceConfig {
   timeout?: number // 默认60秒
 }
 
+// MCP服务授权状态
+export type MCPAuthStatus = 'authorized' | 'unauthorized' | 'checking'
+
 // MCP服务完整定义（重构后）
 export interface MCPService {
   id: string
@@ -33,6 +36,7 @@ export interface MCPService {
   type: MCPServiceType      // 固定为'HTTP'，只读
   provider: string          // 后台使用，不展示
   status: MCPServiceStatus  // 简化为只有两种状态
+  authStatus?: MCPAuthStatus // 授权状态（新增）
   config: MCPServiceConfig
   createdAt: Date
   updatedAt: Date
@@ -230,6 +234,17 @@ export const platformMCPServices: PlatformMCPService[] = [
     category: 'other',
     points: 8,
   },
+  {
+    id: 'website-analyzer',
+    name: '网站综合分析',
+    englishName: 'analyze_website',
+    description: '全面分析网站性能、SEO、安全性和用户体验，提供详细的优化建议和改进方案。支持检测页面加载速度、移动端适配、关键词密度、外链质量、SSL证书状态等多项指标，帮助您全面提升网站质量。',
+    icon: '📊',
+    provider: '综合分析服务商',
+    defaultUrl: 'https://api.analyzer-provider.com/v1/analyze',
+    category: 'seo',
+    points: 30,
+  },
 ]
 
 // Mock用户配置的MCP服务（我的MCP）
@@ -243,6 +258,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'IP信息服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.ip-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -260,6 +276,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'Whois服务商',
     status: 'disabled',
+    authStatus: 'unauthorized',
     config: {
       url: 'https://api.whois-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -278,6 +295,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: '备案查询服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.icp-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -295,6 +313,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: '域名服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.domain-provider.com/v1/reverse',
       headers: { 'Content-Type': 'application/json' },
@@ -312,6 +331,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'Whois服务商',
     status: 'disabled',
+    authStatus: 'unauthorized',
     config: {
       url: 'https://api.whois-provider.com/v1/reverse',
       headers: { 'Content-Type': 'application/json' },
@@ -330,6 +350,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'Whois服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.whois-provider.com/v1/history',
       headers: { 'Content-Type': 'application/json' },
@@ -347,6 +368,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: '工商信息服务商',
     status: 'disabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.company-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -364,6 +386,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'DNS服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.dns-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -381,6 +404,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'SSL服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.ssl-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -398,6 +422,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: '子域名服务商',
     status: 'disabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.subdomain-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -416,6 +441,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: '端口扫描服务商',
     status: 'enabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.port-provider.com/v1/scan',
       headers: { 'Content-Type': 'application/json' },
@@ -434,6 +460,7 @@ export const mockUserMCPServices: MCPService[] = [
     type: 'HTTP',
     provider: 'CDN服务商',
     status: 'disabled',
+    authStatus: 'authorized',
     config: {
       url: 'https://api.cdn-provider.com/v1/query',
       headers: { 'Content-Type': 'application/json' },
@@ -441,6 +468,25 @@ export const mockUserMCPServices: MCPService[] = [
     },
     createdAt: new Date('2024-12-10'),
     updatedAt: new Date('2024-12-10'),
+  },
+  {
+    id: 'user-website-analyzer-1',
+    name: '网站综合分析',
+    englishName: 'analyze_website',
+    description: '全面分析网站性能、SEO、安全性和用户体验，提供详细的优化建议和改进方案。支持检测页面加载速度、移动端适配、关键词密度、外链质量、SSL证书状态等多项指标，帮助您全面提升网站质量。',
+    icon: '📊',
+    type: 'HTTP',
+    provider: '综合分析服务商',
+    status: 'enabled',
+    authStatus: 'authorized',
+    config: {
+      url: 'https://api.analyzer-provider.com/v1/analyze',
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 120,
+      longRunning: true,
+    },
+    createdAt: new Date('2024-12-05'),
+    updatedAt: new Date('2024-12-05'),
   },
 ]
 

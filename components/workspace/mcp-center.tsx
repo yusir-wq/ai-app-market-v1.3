@@ -10,8 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination'
 import { useMCP } from '@/contexts/mcp-context'
 import { MCPService, PlatformMCPService, platformMCPServices, categories, MCPCategory } from '@/lib/mcp-data'
-import { ArrowLeft, Trash2, Plus, Search, ExternalLink, Pencil } from 'lucide-react'
-import { Switch } from '@/components/ui/switch'
+import { ArrowLeft, Trash2, Plus, Search, ExternalLink, Pencil, MoreHorizontal, Loader2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +21,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -34,22 +45,108 @@ function MyMCPServiceCard({
   service,
   onDelete,
   onEdit,
-  onToggle,
+  onCheckAuth,
+  onDetail,
 }: {
   service: MCPService
   onDelete: () => void
   onEdit: () => void
-  onToggle: (enabled: boolean) => void
+  onCheckAuth: () => void
+  onDetail: () => void
 }) {
+  const [isChecking, setIsChecking] = useState(false)
+
+  // 处理授权状态点击
+  const handleAuthClick = async () => {
+    setIsChecking(true)
+    await onCheckAuth()
+    setIsChecking(false)
+  }
+
+  // 获取授权状态显示
+  const getAuthStatusDisplay = () => {
+    if (isChecking) {
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>检测中</span>
+        </div>
+      )
+    }
+    if (service.authStatus === 'authorized') {
+      return (
+        <div className="flex items-center gap-1.5 text-xs text-green-600">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span>已授权</span>
+        </div>
+      )
+    }
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-red-600">
+        <div className="w-2 h-2 rounded-full bg-red-500" />
+        <span>未授权</span>
+      </div>
+    )
+  }
+
+  // 获取tooltip内容
+  const getTooltipContent = () => {
+    if (service.authStatus === 'authorized') {
+      return 'MCP服务正常使用时显示"已授权"。点击可获取MCP服务最新状态'
+    }
+    return '服务不可用时（如APIKey失效/次数不足/服务下架等）显示"未授权"。点击可获取MCP服务最新状态'
+  }
+
   return (
-    <Card className="overflow-hidden">
+    <Card className="relative overflow-hidden">
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+        <div className="absolute right-3 top-3 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="更多"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="h-4 w-4 mr-2" />
+                编辑
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDelete} className="text-red-600 focus:text-red-600">
+                <Trash2 className="h-4 w-4 mr-2" />
+                移除
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="cursor-pointer" onClick={handleAuthClick}>
+                  {getAuthStatusDisplay()}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{getTooltipContent()}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div className="flex items-center gap-3 pr-20">
           {/* Icon */}
-          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-sm font-medium shrink-0">
-            {service.icon}
+          <div className="shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-sm font-medium">
+              {service.icon}
+            </div>
           </div>
-          
+
           {/* 信息 */}
           <div className="flex-1 min-w-0 space-y-1">
             {/* 服务名称 + 英文名称 */}
@@ -57,41 +154,46 @@ function MyMCPServiceCard({
               <span className="font-medium text-sm truncate">{service.name}</span>
               <span className="text-xs text-muted-foreground truncate">{service.englishName}</span>
             </div>
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {service.description}
-            </p>
-          </div>
-          
-          {/* 操作按钮 */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* 启用开关 */}
-            <Switch
-              checked={service.status === 'enabled'}
-              onCheckedChange={onToggle}
-              title={service.status === 'enabled' ? '已启用' : '已关闭'}
+            {/* 服务介绍 - hover显示详情按钮 */}
+            <DescriptionWithDetail 
+              description={service.description} 
+              onDetail={onDetail} 
             />
-            {/* 编辑按钮 */}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onEdit}
-              title="编辑MCP服务"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {/* 删除按钮 */}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onDelete}
-              title="删除"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+// 服务介绍组件（带hover详情按钮）
+function DescriptionWithDetail({
+  description,
+  onDetail,
+}: {
+  description: string
+  onDetail: () => void
+}) {
+  const [showDetailBtn, setShowDetailBtn] = useState(false)
+
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={() => setShowDetailBtn(true)}
+      onMouseLeave={() => setShowDetailBtn(false)}
+    >
+      <p className="text-xs text-muted-foreground line-clamp-2">
+        {description}
+      </p>
+      {showDetailBtn && (
+        <button
+          onClick={onDetail}
+          className="absolute bottom-0 right-0 text-xs text-primary hover:underline bg-background/90 px-1"
+        >
+          详情
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -100,10 +202,12 @@ function MCPMarketCard({
   service,
   isAdded,
   onAdd,
+  onDetail,
 }: {
   service: PlatformMCPService
   isAdded: boolean
   onAdd: () => void
+  onDetail: () => void
 }) {
   return (
     <Card className="overflow-hidden">
@@ -121,9 +225,11 @@ function MCPMarketCard({
               <span className="font-medium text-sm truncate">{service.name}</span>
               <span className="text-xs text-muted-foreground truncate">{service.englishName}</span>
             </div>
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {service.description}
-            </p>
+            {/* 服务介绍 - hover显示详情按钮 */}
+            <DescriptionWithDetail 
+              description={service.description} 
+              onDetail={onDetail} 
+            />
           </div>
           
           {/* 操作按钮 */}
@@ -156,12 +262,13 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
     addService,
     deleteService,
     updateService,
-    toggleServiceStatus,
     setEditingService,
     setShowQuickCreateModal,
     setQuickConfigService,
     setShowQuickConfigModal,
     isServiceAdded,
+    setDetailService,
+    setShowDetailModal,
   } = useMCP()
   
   // Tab状态
@@ -257,10 +364,29 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
     setShowQuickCreateModal(true)
   }
 
-  // 处理启用/关闭切换
-  const handleToggleService = (service: MCPService, enabled: boolean) => {
-    toggleServiceStatus(service.id)
-    toast.success(`${service.name}已${enabled ? '启用' : '关闭'}`)
+  // 处理授权状态检查
+  const handleCheckAuth = async (service: MCPService) => {
+    // 模拟API调用检查授权状态
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 随机返回授权状态（实际项目中应该调用真实API）
+    const newStatus = Math.random() > 0.3 ? 'authorized' : 'unauthorized'
+    updateService(service.id, { authStatus: newStatus as 'authorized' | 'unauthorized' })
+    toast.success(`${service.name}授权状态已更新`)
+  }
+
+  // 处理查看服务详情 - 我的MCP
+  const handleMyDetail = (service: MCPService) => {
+    const platformService = platformMCPServices.find(p => p.englishName === service.englishName)
+    if (platformService) {
+      setDetailService(platformService)
+      setShowDetailModal(true)
+    }
+  }
+
+  // 处理查看服务详情 - MCP市场
+  const handleMarketDetail = (service: PlatformMCPService) => {
+    setDetailService(service)
+    setShowDetailModal(true)
   }
   
   return (
@@ -286,9 +412,34 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
             </TabsList>
           </Tabs>
           
-          {/* 右侧：服务商入驻 + 企业级MCP定制 */}
+          {/* 右侧：联系MCP客服 + 服务商入驻 + 企业级MCP定制 */}
           <div className="flex items-center gap-2">
-            <Button
+            {/* 联系MCP客服按钮 */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 shrink-0"
+                  >
+                    联系MCP客服
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="p-0">
+                  <div className="flex flex-col items-center p-3">
+                    <img
+                      src="/images/customer-service-qrcode.png"
+                      alt="客服二维码"
+                      className="w-32 h-32 mb-2"
+                    />
+                    <p className="text-xs text-muted-foreground">手机扫码加我微信</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {/* 服务商入驻按钮 - 隐藏 */}
+            {/* <Button
               variant="outline"
               size="sm"
               className="gap-1.5 shrink-0"
@@ -302,7 +453,7 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                 <ExternalLink className="h-4 w-4" />
                 服务商入驻
               </a>
-            </Button>
+            </Button> */}
             <Button
               variant="outline"
               size="sm"
@@ -324,8 +475,9 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
       
       {/* 内容区域 */}
       <ScrollArea className="flex-1 px-4 py-4">
-        {/* 分类Tabs */}
-        <div className="mb-4">
+        {/* 分类Tabs + 搜索框 */}
+        <div className="mb-4 flex items-center gap-4">
+          {/* 分类Tabs */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <Button
@@ -342,21 +494,23 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
               </Button>
             ))}
           </div>
+          
+          {/* 搜索框 - 右对齐，宽度240px */}
+          <div className="flex-1 flex justify-end">
+            <div className="relative w-60 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索MCP..."
+                value={activeTab === 'my' ? mySearchQuery : marketSearchQuery}
+                onChange={(e) => activeTab === 'my' ? setMySearchQuery(e.target.value) : setMarketSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          </div>
         </div>
 
         {activeTab === 'my' ? (
           <>
-          {/* 搜索框 */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="搜索MCP服务..."
-              value={mySearchQuery}
-              onChange={(e) => setMySearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          
           {/* 我的MCP - 一行3列布局 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredMyServices.length > 0 ? (
@@ -366,7 +520,8 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                   service={service}
                   onDelete={() => handleDeleteConfirm(service)}
                   onEdit={() => handleEditService(service)}
-                  onToggle={(enabled) => handleToggleService(service, enabled)}
+                  onCheckAuth={() => handleCheckAuth(service)}
+                  onDetail={() => handleMyDetail(service)}
                 />
               ))
             ) : (
@@ -404,17 +559,6 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
           </>
         ) : (
           <div className="space-y-4">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索MCP服务..."
-                value={marketSearchQuery}
-                onChange={(e) => setMarketSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            
             {/* 服务列表 - 一行3列布局 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredMarketServices.map((service) => (
@@ -423,6 +567,7 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
                   service={service}
                   isAdded={isServiceAdded(service.id)}
                   onAdd={() => handleAddFromMarket(service)}
+                  onDetail={() => handleMarketDetail(service)}
                 />
               ))}
             </div>
