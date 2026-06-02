@@ -166,7 +166,7 @@ function MyMCPServiceCard({
   )
 }
 
-// 服务介绍组件（带hover详情按钮）
+// 服务介绍组件（带固定详情按钮）
 function DescriptionWithDetail({
   description,
   onDetail,
@@ -174,25 +174,16 @@ function DescriptionWithDetail({
   description: string
   onDetail: () => void
 }) {
-  const [showDetailBtn, setShowDetailBtn] = useState(false)
-
   return (
-    <div 
-      className="relative"
-      onMouseEnter={() => setShowDetailBtn(true)}
-      onMouseLeave={() => setShowDetailBtn(false)}
-    >
+    <div className="relative">
       <p className="text-xs text-muted-foreground line-clamp-2">
-        {description}
-      </p>
-      {showDetailBtn && (
-        <button
+        {description} <button
           onClick={onDetail}
-          className="absolute bottom-0 right-0 text-xs text-primary hover:underline bg-background/90 px-1"
+          className="text-xs text-primary hover:underline"
         >
-          详情
+          查看详情
         </button>
-      )}
+      </p>
     </div>
   )
 }
@@ -475,39 +466,53 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
       
       {/* 内容区域 */}
       <ScrollArea className="flex-1 px-4 py-4">
-        {/* 分类Tabs + 搜索框 */}
-        <div className="mb-4 flex items-center gap-4">
-          {/* 分类Tabs */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category.id as MCPCategory)}
-                className={cn(
-                  "text-xs",
-                  selectedCategory === category.id && "bg-primary text-primary-foreground"
-                )}
-              >
-                {category.name}
-              </Button>
-            ))}
-          </div>
-          
-          {/* 搜索框 - 右对齐，宽度240px */}
-          <div className="flex-1 flex justify-end">
+        {/* MCP市场：分类Tabs + 搜索框同一行 */}
+        {activeTab === 'market' && (
+          <div className="flex items-center justify-between gap-4 mb-4">
+            {/* 分类Tabs */}
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category.id as MCPCategory)}
+                  className={cn(
+                    "text-xs",
+                    selectedCategory === category.id && "bg-primary text-primary-foreground"
+                  )}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+            {/* 搜索框 */}
             <div className="relative w-60 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="搜索MCP..."
-                value={activeTab === 'my' ? mySearchQuery : marketSearchQuery}
-                onChange={(e) => activeTab === 'my' ? setMySearchQuery(e.target.value) : setMarketSearchQuery(e.target.value)}
+                value={marketSearchQuery}
+                onChange={(e) => setMarketSearchQuery(e.target.value)}
                 className="pl-9 h-9"
               />
             </div>
           </div>
-        </div>
+        )}
+
+        {/* 我的MCP：搜索框通栏显示 */}
+        {activeTab === 'my' && (
+          <div className="mb-4">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="搜索MCP..."
+                value={mySearchQuery}
+                onChange={(e) => setMySearchQuery(e.target.value)}
+                className="pl-9 h-9 w-full"
+              />
+            </div>
+          </div>
+        )}
 
         {activeTab === 'my' ? (
           <>
@@ -604,14 +609,14 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogTitle>确认移除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除 &quot;{serviceToDelete?.name}&quot; 服务吗？此操作无法撤销。
+              确定要移除"{serviceToDelete?.name}"MCP服务吗？移除后，相关对话将无法继续使用该 MCP 能力，可能导致功能不可用。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>删除</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>移除</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

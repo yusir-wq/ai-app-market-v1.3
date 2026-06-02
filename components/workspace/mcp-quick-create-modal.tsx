@@ -16,13 +16,6 @@ import { useMCP } from '@/contexts/mcp-context'
 import { MCPService, serviceTypeFullLabels } from '@/lib/mcp-data'
 
 
-// 请求头项类型
-interface HeaderItem {
-  key: string
-  value: string
-  isMasked?: boolean
-}
-
 export function MCPQuickCreateModal() {
   const {
     showQuickCreateModal,
@@ -34,7 +27,7 @@ export function MCPQuickCreateModal() {
 
   // 表单状态
   const [serviceName, setServiceName] = useState('')
-  const [headerItems, setHeaderItems] = useState<HeaderItem[]>([])
+  const [apiKey, setApiKey] = useState('')
   const [timeout, setTimeoutValue] = useState(60)
 
   // 只处理编辑模式（从市场添加由 MCPConfigModal 处理）
@@ -47,67 +40,31 @@ export function MCPQuickCreateModal() {
   useEffect(() => {
     if (isEditing && editingService) {
       setServiceName(editingService.name)
-      // 将headers对象转换为数组形式
-      const headers = editingService.config.headers || {}
-      const items: HeaderItem[] = Object.entries(headers).map(([key, value]) => ({
-        key,
-        value: String(value),
-        isMasked: key.toLowerCase() === 'authorization',
-      }))
-      setHeaderItems(items.length > 0 ? items : [{ key: 'Authorization', value: 'Bearer token123', isMasked: true }])
+      // 从 Authorization header 中提取 APIKey
+      const authHeader = editingService.config.headers?.['Authorization'] || ''
+      const extractedKey = authHeader.replace(/^Bearer\s*/i, '')
+      setApiKey(extractedKey)
       setTimeoutValue(editingService.config.timeout || 60)
     } else {
       // 重置表单
       setServiceName('')
-      setHeaderItems([])
+      setApiKey('')
       setTimeoutValue(60)
     }
   }, [isEditing, editingService])
 
-  // 添加请求头
-  const addHeader = () => {
-    setHeaderItems([...headerItems, { key: 'Authorization', value: 'Bearer token123', isMasked: true }])
-  }
-
-  // 更新请求头
-  const updateHeader = (index: number, field: 'key' | 'value', value: string) => {
-    const newItems = [...headerItems]
-    newItems[index][field] = value
-    setHeaderItems(newItems)
-  }
-
-  // 删除请求头
-  const removeHeader = (index: number) => {
-    setHeaderItems(headerItems.filter((_, i) => i !== index))
-  }
-
-  // 掩码显示值 - 使用固定掩码
-  const maskValue = (value: string) => {
-    // 对于Authorization类型的值，使用固定的掩码格式
-    if (value.includes('Bearer')) {
-      return 'Be*************************************************************************************7a'
-    }
-    if (value.length <= 2) return value
-    return value.substring(0, 2) + '*'.repeat(Math.min(value.length - 2, 30))
-  }
-
   // 处理保存
   const handleSave = () => {
-    // 将数组转换为对象
-    const headers: Record<string, string> = {}
-    headerItems.forEach(item => {
-      if (item.key.trim()) {
-        headers[item.key.trim()] = item.value
-      }
-    })
-
     if (isEditing && editingService) {
       // 更新现有服务
       updateService(editingService.id, {
         name: serviceName,
         config: {
           ...editingService.config,
-          headers,
+          headers: {
+            ...editingService.config.headers,
+            'Authorization': `Bearer ${apiKey}`,
+          },
           timeout,
         },
       })
@@ -146,7 +103,18 @@ export function MCPQuickCreateModal() {
               />
             </div>
 
-            {/* 2. MCP英文名称（只读） */}
+            {/* 2. APIKey（可编辑） */}
+            <div className="space-y-2">
+              <Label>APIKey</Label>
+              <Input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="请输入APIKey"
+              />
+            </div>
+
+            {/* 3. MCP英文名称（只读） */}
             {readOnlyData && (
               <div className="space-y-2">
                 <Label className="text-muted-foreground">MCP英文名称</Label>
@@ -158,7 +126,7 @@ export function MCPQuickCreateModal() {
               </div>
             )}
 
-            {/* 3. 服务介绍（只读） */}
+            {/* 4. 服务介绍（只读） */}
             {readOnlyData && (
               <div className="space-y-2">
                 <Label className="text-muted-foreground">服务介绍</Label>
@@ -171,7 +139,7 @@ export function MCPQuickCreateModal() {
               </div>
             )}
 
-            {/* 4. 服务类型（只读） */}
+            {/* 5. 服务类型（只读） */}
             <div className="space-y-2">
               <Label className="text-muted-foreground">服务类型</Label>
               <Input
@@ -181,7 +149,7 @@ export function MCPQuickCreateModal() {
               />
             </div>
 
-            {/* 5. URL（只读） */}
+            {/* 6. URL（只读） */}
             {isEditing && editingService && (
               <div className="space-y-2">
                 <Label className="text-muted-foreground">URL</Label>
@@ -193,77 +161,20 @@ export function MCPQuickCreateModal() {
               </div>
             )}
 
-            {/* 6. 请求头（表格形式） */}
-            <div className="space-y-2">
-              <Label>请求头</Label>
-              <p className="text-xs text-muted-foreground">
-                发送到 MCP 服务器的额外 HTTP 请求头
-              </p>
-              <p className="text-xs text-muted-foreground">
-                为了安全，请求头值已被掩码处理。修改将更新实际值。
-              </p>
-
-              {/* 请求头表格 */}
-              <div className="border rounded-md overflow-hidden">
-                {/* 表头 */}
-                <div className="grid grid-cols-2 gap-2 px-3 py-2 bg-muted text-xs font-medium text-muted-foreground">
-                  <div>请求头名称</div>
-                  <div>请求头值</div>
-                </div>
-
-                {/* 表体 */}
-                <div className="divide-y">
-                  {headerItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className={`grid grid-cols-2 gap-2 px-3 py-2 items-center ${
-                        item.key.toLowerCase() === 'authorization' ? 'bg-muted/50' : ''
-                      }`}
-                    >
-                      <Input
-                        value={item.key}
-                        onChange={(e) => updateHeader(index, 'key', e.target.value)}
-                        placeholder="例如：Authorization"
-                        className="h-8 text-sm"
-                      />
-                      <Input
-                        value={item.isMasked ? maskValue(item.value) : item.value}
-                        onChange={(e) => updateHeader(index, 'value', e.target.value)}
-                        placeholder="Bearer token123"
-                        className="h-8 text-sm font-mono"
-                        onFocus={() => {
-                          // 聚焦时显示真实值
-                          if (item.isMasked) {
-                            const newItems = [...headerItems]
-                            newItems[index].isMasked = false
-                            setHeaderItems(newItems)
-                          }
-                        }}
-                        onBlur={() => {
-                          // 失焦时恢复掩码
-                          if (item.key.toLowerCase() === 'authorization') {
-                            const newItems = [...headerItems]
-                            newItems[index].isMasked = true
-                            setHeaderItems(newItems)
-                          }
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* 7. 超时时间（秒）（可编辑） */}
             <div className="space-y-2">
               <Label>超时时间（秒）</Label>
-              <Input
-                type="number"
-                value={timeout}
-                onChange={(e) => setTimeoutValue(parseInt(e.target.value) || 60)}
-                min={1}
-                max={600}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={timeout}
+                  onChange={(e) => setTimeoutValue(parseInt(e.target.value) || 60)}
+                  min={1}
+                  max={300}
+                  className="flex-1"
+                />
+                <span className="text-sm text-muted-foreground shrink-0">1~300秒</span>
+              </div>
             </div>
           </div>
         </div>

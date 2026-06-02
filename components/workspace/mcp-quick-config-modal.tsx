@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useMCP } from '@/contexts/mcp-context'
 import { toast } from 'sonner'
+import { ExternalLink } from 'lucide-react'
 
 export function MCPQuickConfigModal() {
   const {
@@ -83,13 +84,39 @@ export function MCPQuickConfigModal() {
                 id="apikey"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="请输入您的APIKey"
+                placeholder="请输入从 chinaz.net 获取的 APIKey，如：a1b2c3d4e5f6..."
               />
+              <p className="text-sm text-muted-foreground">
+                该服务需购买后获取APIKey，前往 chinaz.net 开通服务
+                <a
+                  href="https://www.chinaz.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-1 text-primary hover:underline inline-flex items-center gap-0.5"
+                >
+                  <Button variant="link" size="sm" className="h-auto p-0 text-primary">
+                    立即购买
+                  </Button>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
             </div>
 
-            {/* 操作演示 */}
+            {/* 获取 APIKey 操作演示 */}
             <div className="space-y-2">
-              <Label>操作演示</Label>
+              <Label>获取 APIKey 操作演示</Label>
+              <p className="text-sm text-muted-foreground">
+                只需两步：
+              </p>
+              <p className="text-sm text-muted-foreground">
+                1. 登录 chinaz.net 购买开通服务；
+              </p>
+              <p className="text-sm text-muted-foreground">
+                2. 进入买家中心-我的API复制 APIKey；
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                👇 下方视频演示详细操作
+              </p>
               <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:bg-muted/80 transition-colors">
                 <div className="text-center px-4">
                   <div className="text-4xl mb-2">▶️</div>
