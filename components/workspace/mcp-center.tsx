@@ -33,6 +33,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -94,7 +101,7 @@ function MyMCPServiceCard({
     if (service.authStatus === 'authorized') {
       return 'MCP服务正常使用时显示"已授权"。点击可获取MCP服务最新状态'
     }
-    return '服务不可用时（如APIKey失效/次数不足/服务下架等）显示"未授权"。点击可获取MCP服务最新状态'
+    return '服务已下架时，显示"未授权"。点击可获取MCP服务最新状态'
   }
 
   return (
@@ -277,6 +284,9 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
   // 删除确认弹窗
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [serviceToDelete, setServiceToDelete] = useState<MCPService | null>(null)
+
+  // 联系客服弹窗
+  const [showContactModal, setShowContactModal] = useState(false)
   
   // 过滤MCP市场服务
   const filteredMarketServices = useMemo(() => {
@@ -405,31 +415,16 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
           
           {/* 右侧：提示文本 + 联系MCP客服 + 企业级MCP定制 */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-orange-500 font-medium shrink-0">扫码联系客服，锁定免费名额</span>
+            <span className="text-sm text-orange-500 font-medium shrink-0">MCP免费体验名额正在发放中...</span>
             {/* 联系MCP客服按钮 */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 shrink-0"
-                  >
-                    联系MCP客服
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="p-0 bg-gray-100">
-                  <div className="flex flex-col items-center p-3">
-                    <img
-                      src="/images/customer-service-qrcode.png"
-                      alt="客服二维码"
-                      className="w-32 h-32 mb-2"
-                    />
-                    <p className="text-xs text-black">手机扫码加我微信</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0"
+              onClick={() => setShowContactModal(true)}
+            >
+              联系MCP客服
+            </Button>
             {/* 服务商入驻按钮 - 隐藏 */}
             {/* <Button
               variant="outline"
@@ -621,6 +616,39 @@ export function MCPCenter({ onBack }: MCPCenterProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 联系客服弹窗 */}
+      <Dialog open={showContactModal} onOpenChange={setShowContactModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>联系客服</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-start gap-6 py-4">
+            {/* 左侧：客服二维码 */}
+            <div className="shrink-0">
+              <img
+                src="/images/customer-service-qrcode.png"
+                alt="客服二维码"
+                className="w-36 h-36 rounded-lg border"
+              />
+            </div>
+            {/* 右侧：文本说明 */}
+            <div className="flex-1 space-y-4">
+              <p className="text-sm font-medium text-foreground">
+                扫码添加客服，抢MCP免费体验名额
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                使用 MCP 服务时如有任何问题，也欢迎随时联系客服。
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContactModal(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

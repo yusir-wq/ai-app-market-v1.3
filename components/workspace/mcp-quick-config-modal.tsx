@@ -24,7 +24,7 @@ export function MCPQuickConfigModal() {
     addService,
   } = useMCP()
 
-  const [apiKey, setApiKey] = useState('')
+  const [apiKey, setApiKey] = useState('apiuser_quantity******78bdd')
   const [showContactModal, setShowContactModal] = useState(false)
 
   // 处理关闭
@@ -87,17 +87,17 @@ export function MCPQuickConfigModal() {
             <div className="space-y-6">
               {/* APIKey输入框 */}
               <div className="space-y-2">
-                <Label htmlFor="apikey">APIKey</Label>
+                <Label htmlFor="apikey">输入此服务的APIKey</Label>
                 <Input
                   id="apikey"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="请输入从 chinaz.net 获取的 APIKey，如：a1b2c3d4e5f6..."
+                  placeholder="输入此服务对应的APIKey，例如apiuser_quantity_eff..."
                 />
                 <p className="text-sm text-muted-foreground">
                   该服务需购买后获取APIKey，前往 chinaz.net 开通服务
                   <a
-                    href="https://www.chinaz.net"
+                    href="https://www.chinaz.net/mall/a_9aUhQUNiv4.html"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-1 text-primary hover:underline inline-flex items-center gap-0.5"
@@ -117,7 +117,14 @@ export function MCPQuickConfigModal() {
                   只需两步：
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  1. 登录 chinaz.net 购买开通服务；
+                  1. 登录 <a
+                    href="https://www.chinaz.net/mall/a_9aUhQUNiv4.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    chinaz.net
+                  </a> 购买开通服务；
                 </p>
                 <p className="text-sm text-muted-foreground">
                   2. 进入<a
@@ -178,7 +185,7 @@ export function MCPQuickConfigModal() {
             {/* 右侧：文本说明 */}
             <div className="flex-1 space-y-4">
               <p className="text-sm font-medium text-foreground">
-                扫码联系客服，锁定免费名额
+                扫码添加客服，抢MCP免费体验名额
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 使用 MCP 服务时如有任何问题，也欢迎随时联系客服。

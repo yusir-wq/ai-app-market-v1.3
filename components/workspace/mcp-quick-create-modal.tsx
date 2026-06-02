@@ -105,12 +105,12 @@ export function MCPQuickCreateModal() {
 
             {/* 2. APIKey（可编辑） */}
             <div className="space-y-2">
-              <Label>APIKey</Label>
+              <Label>输入此服务的APIKey</Label>
               <Input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="请输入APIKey"
+                placeholder="输入此服务对应的APIKey，例如apiuser_quantity_eff..."
               />
             </div>
 
@@ -149,19 +149,7 @@ export function MCPQuickCreateModal() {
               />
             </div>
 
-            {/* 6. URL（只读） */}
-            {isEditing && editingService && (
-              <div className="space-y-2">
-                <Label className="text-muted-foreground">URL</Label>
-                <Input
-                  value={editingService.config.url || ''}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-            )}
-
-            {/* 7. 超时时间（秒）（可编辑） */}
+            {/* 6. 超时时间（秒）（可编辑） */}
             <div className="space-y-2">
               <Label>超时时间（秒）</Label>
               <div className="flex items-center gap-2">
