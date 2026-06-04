@@ -175,8 +175,6 @@ export function InputArea({ model, onSendMessage, inputValue: externalValue, onI
       {showVideoParams && (
         <div className="px-[20%] space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* MCP服务按钮 - 新增 */}
-            <MCPServiceSelector onNavigate={onNavigate} />
             
             <Select value={videoParams.duration.toString()} onValueChange={(dur: any) => setVideoParams({ ...videoParams, duration: parseInt(dur) })}>
               <SelectTrigger className="w-[100px] h-8 text-xs">
@@ -432,8 +430,6 @@ export function InputArea({ model, onSendMessage, inputValue: externalValue, onI
       {showImageParams && (
         <div className="px-[20%] space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* MCP服务按钮 - 新增 */}
-            <MCPServiceSelector onNavigate={onNavigate} />
             
             <Select value={imageParams.ratio} onValueChange={(ratio: any) => setImageParams({ ...imageParams, ratio })}>
               <SelectTrigger className="w-[100px] h-8 text-xs">

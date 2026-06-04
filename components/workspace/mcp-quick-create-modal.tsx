@@ -12,6 +12,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useMCP } from '@/contexts/mcp-context'
 import { MCPService, serviceTypeFullLabels } from '@/lib/mcp-data'
 
@@ -152,17 +159,17 @@ export function MCPQuickCreateModal() {
             {/* 6. 超时时间（秒）（可编辑） */}
             <div className="space-y-2">
               <Label>超时时间（秒）</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={timeout}
-                  onChange={(e) => setTimeoutValue(parseInt(e.target.value) || 60)}
-                  min={1}
-                  max={300}
-                  className="flex-1"
-                />
-                <span className="text-sm text-muted-foreground shrink-0">1~300秒</span>
-              </div>
+              <Select value={timeout.toString()} onValueChange={(val) => setTimeoutValue(parseInt(val))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="60">60秒</SelectItem>
+                  <SelectItem value="120">120秒</SelectItem>
+                  <SelectItem value="180">180秒</SelectItem>
+                  <SelectItem value="300">300秒</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

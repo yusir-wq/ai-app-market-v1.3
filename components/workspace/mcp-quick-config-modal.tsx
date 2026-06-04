@@ -114,10 +114,7 @@ export function MCPQuickConfigModal() {
               <div className="space-y-2">
                 <Label>获取 APIKey 操作演示</Label>
                 <p className="text-sm text-muted-foreground">
-                  只需两步：
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  1. 登录 <a
+                  第1步. 登录 <a
                     href="https://www.chinaz.net/mall/a_9aUhQUNiv4.html"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -127,7 +124,7 @@ export function MCPQuickConfigModal() {
                   </a> 购买开通服务；
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  2. 进入<a
+                  第2步. 进入<a
                     href="https://user.chinaz.net/servicesPurchased/myApi"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -135,7 +132,13 @@ export function MCPQuickConfigModal() {
                   >买家中心-我的API</a>复制 APIKey；
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  👇 下方视频演示详细操作
+                  👇 下方视频演示详细操作。有使用问题随时向我们
+                  <button
+                    onClick={() => setShowContactModal(true)}
+                    className="text-primary hover:underline cursor-pointer font-medium"
+                  >
+                    寻求帮助
+                  </button>
                 </p>
                 <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/30 cursor-pointer hover:bg-muted/80 transition-colors">
                   <div className="text-center px-4">
