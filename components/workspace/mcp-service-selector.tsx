@@ -121,13 +121,18 @@ export function MCPServiceSelector({ onNavigate }: MCPServiceSelectorProps = {})
         onMouseLeave={handleContentMouseLeave}
       >
         {/* 标题区域：选择MCP服务（x） + 开关 */}
-        <div className="p-3 border-b flex items-center justify-between">
-          <p className="text-sm font-medium">选择MCP服务（{selectedCount}）</p>
-          <Switch 
-            checked={mcpEnabled} 
-            onCheckedChange={handleMCPToggle}
-            className="scale-90"
-          />
+        <div className="p-3 border-b">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">选择MCP服务（{selectedCount}）</p>
+            <Switch 
+              checked={mcpEnabled} 
+              onCheckedChange={handleMCPToggle}
+              className="scale-90"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            已添加MCP服务总数：{enabledServices.length} 个
+          </p>
         </div>
         
         {enabledServices.length > 0 ? (
