@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
 import { mockPaymentRecords, type PaymentRecord } from '@/lib/mock-billing-data'
+import { cn } from '@/lib/utils'
 
 interface BillingPaymentsProps {
   onBack: () => void
@@ -34,47 +34,34 @@ function amountToPoints(amount: number): number {
 
 export function BillingPayments({ onBack }: BillingPaymentsProps) {
   return (
-    <div className="p-6 space-y-6">
-      {/* 顶部标题栏 */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          className="gap-2 text-muted-foreground hover:text-foreground"
-          onClick={onBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          返回工作台
-        </Button>
-        <h1 className="text-lg font-semibold text-foreground">支付记录</h1>
-        <div className="w-[100px]" />
-      </div>
-
+    <div className="py-6 space-y-6">
       {/* 支付记录表格 */}
-      <Card className="bg-card border rounded-xl">
-        <CardContent className="p-0">
-          <Table>
+      <div className="px-3 md:px-6">
+      <Card className="bg-card border rounded-lg overflow-hidden">
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[500px]">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-sm font-medium">订单号</TableHead>
-                <TableHead className="text-sm font-medium text-right">支付金额</TableHead>
-                <TableHead className="text-sm font-medium text-right">购买智点</TableHead>
-                <TableHead className="text-sm font-medium">支付时间</TableHead>
-                <TableHead className="text-sm font-medium">支付方式</TableHead>
+                <TableHead className="text-xs md:text-sm font-medium">订单号</TableHead>
+                <TableHead className="text-xs md:text-sm font-medium text-right">支付金额</TableHead>
+                <TableHead className="text-xs md:text-sm font-medium text-right">购买智点</TableHead>
+                <TableHead className="text-xs md:text-sm font-medium">支付时间</TableHead>
+                <TableHead className="text-xs md:text-sm font-medium">支付方式</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {mockPaymentRecords.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="text-sm font-medium text-foreground">
+                  <TableCell className="text-xs md:text-sm font-medium text-foreground">
                     {record.orderNo}
                   </TableCell>
-                  <TableCell className="text-sm text-right font-medium text-foreground">
+                  <TableCell className="text-xs md:text-sm text-right font-medium text-foreground">
                     {`¥${record.amount.toFixed(2)}`}
                   </TableCell>
-                  <TableCell className="text-sm text-right font-medium text-foreground">
+                  <TableCell className="text-xs md:text-sm text-right font-medium text-foreground">
                     {amountToPoints(record.amount).toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-xs md:text-sm text-muted-foreground">
                     {record.payTime}
                   </TableCell>
                   <TableCell>{getPayMethodBadge(record.payMethod)}</TableCell>
@@ -84,6 +71,7 @@ export function BillingPayments({ onBack }: BillingPaymentsProps) {
           </Table>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }
