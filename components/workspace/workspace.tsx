@@ -18,7 +18,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import { NavPanel } from './nav-panel'
 import { HomeContent } from './home-content'
 import { WorkspaceContent } from './workspace-content'
@@ -49,8 +50,12 @@ import {
   type Conversation,
 } from '@/lib/mock-data'
 import { Search, MoreHorizontal, Pencil, Trash2, Menu, ArrowLeft, ExternalLink } from 'lucide-react'
+import { getAgentById } from '@/lib/mock-data'
+import { AgentHomeView } from './agent-home-view'
+import { AgentDetailView } from './agent-detail-view'
+import { toast } from 'sonner'
 
-type ViewMode = 'home' | 'chat' | 'history-all' | 'model-detail' | 'billing-usage' | 'billing-payments' | 'mcp-center'
+type ViewMode = 'home' | 'chat' | 'history-all' | 'model-detail' | 'billing-usage' | 'billing-payments' | 'mcp-center' | 'agent-home' | 'agent-detail'
 
 export function Workspace() {
   const { isLoggedIn, setShowLoginModal, setShowRechargeModal, user } = useAuth()
@@ -85,6 +90,11 @@ export function Workspace() {
   // MCP页面状态
   const [mcpActiveTab, setMcpActiveTab] = useState<'my' | 'market'>('my')
   const mcpCenterRef = useRef<MCPCenterHandle>(null)
+
+  // 智能体页面状态
+  const [agentViewTab, setAgentViewTab] = useState<'scene' | 'experience' | 'history'>('experience')
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'video-subtitle'])
 
   // 智点
   const points = user ? Math.floor(user.balance * 1000) : 0
@@ -777,6 +787,11 @@ export function Workspace() {
                 model={selectedModels[0] || null}
                 messages={[]}
                 isLoading={false}
+                onSelectPrompt={(prompt) => {
+                  if (selectedModels[0]) {
+                    handleStartChatFromPrompt(selectedModels[0], prompt)
+                  }
+                }}
               />
             )}
           </div>
@@ -957,6 +972,56 @@ export function Workspace() {
     )
   }
 
+  // 从提示词开始对话（复用函数）
+  const handleStartChatFromPrompt = useCallback((model: Model, prompt: string) => {
+    setSelectedModels([model])
+    setReplyModel(null)
+    setViewMode('chat')
+    const convId = `conv-${Date.now()}`
+    const newConv: Conversation = {
+      id: convId,
+      title: prompt.slice(0, 30) + (prompt.length > 30 ? '...' : ''),
+      preview: prompt,
+      createdAt: new Date(),
+      modelIds: [model.id],
+      messages: [],
+    }
+    setActiveConversationId(convId)
+    setConversations(prev => [newConv, ...prev])
+    setMessages([
+      {
+        id: `msg-${Date.now()}`,
+        role: 'user',
+        content: prompt,
+        contentType: 'text',
+        modelIds: [model.id],
+        timestamp: new Date(),
+      } as Message,
+    ])
+    setIsLoading(true)
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: `msg-${Date.now()}-ai-${model.id}`,
+        role: 'assistant',
+        content: getMockResponse(model, prompt),
+        contentType: 'markdown',
+        modelId: model.id,
+        timestamp: new Date(),
+        responseTime: 1200,
+        costPoints: model.costPoints,
+        status: 'success',
+      } as Message
+      setMessages(prev => {
+        const updated = [...prev, aiMessage]
+        setConversations(prevConvs =>
+          prevConvs.map(c => c.id === convId ? { ...c, messages: updated } : c)
+        )
+        setIsLoading(false)
+        return updated
+      })
+    }, 1200)
+  }, [])
+
   // ===== 模型详情页 / 单模型对话启动器 =====
   const renderModelDetail = () => {
     if (selectedModels.length === 0) return null
@@ -980,38 +1045,7 @@ export function Workspace() {
       setActiveConversationId(convId)
       setConversations(prev => [newConv, ...prev])
       if (prompt) {
-        setMessages([
-          {
-            id: `msg-${Date.now()}`,
-            role: 'user',
-            content: prompt,
-            contentType: 'text',
-            modelIds: [model.id],
-            timestamp: new Date(),
-          } as Message,
-        ])
-        setIsLoading(true)
-        setTimeout(() => {
-          const aiMessage: Message = {
-            id: `msg-${Date.now()}-ai-${model.id}`,
-            role: 'assistant',
-            content: getMockResponse(model, prompt),
-            contentType: 'markdown',
-            modelId: model.id,
-            timestamp: new Date(),
-            responseTime: 1200,
-            costPoints: model.costPoints,
-            status: 'success',
-          } as Message
-          setMessages(prev => {
-            const updated = [...prev, aiMessage]
-            setConversations(prevConvs =>
-              prevConvs.map(c => c.id === convId ? { ...c, messages: updated } : c)
-            )
-            setIsLoading(false)
-            return updated
-          })
-        }, 1200)
+        handleStartChatFromPrompt(model, prompt)
       }
     }
 
@@ -1160,6 +1194,9 @@ export function Workspace() {
     </div>
   )
 
+  // ===== 智能体主页（已提取为独立组件） =====
+  // ===== 智能体详情页（已提取为独立组件） =====
+
   // ===== MCP服务中心 =====
   const renderMCPCenter = () => (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -1239,6 +1276,25 @@ export function Workspace() {
 
   // ===== 默认工作台 =====
   const isStandaloneView = viewMode === 'billing-usage' || viewMode === 'billing-payments' || viewMode === 'mcp-center'
+  const navActiveTab = viewMode === 'agent-home' || viewMode === 'agent-detail' ? 'agents' : 'models'
+
+  const handleNavTabChange = useCallback((tab: string) => {
+    if (tab === 'agents') {
+      setViewMode('agent-home')
+    } else {
+      setViewMode('home')
+    }
+  }, [])
+
+  const handleSelectAgent = useCallback((agentId: string) => {
+    setSelectedAgentId(agentId)
+    setViewMode('agent-detail')
+    setRecentAgents(prev => {
+      const updated = [agentId, ...prev.filter(id => id !== agentId)]
+      return updated.slice(0, 10)
+    })
+  }, [])
+
   return (
     <div className="h-screen flex bg-background overflow-hidden">
         {!isStandaloneView && (
@@ -1254,6 +1310,10 @@ export function Workspace() {
             onRenameChat={handleRenameChat}
             onDeleteChat={handleDeleteChat}
             conversations={conversations}
+            activeTab={navActiveTab}
+            onTabChange={handleNavTabChange}
+            recentAgents={recentAgents}
+            onSelectAgent={handleSelectAgent}
           />
         </div>
         )}
@@ -1275,6 +1335,18 @@ export function Workspace() {
         {viewMode === 'billing-usage' && renderBillingUsage()}
         {viewMode === 'billing-payments' && renderBillingPayments()}
         {viewMode === 'mcp-center' && renderMCPCenter()}
+        {viewMode === 'agent-home' && (
+          <AgentHomeView onSelectAgent={handleSelectAgent} />
+        )}
+        {viewMode === 'agent-detail' && selectedAgentId && (
+          <AgentDetailView
+            agent={getAgentById(selectedAgentId)!}
+            onBack={() => {
+              setSelectedAgentId(null)
+              setViewMode('agent-home')
+            }}
+          />
+        )}
 
         {!isStandaloneView && (
           <>
@@ -1307,6 +1379,10 @@ export function Workspace() {
             onRenameChat={handleRenameChat}
             onDeleteChat={handleDeleteChat}
             conversations={conversations}
+            activeTab={navActiveTab}
+            onTabChange={handleNavTabChange}
+            recentAgents={recentAgents}
+            onSelectAgent={handleSelectAgent}
           />
         </div>
 

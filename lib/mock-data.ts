@@ -1304,3 +1304,296 @@ export const mockInviteRecords: InviteRecord[] = [
     rewardPoints: 500,
   },
 ]
+
+// ========== V1.3 智能体系统 ==========
+
+export type AgentCategory = 'video' | 'audio' | 'copywriting' | 'image'
+
+export interface AgentScene {
+  icon: string
+  title: string
+  description: string
+}
+
+export interface AgentParameter {
+  id: string
+  type: 'select' | 'switch' | 'slider' | 'text'
+  label: string
+  defaultValue: any
+  options?: { label: string; value: any }[]
+  min?: number
+  max?: number
+  step?: number
+}
+
+export interface Agent {
+  id: string
+  name: string
+  category: AgentCategory
+  description: string
+  icon: string
+  gradient: string
+  scenes: AgentScene[]
+  inputType: 'file' | 'text' | 'both'
+  acceptedFiles?: string[]
+  maxFileSize?: number // MB
+  parameters: AgentParameter[]
+  costPoints: number
+  avgProcessTime: string
+}
+
+export const agentCategories: { id: AgentCategory; name: string; icon: string }[] = [
+  { id: 'video', name: '视频处理', icon: 'Film' },
+  { id: 'audio', name: '音频处理', icon: 'Mic' },
+  { id: 'copywriting', name: '文案生成', icon: 'PenTool' },
+  { id: 'image', name: '图片处理', icon: 'Image' },
+]
+
+export const mockAgents: Agent[] = [
+  {
+    id: 'video-remove-watermark',
+    name: '视频去水印',
+    category: 'video',
+    description: '上传视频，AI自动识别并去除水印、Logo等干扰元素',
+    icon: 'Droplets',
+    gradient: 'from-cyan-400 to-blue-500',
+    scenes: [
+      { icon: 'Smartphone', title: '自媒体搬运', description: '去除平台水印，快速二次创作' },
+      { icon: 'ShoppingBag', title: '电商素材', description: '清理产品视频中的品牌标识' },
+      { icon: 'Palette', title: '素材二创', description: '获取干净素材用于混剪编辑' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp4', '.mov', '.avi', '.mkv'],
+    maxFileSize: 500,
+    parameters: [
+      { id: 'outputFormat', type: 'select', label: '输出格式', defaultValue: 'mp4', options: [{ label: 'MP4', value: 'mp4' }, { label: 'MOV', value: 'mov' }, { label: 'MKV', value: 'mkv' }] },
+      { id: 'quality', type: 'select', label: '输出质量', defaultValue: 'high', options: [{ label: '原画', value: 'original' }, { label: '高清', value: 'high' }, { label: '标清', value: 'medium' }] },
+      { id: 'removeArea', type: 'select', label: '去除模式', defaultValue: 'auto', options: [{ label: '自动识别', value: 'auto' }, { label: '手动框选', value: 'manual' }] },
+    ],
+    costPoints: 50,
+    avgProcessTime: '1-3分钟',
+  },
+  {
+    id: 'video-subtitle',
+    name: '视频配字幕',
+    category: 'video',
+    description: '上传视频，AI自动生成精准字幕，支持99种语言翻译',
+    icon: 'Subtitles',
+    gradient: 'from-emerald-400 to-teal-500',
+    scenes: [
+      { icon: 'Globe', title: '海外视频翻译', description: '自动翻译并生成双语字幕' },
+      { icon: 'Accessibility', title: '无障碍视频', description: '为听障人群提供字幕支持' },
+      { icon: 'GraduationCap', title: '教育课程', description: '网课自动加字幕，提升学习体验' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp4', '.mov', '.avi', '.mkv'],
+    maxFileSize: 1000,
+    parameters: [
+      { id: 'sourceLanguage', type: 'select', label: '源语言', defaultValue: 'auto', options: [{ label: '自动检测', value: 'auto' }, { label: '中文', value: 'zh' }, { label: '英语', value: 'en' }, { label: '日语', value: 'ja' }, { label: '韩语', value: 'ko' }] },
+      { id: 'targetLanguage', type: 'select', label: '目标语言', defaultValue: 'zh', options: [{ label: '不翻译', value: '' }, { label: '中文', value: 'zh' }, { label: '英语', value: 'en' }, { label: '日语', value: 'ja' }] },
+      { id: 'subtitleStyle', type: 'select', label: '字幕样式', defaultValue: 'srt', options: [{ label: 'SRT文件', value: 'srt' }, { label: 'ASS文件', value: 'ass' }, { label: '烧录到视频', value: 'burn' }] },
+      { id: 'bilingual', type: 'switch', label: '双语字幕', defaultValue: false },
+    ],
+    costPoints: 30,
+    avgProcessTime: '30秒-2分钟',
+  },
+  {
+    id: 'copywriting-to-video',
+    name: '文案生成视频',
+    category: 'video',
+    description: '输入文案，AI自动生成口播视频，一键出片',
+    icon: 'Clapperboard',
+    gradient: 'from-violet-400 to-purple-500',
+    scenes: [
+      { icon: 'ShoppingCart', title: '商品种草', description: '产品文案一键转成带货视频' },
+      { icon: 'BookOpen', title: '知识科普', description: '知识点文案转成讲解视频' },
+      { icon: 'PartyPopper', title: '节日营销', description: '活动文案快速生成宣传视频' },
+    ],
+    inputType: 'text',
+    parameters: [
+      { id: 'videoStyle', type: 'select', label: '视频风格', defaultValue: 'talking', options: [{ label: '真人口播', value: 'talking' }, { label: '图文快闪', value: 'flash' }, { label: '动画解说', value: 'animation' }] },
+      { id: 'duration', type: 'select', label: '视频时长', defaultValue: '30', options: [{ label: '15秒', value: '15' }, { label: '30秒', value: '30' }, { label: '60秒', value: '60' }] },
+      { id: 'ratio', type: 'select', label: '画面比例', defaultValue: '9:16', options: [{ label: '竖屏 9:16', value: '9:16' }, { label: '横屏 16:9', value: '16:9' }, { label: '方形 1:1', value: '1:1' }] },
+      { id: 'voice', type: 'select', label: '配音音色', defaultValue: 'female', options: [{ label: '女声', value: 'female' }, { label: '男声', value: 'male' }, { label: '童声', value: 'child' }] },
+      { id: 'bgm', type: 'switch', label: '添加背景音乐', defaultValue: true },
+    ],
+    costPoints: 100,
+    avgProcessTime: '2-5分钟',
+  },
+  {
+    id: 'video-dubbing',
+    name: '视频配音',
+    category: 'video',
+    description: '上传视频，AI自动提取文字并替换为多音色配音',
+    icon: 'Volume2',
+    gradient: 'from-amber-400 to-orange-500',
+    scenes: [
+      { icon: 'Languages', title: '多语言版本', description: '一个视频生成多语种配音版本' },
+      { icon: 'BookMarked', title: '有声读物', description: '将文字内容转成有声视频' },
+      { icon: 'Podcast', title: '解说视频', description: '为教程/解说视频快速配音' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp4', '.mov'],
+    maxFileSize: 500,
+    parameters: [
+      { id: 'voice', type: 'select', label: '配音音色', defaultValue: 'female', options: [{ label: '女声-温柔', value: 'female-gentle' }, { label: '女声-活泼', value: 'female-lively' }, { label: '男声-沉稳', value: 'male-calm' }, { label: '男声-活力', value: 'male-energetic' }] },
+      { id: 'speed', type: 'slider', label: '语速', defaultValue: 1.0, min: 0.5, max: 2.0, step: 0.1 },
+      { id: 'volume', type: 'slider', label: '音量', defaultValue: 100, min: 0, max: 150, step: 10 },
+      { id: 'keepOriginalAudio', type: 'switch', label: '保留原声音轨', defaultValue: false },
+    ],
+    costPoints: 40,
+    avgProcessTime: '1-2分钟',
+  },
+  {
+    id: 'speech-to-text',
+    name: '语音转文字',
+    category: 'audio',
+    description: '上传音频或视频，AI精准识别语音并转成文字',
+    icon: 'Mic',
+    gradient: 'from-sky-400 to-blue-500',
+    scenes: [
+      { icon: 'Users', title: '会议记录', description: '会议录音一键转会议纪要' },
+      { icon: 'Headphones', title: '播客转稿', description: '播客音频转成公众号文章' },
+      { icon: 'BookOpen', title: '课堂笔记', description: '课堂录音转结构化笔记' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp3', '.wav', '.m4a', '.mp4', '.mov'],
+    maxFileSize: 500,
+    parameters: [
+      { id: 'language', type: 'select', label: '识别语言', defaultValue: 'zh', options: [{ label: '中文', value: 'zh' }, { label: '英语', value: 'en' }, { label: '日语', value: 'ja' }, { label: '自动检测', value: 'auto' }] },
+      { id: 'speakerCount', type: 'select', label: '说话人数量', defaultValue: '1', options: [{ label: '1人', value: '1' }, { label: '2人', value: '2' }, { label: '多人', value: 'multi' }, { label: '自动识别', value: 'auto' }] },
+      { id: 'punctuation', type: 'switch', label: '自动添加标点', defaultValue: true },
+      { id: 'timestamps', type: 'switch', label: '输出时间戳', defaultValue: false },
+      { id: 'summarize', type: 'switch', label: '生成内容摘要', defaultValue: true },
+    ],
+    costPoints: 20,
+    avgProcessTime: '30秒-2分钟',
+  },
+  {
+    id: 'text-to-speech',
+    name: '文字转语音',
+    category: 'audio',
+    description: '输入文案，选择音色，一键生成自然流畅的语音',
+    icon: 'AudioLines',
+    gradient: 'from-rose-400 to-pink-500',
+    scenes: [
+      { icon: 'BookOpen', title: '有声小说', description: '小说文案转成有声书' },
+      { icon: 'Video', title: '视频旁白', description: '为视频生成专业旁白配音' },
+      { icon: 'Megaphone', title: '广告配音', description: '广告文案转成宣传语音' },
+    ],
+    inputType: 'text',
+    parameters: [
+      { id: 'voice', type: 'select', label: '配音音色', defaultValue: 'female-gentle', options: [{ label: '女声-温柔', value: 'female-gentle' }, { label: '女声-活泼', value: 'female-lively' }, { label: '男声-沉稳', value: 'male-calm' }, { label: '男声-磁性', value: 'male-deep' }, { label: '童声', value: 'child' }] },
+      { id: 'speed', type: 'slider', label: '语速', defaultValue: 1.0, min: 0.5, max: 2.0, step: 0.1 },
+      { id: 'pitch', type: 'slider', label: '音调', defaultValue: 0, min: -10, max: 10, step: 1 },
+      { id: 'volume', type: 'slider', label: '音量', defaultValue: 100, min: 50, max: 150, step: 10 },
+      { id: 'outputFormat', type: 'select', label: '输出格式', defaultValue: 'mp3', options: [{ label: 'MP3', value: 'mp3' }, { label: 'WAV', value: 'wav' }, { label: 'M4A', value: 'm4a' }] },
+    ],
+    costPoints: 15,
+    avgProcessTime: '10-30秒',
+  },
+  {
+    id: 'audio-video-summary',
+    name: 'AI音视频总结',
+    category: 'audio',
+    description: '上传音视频，AI提取核心要点，生成智能摘要',
+    icon: 'FileAudio',
+    gradient: 'from-indigo-400 to-violet-500',
+    scenes: [
+      { icon: 'Clock', title: '长会议总结', description: '1小时会议5分钟看完重点' },
+      { icon: 'GraduationCap', title: '网课精华', description: '提取网课核心知识点' },
+      { icon: 'Headphones', title: '播客速览', description: '播客内容快速预览' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp3', '.wav', '.m4a', '.mp4', '.mov'],
+    maxFileSize: 1000,
+    parameters: [
+      { id: 'language', type: 'select', label: '内容语言', defaultValue: 'zh', options: [{ label: '中文', value: 'zh' }, { label: '英语', value: 'en' }, { label: '自动检测', value: 'auto' }] },
+      { id: 'summaryType', type: 'select', label: '总结类型', defaultValue: 'bullet', options: [{ label: '要点列表', value: 'bullet' }, { label: '详细摘要', value: 'detailed' }, { label: '一句话总结', value: 'oneline' }] },
+      { id: 'extractKeyPoints', type: 'switch', label: '提取关键信息', defaultValue: true },
+      { id: 'extractActionItems', type: 'switch', label: '提取待办事项', defaultValue: true },
+    ],
+    costPoints: 25,
+    avgProcessTime: '30秒-2分钟',
+  },
+  {
+    id: 'topic-to-copywriting',
+    name: '主体生成视频文案',
+    category: 'copywriting',
+    description: '输入主题或产品，AI生成专业视频脚本和营销文案',
+    icon: 'Pencil',
+    gradient: 'from-fuchsia-400 to-pink-500',
+    scenes: [
+      { icon: 'ScrollText', title: '短视频脚本', description: '生成抖音/快手爆款脚本' },
+      { icon: 'Store', title: '直播话术', description: '生成带货直播间话术' },
+      { icon: 'Sparkles', title: '广告Slogan', description: '一句话打动用户的Slogan' },
+    ],
+    inputType: 'text',
+    parameters: [
+      { id: 'copywritingType', type: 'select', label: '文案类型', defaultValue: 'short-video', options: [{ label: '短视频脚本', value: 'short-video' }, { label: '直播话术', value: 'live' }, { label: '广告Slogan', value: 'slogan' }, { label: '种草文案', value: 'seed' }, { label: '公众号文章', value: 'article' }] },
+      { id: 'tone', type: 'select', label: '文案风格', defaultValue: 'casual', options: [{ label: '轻松幽默', value: 'casual' }, { label: '专业严谨', value: 'professional' }, { label: '情感共鸣', value: 'emotional' }, { label: '带货促单', value: 'sales' }] },
+      { id: 'length', type: 'select', label: '文案长度', defaultValue: 'medium', options: [{ label: '简短', value: 'short' }, { label: '适中', value: 'medium' }, { label: '详细', value: 'long' }] },
+      { id: 'includeHook', type: 'switch', label: '生成开头钩子', defaultValue: true },
+      { id: 'includeCTA', type: 'switch', label: '生成行动号召', defaultValue: true },
+    ],
+    costPoints: 10,
+    avgProcessTime: '5-15秒',
+  },
+  {
+    id: 'copywriting-to-video-advanced',
+    name: '文案生成视频',
+    category: 'copywriting',
+    description: '输入文案，AI自动分镜并生成完整视频',
+    icon: 'Wand2',
+    gradient: 'from-cyan-400 to-teal-500',
+    scenes: [
+      { icon: 'Building2', title: '品牌宣传片', description: '品牌文案一键成片' },
+      { icon: 'Package', title: '产品展示', description: '产品文案转成展示视频' },
+      { icon: 'PartyPopper', title: '节日营销', description: '节日文案快速生成营销视频' },
+    ],
+    inputType: 'text',
+    parameters: [
+      { id: 'videoStyle', type: 'select', label: '视频风格', defaultValue: 'modern', options: [{ label: '现代简约', value: 'modern' }, { label: '科技感', value: 'tech' }, { label: '温馨治愈', value: 'warm' }, { label: '商务专业', value: 'business' }] },
+      { id: 'duration', type: 'select', label: '视频时长', defaultValue: '30', options: [{ label: '15秒', value: '15' }, { label: '30秒', value: '30' }, { label: '60秒', value: '60' }, { label: '90秒', value: '90' }] },
+      { id: 'ratio', type: 'select', label: '画面比例', defaultValue: '9:16', options: [{ label: '竖屏 9:16', value: '9:16' }, { label: '横屏 16:9', value: '16:9' }] },
+      { id: 'bgm', type: 'switch', label: '自动配背景音乐', defaultValue: true },
+      { id: 'captions', type: 'switch', label: '自动添加字幕', defaultValue: true },
+    ],
+    costPoints: 120,
+    avgProcessTime: '3-8分钟',
+  },
+  {
+    id: 'ai-image-editor',
+    name: 'AI修图助手',
+    category: 'image',
+    description: '上传图片，一键抠图、增强、修复、去水印',
+    icon: 'ImagePlus',
+    gradient: 'from-emerald-400 to-green-500',
+    scenes: [
+      { icon: 'ShoppingBag', title: '电商主图', description: '一键抠图换背景，制作白底图' },
+      { icon: 'User', title: '证件照修复', description: '模糊照片变清晰，修复老照片' },
+      { icon: 'Camera', title: '老照片翻新', description: '黑白照片上色，划痕修复' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.jpg', '.jpeg', '.png', '.webp'],
+    maxFileSize: 50,
+    parameters: [
+      { id: 'editType', type: 'select', label: '修图类型', defaultValue: 'remove-bg', options: [{ label: 'AI抠图', value: 'remove-bg' }, { label: '画质增强', value: 'enhance' }, { label: '去水印', value: 'watermark' }, { label: '老照片修复', value: 'restore' }, { label: '无损放大', value: 'upscale' }] },
+      { id: 'outputFormat', type: 'select', label: '输出格式', defaultValue: 'png', options: [{ label: 'PNG', value: 'png' }, { label: 'JPG', value: 'jpg' }, { label: 'WEBP', value: 'webp' }] },
+      { id: 'quality', type: 'select', label: '输出质量', defaultValue: 'high', options: [{ label: '原画', value: 'original' }, { label: '高清', value: 'high' }] },
+      { id: 'keepTransparent', type: 'switch', label: '保留透明背景', defaultValue: true },
+    ],
+    costPoints: 30,
+    avgProcessTime: '10-30秒',
+  },
+]
+
+// 根据category获取智能体
+export function getAgentsByCategory(category: AgentCategory): Agent[] {
+  return mockAgents.filter(agent => agent.category === category)
+}
+
+// 根据ID获取智能体
+export function getAgentById(id: string): Agent | undefined {
+  return mockAgents.find(agent => agent.id === id)
+}

@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { mockModels, type Conversation } from '@/lib/mock-data'
+import { mockModels, getAgentById, mockAgents, agentCategories, type Conversation } from '@/lib/mock-data'
 import { useAuth } from '@/contexts/auth-context'
 import { UserProfilePopover } from './user-profile-popover'
 import {
@@ -37,7 +37,13 @@ import {
   PanelLeftClose,
   PanelLeft,
   UserPlus,
+  Bot,
+  Cpu,
+  Clock,
+  Zap,
 } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface NavPanelProps {
   isCollapsed: boolean
@@ -50,6 +56,10 @@ interface NavPanelProps {
   onRenameChat?: (chatId: string, newTitle: string) => void
   onDeleteChat?: (chatId: string) => void
   conversations: Conversation[]
+  activeTab?: 'models' | 'agents'
+  onTabChange?: (tab: 'models' | 'agents') => void
+  recentAgents?: string[]
+  onSelectAgent?: (agentId: string) => void
 }
 
 function formatTime(date: Date): string {
@@ -79,6 +89,10 @@ export function NavPanel({
   onRenameChat,
   onDeleteChat,
   conversations,
+  activeTab = 'models',
+  onTabChange,
+  recentAgents = [],
+  onSelectAgent,
 }: NavPanelProps) {
   const { isLoggedIn, user, setShowLoginModal, setShowRechargeModal } = useAuth()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -252,156 +266,282 @@ export function NavPanel({
         </Button>
       </div>
 
-      {/* 新建对话按钮 */}
+      {/* 模型广场 / 智能应用 Tab 切换 */}
       <div className="px-3 pb-3">
-        <Button
-          size="default"
-          className="w-full gap-2"
-          onClick={handleNewChat}
+        <div
+          className="flex items-center p-1 rounded-lg"
+          style={{ backgroundColor: 'var(--secondary)' }}
         >
-          <Plus className="h-4 w-4" />
-          新建对话
-        </Button>
-      </div>
-
-      {/* 搜索对话按钮 */}
-      <div className="px-3 pb-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-muted-foreground hover:text-sidebar-foreground"
-          onClick={handleSearchClick}
-        >
-          <Search className="h-4 w-4" />
-          搜索对话
-        </Button>
-      </div>
-
-      {/* 历史对话区域 */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        <div className="px-3 pb-1 shrink-0">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-            最近对话
-          </p>
-        </div>
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 scrollbar-hide">
-          <div className="space-y-0.5">
-            {recentConversations.length > 0 ? (
-              recentConversations.map((conv) => {
-                const firstModel = modelMap.get(conv.modelIds[0])
-                return (
-                  <div
-                    key={conv.id}
-                    className="group flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
-                    onClick={() => onSelectConversation(conv.id)}
-                  >
-                    {/* 模型图标 */}
-                    <div className={`relative w-7 h-7 rounded-lg bg-gradient-to-br ${firstModel?.gradient || 'from-violet-500 to-indigo-600'} flex items-center justify-center text-white text-sm shadow-sm shrink-0 mt-0.5`}>
-                      {firstModel?.logo || '💬'}
-                      {conv.modelIds.length > 1 && (
-                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center ring-2 ring-sidebar">
-                          {conv.modelIds.length}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* 中间内容 */}
-                    <div className="flex-1 min-w-0">
-                      {editingId === conv.id ? (
-                        <div className="flex items-center gap-1">
-                          <input
-                            ref={editInputRef}
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="flex-1 bg-transparent border-b border-primary text-xs outline-none py-0.5"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveRename()
-                              if (e.key === 'Escape') handleCancelRename()
-                            }}
-                            onBlur={handleCancelRename}
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium text-sidebar-foreground truncate flex-1 min-w-0">
-                              {conv.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground/60 shrink-0">
-                              {formatTime(conv.createdAt)}
-                            </p>
-                          </div>
-                          {conv.preview && (
-                            <p className="text-[13px] text-muted-foreground truncate mt-0.5">
-                              {conv.preview}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* 更多操作 */}
-                    {editingId !== conv.id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="h-6 w-6 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem
-                            className="text-xs gap-2 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleStartRename(conv.id, conv.title)
-                            }}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            重命名
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-xs text-destructive gap-2 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDeleteTargetId(conv.id)
-                              setDeleteDialogOpen(true)
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            删除
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                )
-              })
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
-                <p className="text-xs text-muted-foreground">暂无对话记录</p>
-              </div>
+          <button
+            className={cn(
+              'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all',
+              activeTab === 'models'
+                ? 'bg-white text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             )}
+            onClick={() => onTabChange?.('models')}
+          >
+            <Cpu className="h-3.5 w-3.5" />
+            模型广场
+          </button>
+          <button
+            className={cn(
+              'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all',
+              activeTab === 'agents'
+                ? 'bg-white text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            onClick={() => onTabChange?.('agents')}
+          >
+            <Bot className="h-3.5 w-3.5" />
+            智能应用
+          </button>
+        </div>
+      </div>
+
+      {/* 模型广场 Tab 内容 */}
+      {activeTab === 'models' && (
+        <>
+          {/* 新建对话按钮 */}
+          <div className="px-3 pb-3">
+            <Button
+              size="default"
+              className="w-full gap-2"
+              onClick={handleNewChat}
+            >
+              <Plus className="h-4 w-4" />
+              新建对话
+            </Button>
           </div>
 
-          {/* 查看全部 — 紧贴在最后一条对话下方 */}
-          <div className="py-1">
+          {/* 搜索对话按钮 */}
+          <div className="px-3 pb-3">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-center text-muted-foreground hover:text-sidebar-foreground"
-              onClick={onViewAll}
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-sidebar-foreground"
+              onClick={handleSearchClick}
             >
-              查看全部
+              <Search className="h-4 w-4" />
+              搜索对话
             </Button>
           </div>
+
+          {/* 历史对话区域 */}
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className="px-3 pb-1 shrink-0">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                最近对话
+              </p>
+            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 scrollbar-hide">
+              <div className="space-y-0.5">
+                {recentConversations.length > 0 ? (
+                  recentConversations.map((conv) => {
+                    const firstModel = modelMap.get(conv.modelIds[0])
+                    return (
+                      <div
+                        key={conv.id}
+                        className="group flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
+                        onClick={() => onSelectConversation(conv.id)}
+                      >
+                        {/* 模型图标 */}
+                        <div className={`relative w-7 h-7 rounded-lg bg-gradient-to-br ${firstModel?.gradient || 'from-violet-500 to-indigo-600'} flex items-center justify-center text-white text-sm shadow-sm shrink-0 mt-0.5`}>
+                          {firstModel?.logo || '💬'}
+                          {conv.modelIds.length > 1 && (
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center ring-2 ring-sidebar">
+                              {conv.modelIds.length}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 中间内容 */}
+                        <div className="flex-1 min-w-0">
+                          {editingId === conv.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                ref={editInputRef}
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="flex-1 bg-transparent border-b border-primary text-xs outline-none py-0.5"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveRename()
+                                  if (e.key === 'Escape') handleCancelRename()
+                                }}
+                                onBlur={handleCancelRename}
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-sidebar-foreground truncate flex-1 min-w-0">
+                                  {conv.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground/60 shrink-0">
+                                  {formatTime(conv.createdAt)}
+                                </p>
+                              </div>
+                              {conv.preview && (
+                                <p className="text-[13px] text-muted-foreground truncate mt-0.5">
+                                  {conv.preview}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* 更多操作 */}
+                        {editingId !== conv.id && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="h-6 w-6 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-32">
+                              <DropdownMenuItem
+                                className="text-xs gap-2 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleStartRename(conv.id, conv.title)
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                重命名
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-xs text-destructive gap-2 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setDeleteTargetId(conv.id)
+                                  setDeleteDialogOpen(true)
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                    <p className="text-xs text-muted-foreground">暂无对话记录</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 查看全部 — 紧贴在最后一条对话下方 */}
+              <div className="py-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-center text-muted-foreground hover:text-sidebar-foreground"
+                  onClick={onViewAll}
+                >
+                  查看全部
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 智能应用 Tab 内容 */}
+      {activeTab === 'agents' && (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 scrollbar-hide">
+            <div className="space-y-4 pb-2">
+              {/* 最近使用的智能体 */}
+              {recentAgents.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 px-1 py-2">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">最近使用</span>
+                  </div>
+                  <div className="space-y-0.5">
+                    {recentAgents.map((agentId) => {
+                      const agent = getAgentById(agentId)
+                      if (!agent) return null
+                      const AgentIcon = (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
+                      return (
+                        <div
+                          key={agentId}
+                          className="group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
+                          onClick={() => onSelectAgent?.(agentId)}
+                        >
+                          <div
+                            className={cn(
+                              'w-7 h-7 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0',
+                              agent.gradient
+                            )}
+                          >
+                            <AgentIcon className="h-3.5 w-3.5 text-white" />
+                          </div>
+                          <p className="text-sm font-medium text-sidebar-foreground truncate flex-1">
+                            {agent.name}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 智能应用分类列表 */}
+              {agentCategories.map((category) => {
+                const agents = mockAgents.filter((a) => a.category === category.id)
+                if (agents.length === 0) return null
+                return (
+                  <div key={category.id}>
+                    <div className="flex items-center gap-1.5 px-1 py-2">
+                      <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground">{category.name}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {agents.map((agent) => {
+                        const AgentIcon = (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
+                        return (
+                          <div
+                            key={agent.id}
+                            className="group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
+                            onClick={() => onSelectAgent?.(agent.id)}
+                          >
+                            <div
+                              className={cn(
+                                'w-7 h-7 rounded-lg bg-gradient-to-br flex items-center justify-center shrink-0',
+                                agent.gradient
+                              )}
+                            >
+                              <AgentIcon className="h-3.5 w-3.5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                                {agent.name}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {agent.description}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 邀请好友 */}
       <div className="px-3 py-2 border-t border-sidebar-border space-y-0.5">
