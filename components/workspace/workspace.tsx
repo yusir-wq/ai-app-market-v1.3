@@ -53,9 +53,11 @@ import { Search, MoreHorizontal, Pencil, Trash2, Menu, ArrowLeft, ExternalLink }
 import { getAgentById } from '@/lib/mock-data'
 import { AgentHomeView } from './agent-home-view'
 import { AgentDetailView } from './agent-detail-view'
+import { AgentResultDetailView } from './agent-result-detail-view'
+import { getResultDetail } from '@/lib/mock-result-data'
 import { toast } from 'sonner'
 
-type ViewMode = 'home' | 'chat' | 'history-all' | 'model-detail' | 'billing-usage' | 'billing-payments' | 'mcp-center' | 'agent-home' | 'agent-detail'
+type ViewMode = 'home' | 'chat' | 'history-all' | 'model-detail' | 'billing-usage' | 'billing-payments' | 'mcp-center' | 'agent-home' | 'agent-detail' | 'result-detail'
 
 export function Workspace() {
   const { isLoggedIn, setShowLoginModal, setShowRechargeModal, user } = useAuth()
@@ -94,7 +96,8 @@ export function Workspace() {
   // 智能体页面状态
   const [agentViewTab, setAgentViewTab] = useState<'scene' | 'experience' | 'history'>('experience')
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
-  const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'video-subtitle'])
+  const [selectedResultId, setSelectedResultId] = useState<string | null>(null)
+  const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'copywriting-to-video'])
 
   // 智点
   const points = user ? Math.floor(user.balance * 1000) : 0
@@ -1276,7 +1279,7 @@ export function Workspace() {
 
   // ===== 默认工作台 =====
   const isStandaloneView = viewMode === 'billing-usage' || viewMode === 'billing-payments' || viewMode === 'mcp-center'
-  const navActiveTab = viewMode === 'agent-home' || viewMode === 'agent-detail' ? 'agents' : 'models'
+  const navActiveTab = viewMode === 'agent-home' || viewMode === 'agent-detail' || viewMode === 'result-detail' ? 'agents' : 'models'
 
   const handleNavTabChange = useCallback((tab: string) => {
     if (tab === 'agents') {
@@ -1336,7 +1339,12 @@ export function Workspace() {
         {viewMode === 'billing-payments' && renderBillingPayments()}
         {viewMode === 'mcp-center' && renderMCPCenter()}
         {viewMode === 'agent-home' && (
-          <AgentHomeView />
+          <AgentHomeView
+            onSelectAgent={(id) => {
+              setSelectedAgentId(id)
+              setViewMode('agent-detail')
+            }}
+          />
         )}
         {viewMode === 'agent-detail' && selectedAgentId && (
           <AgentDetailView
@@ -1345,8 +1353,26 @@ export function Workspace() {
               setSelectedAgentId(null)
               setViewMode('agent-home')
             }}
+            onViewResult={(resultId) => {
+              setSelectedResultId(resultId)
+              setViewMode('result-detail')
+            }}
           />
         )}
+        {viewMode === 'result-detail' && selectedResultId && (() => {
+          const detail = getResultDetail(selectedResultId)
+          const agent = detail ? getAgentById(detail.agentId) : null
+          return detail && agent ? (
+            <AgentResultDetailView
+              result={detail}
+              agent={agent}
+              onBack={() => {
+                setSelectedResultId(null)
+                setViewMode('agent-detail')
+              }}
+            />
+          ) : null
+        })()}
 
         {!isStandaloneView && (
           <>

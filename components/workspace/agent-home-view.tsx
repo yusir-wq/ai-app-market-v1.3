@@ -42,7 +42,11 @@ const categoryTheme: Record<
   },
 }
 
-export function AgentHomeView() {
+interface AgentHomeViewProps {
+  onSelectAgent?: (agentId: string) => void
+}
+
+export function AgentHomeView({ onSelectAgent }: AgentHomeViewProps = {}) {
   const router = useRouter()
   const [activeCategory, setActiveCategory] = useState<AgentCategory | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -137,7 +141,13 @@ export function AgentHomeView() {
                     'hover:-translate-y-1 hover:shadow-md hover:border-primary/20 dark:hover:border-primary/30',
                     '!py-0 !gap-0'
                   )}
-                  onClick={() => router.push(`/agent/${agent.id}`)}
+                  onClick={() => {
+                    if (onSelectAgent) {
+                      onSelectAgent(agent.id)
+                    } else {
+                      router.push(`/agent/${agent.id}`)
+                    }
+                  }}
                 >
                   <CardContent className="!p-0">
                     <div
