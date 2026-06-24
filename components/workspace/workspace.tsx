@@ -1336,7 +1336,7 @@ export function Workspace() {
         {viewMode === 'billing-payments' && renderBillingPayments()}
         {viewMode === 'mcp-center' && renderMCPCenter()}
         {viewMode === 'agent-home' && (
-          <AgentHomeView onSelectAgent={handleSelectAgent} />
+          <AgentHomeView />
         )}
         {viewMode === 'agent-detail' && selectedAgentId && (
           <AgentDetailView

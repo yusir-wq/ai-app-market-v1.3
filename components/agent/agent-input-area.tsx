@@ -110,18 +110,18 @@ function QuickFillBar({
   onAction: (id: string) => void
 }) {
   return (
-    <div className="flex items-center gap-2 flex-wrap mb-3">
+    <div className="flex items-center gap-1 flex-wrap p-1 rounded-xl bg-secondary/50 border border-border/40">
       {quickFillActions.map((action) => {
         const Icon = action.icon
         return (
           <Button
             key={action.id}
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="h-8 text-xs gap-1.5 rounded-full border-border/80 hover:border-primary/40 hover:bg-accent"
+            className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all"
             onClick={() => onAction(action.id)}
           >
-            <Icon className="h-3 w-3" />
+            <Icon className="h-3 w-3 text-muted-foreground" />
             {action.label}
           </Button>
         )
@@ -291,11 +291,11 @@ function FileUploadZone({
 // ============================================================
 
 const voicePresets = [
-  { value: 'female-gentle', label: '女声-温柔', tag: '女声', desc: '温柔知性，适合有声读物', color: 'bg-rose-50 border-rose-200 text-rose-700' },
-  { value: 'female-lively', label: '女声-活泼', tag: '女声', desc: '活泼俏皮，适合短视频', color: 'bg-pink-50 border-pink-200 text-pink-700' },
-  { value: 'male-calm', label: '男声-沉稳', tag: '男声', desc: '沉稳大气，适合新闻播报', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-  { value: 'male-deep', label: '男声-磁性', tag: '男声', desc: '磁性低沉，适合广告配音', color: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
-  { value: 'child', label: '童声', tag: '童声', desc: '天真可爱，适合儿童内容', color: 'bg-amber-50 border-amber-200 text-amber-700' },
+  { value: 'female-gentle', label: '温柔女声', tag: '女声', desc: '温暖知性，情感细腻，适合有声读物、产品解说', color: 'bg-rose-50 border-rose-200 text-rose-700' },
+  { value: 'female-lively', label: '活泼女声', tag: '女声', desc: '俏皮灵动，元气满满，适合短视频、带货广告', color: 'bg-pink-50 border-pink-200 text-pink-700' },
+  { value: 'male-calm', label: '沉稳男声', tag: '男声', desc: '大气稳重，字正腔圆，适合新闻播报、品牌视频', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+  { value: 'male-deep', label: '磁性男声', tag: '男声', desc: '低沉醇厚，感染力强，适合广告配音、播客开场', color: 'bg-indigo-50 border-indigo-200 text-indigo-700' },
+  { value: 'child', label: '可爱童声', tag: '童声', desc: '天真烂漫，自然灵动，适合儿童内容、在线教育', color: 'bg-amber-50 border-amber-200 text-amber-700' },
 ]
 
 function VoiceSelector({
@@ -317,12 +317,20 @@ function VoiceSelector({
   }
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium flex items-center gap-1.5">
-        <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
-        配音音色
-      </Label>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Volume2 className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">配音音色</p>
+          <p className="text-xs text-muted-foreground">选择最适合你内容风格的声音</p>
+        </div>
+      </div>
+
+      {/* Voice cards grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {voicePresets.map((voice) => {
           const isSelected = value === voice.value
           const isPlaying = playingVoice === voice.value
@@ -331,48 +339,78 @@ function VoiceSelector({
               key={voice.value}
               onClick={() => onChange(voice.value)}
               className={cn(
-                'relative rounded-xl border p-3 text-left transition-all',
-                'hover:shadow-sm',
+                'group relative rounded-xl border p-4 text-left transition-all duration-200',
+                'hover:-translate-y-0.5',
                 isSelected
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                  : 'border-border bg-card hover:border-primary/30'
+                  ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/30 shadow-sm'
+                  : 'border-border/60 bg-card hover:border-primary/25 hover:shadow-sm'
               )}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <Badge
-                  variant="secondary"
-                  className={cn('text-[10px] px-1.5 py-0', voice.color)}
+              {/* Top: Tag + Play preview */}
+              <div className="flex items-center justify-between mb-2.5">
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium leading-none',
+                    voice.color
+                  )}
                 >
                   {voice.tag}
-                </Badge>
-                <button
+                </span>
+                <div
                   onClick={(e) => {
                     e.stopPropagation()
                     togglePreview(voice.value)
                   }}
                   className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center transition-colors',
+                    'w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200',
                     isPlaying
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+                      ? 'bg-primary text-primary-foreground scale-110 shadow-sm'
+                      : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
                   )}
                 >
                   {isPlaying ? (
-                    <Pause className="h-3 w-3" />
+                    <Pause className="h-3.5 w-3.5" />
                   ) : (
-                    <Play className="h-3 w-3 ml-0.5" />
+                    <Play className="h-3.5 w-3.5 ml-0.5" />
                   )}
-                </button>
+                </div>
               </div>
-              <p className="text-sm font-medium text-foreground">
+
+              {/* Name */}
+              <p
+                className={cn(
+                  'text-sm font-semibold mb-1 transition-colors',
+                  isSelected ? 'text-primary' : 'text-foreground'
+                )}
+              >
                 {voice.label}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+
+              {/* Description */}
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {voice.desc}
               </p>
+
+              {/* Waveform decoration */}
+              <div className="flex items-end gap-px mt-3 h-5 opacity-20 group-hover:opacity-40 transition-opacity">
+                {[3, 6, 4, 8, 5, 7, 4, 9, 5, 3, 6, 4, 7, 5, 8, 4, 6, 3, 5, 7].map((h, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'w-0.5 rounded-full transition-colors',
+                      isSelected ? 'bg-primary' : 'bg-foreground/40'
+                    )}
+                    style={{ height: `${h * 2}px` }}
+                  />
+                ))}
+              </div>
+
+              {/* Selected indicator */}
               {isSelected && (
-                <div className="absolute top-1.5 right-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                <div className="absolute top-3 right-3">
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
+                    <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
+                  </div>
                 </div>
               )}
             </button>
@@ -507,9 +545,9 @@ function ParamField({
     case 'select':
       return (
         <div className="space-y-2">
-          <Label className="text-sm font-medium">{param.label}</Label>
+          <Label className="text-sm font-medium text-foreground">{param.label}</Label>
           <Select value={String(value)} onValueChange={onChange}>
-            <SelectTrigger className="w-full h-10">
+            <SelectTrigger className="w-full h-10 rounded-xl border-border/60 bg-secondary/30 hover:bg-background transition-colors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -533,14 +571,13 @@ function ParamField({
 
     case 'slider':
       return (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">{param.label}</Label>
-            <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
+            <Label className="text-sm font-medium text-foreground">{param.label}</Label>
+            <span className="inline-flex items-center justify-center min-w-[44px] h-6 px-2 text-xs font-semibold text-primary bg-primary/10 rounded-md tabular-nums">
               {value}
               {param.label === '音量' && '%'}
               {param.label === '语速' && 'x'}
-              {param.label === '音调' && ''}
             </span>
           </div>
           <Slider
@@ -551,6 +588,10 @@ function ParamField({
             step={param.step}
             className="w-full"
           />
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[10px] text-muted-foreground tabular-nums">{param.min}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{param.max}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
+          </div>
         </div>
       )
 
@@ -601,7 +642,7 @@ export function AgentInputArea({
   const handleQuickFill = useCallback(
     (actionId: string) => {
       const fills: Record<string, string> = {
-        'ai-write': '请帮我写一段关于人工智能改变生活的宣传文案，要求语言生动、有感染力，适合用于视频配音。',
+        'ai-write': '请帮我写一段关于智能科技改变生活的品牌宣传文案，要求语言生动、富有感染力，适合用于视频配音，让听众沉浸其中。',
         'random-story': '从前有一个小村庄，村里的人们过着平静的生活。直到有一天，一位旅行者带来了一个神秘的盒子...',
         'translate': text,
         pause: text + ' [停顿] ',
@@ -652,13 +693,17 @@ export function AgentInputArea({
 
       {/* === Text Input === */}
       {(agent.inputType === 'text' || agent.inputType === 'both') && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-muted-foreground">
+            <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
               输入内容
             </Label>
-            <span className="text-xs text-muted-foreground">
-              {text.length}/5000 字
+            <span className={cn(
+              'text-xs font-medium tabular-nums',
+              text.length > 4500 ? 'text-destructive' : 'text-muted-foreground'
+            )}>
+              {text.length}/5000
             </span>
           </div>
 
@@ -685,14 +730,14 @@ export function AgentInputArea({
           <Textarea
             placeholder={
               agent.id === 'text-to-speech'
-                ? '输入要转成语音的文案...'
+                ? '输入你想要的配音文案，AI 即刻生成带情感的自然人声…'
                 : agent.id === 'topic-to-copywriting'
                   ? '输入主题或产品名称...'
                   : '请输入内容...'
             }
             value={text}
             onChange={(e) => onTextChange(e.target.value)}
-            className="min-h-[140px] resize-none rounded-xl border-border focus-visible:ring-primary"
+            className="min-h-[160px] resize-none rounded-xl border-border/60 bg-secondary/30 focus:bg-background focus-visible:ring-1 focus-visible:ring-primary/30 transition-colors text-sm leading-relaxed"
           />
         </div>
       )}
@@ -700,12 +745,12 @@ export function AgentInputArea({
       {/* === Parameters === */}
       {agent.parameters.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground font-medium">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/50" />
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest select-none">
               参数设置
             </span>
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-border/50" />
           </div>
           <div className="space-y-4">
             {agent.parameters.map((param) => (

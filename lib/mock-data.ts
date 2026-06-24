@@ -1313,6 +1313,8 @@ export interface AgentScene {
   icon: string
   title: string
   description: string
+  highlights?: string[]
+  color?: 'rose' | 'sky' | 'amber' | 'emerald' | 'violet'
 }
 
 export interface AgentParameter {
@@ -1477,9 +1479,11 @@ export const mockAgents: Agent[] = [
     icon: 'AudioLines',
     gradient: 'from-rose-400 to-pink-500',
     scenes: [
-      { icon: 'BookOpen', title: '有声小说', description: '小说文案转成有声书' },
-      { icon: 'Video', title: '视频旁白', description: '为视频生成专业旁白配音' },
-      { icon: 'Megaphone', title: '广告配音', description: '广告文案转成宣传语音' },
+      { icon: 'BookAudio', title: '有声小说', description: '将小说文案智能转化为情感饱满的有声书，支持多角色声线切换与背景音融合', highlights: ['情感丰富', '多角色演绎', '章节分段'], color: 'rose' },
+      { icon: 'Clapperboard', title: '视频旁白', description: '为宣传片、纪录片、短视频一键生成专业级旁白配音，语感自然流畅', highlights: ['语感自然', '多音色可选', '节奏可控'], color: 'sky' },
+      { icon: 'Megaphone', title: '广告配音', description: '广告文案秒变高感染力宣传语音，适配电商促销、品牌推广等多种场景', highlights: ['高感染力', '促销风格', '品牌定制'], color: 'amber' },
+      { icon: 'GraduationCap', title: '在线教育', description: '为课件、微课、教学视频生成清晰标准的讲解配音，提升学习体验', highlights: ['发音标准', '语速适中', '知识分段'], color: 'emerald' },
+      { icon: 'Podcast', title: '播客电台', description: '新闻稿、深度文章一键转为播客式朗读音频，打造个人电台内容', highlights: ['新闻风格', '深度解析', '多栏目适配'], color: 'violet' },
     ],
     inputType: 'text',
     parameters: [

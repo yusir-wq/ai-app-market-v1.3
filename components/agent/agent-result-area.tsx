@@ -89,58 +89,49 @@ function ProcessingState({
   steps?: { label: string; status: 'pending' | 'running' | 'done' }[]
 }) {
   return (
-    <div className="space-y-5"
-    >
+    <div className="space-y-5">
       {/* Progress Header */}
-      <div className="flex items-center gap-3"
-      >
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"
-        >
-          <Loader2 className="h-4 w-4 text-primary animate-spin" />
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 text-primary animate-spin" />
         </div>
-        <div className="flex-1"
-        >
-          <p className="text-sm font-medium text-foreground"
-          >AI处理中...</p>
-          <p className="text-xs text-muted-foreground"
-          >请稍候，正在为您生成结果</p>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">AI 处理中…</p>
+          <p className="text-xs text-muted-foreground">请稍候，正在为您生成结果</p>
         </div>
-        <span className="text-sm font-semibold text-primary"
-        >{progress}%</span>
+        <span className="text-base font-bold text-primary tabular-nums">{progress}%</span>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full h-2 bg-muted rounded-full overflow-hidden"
-      >
+      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-primary transition-all duration-500 rounded-full"
+          className="h-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500 rounded-full"
           style={{ width: `${Math.min(progress, 100)}%` }}
         />
       </div>
 
       {/* Steps */}
       {steps && steps.length > 0 && (
-        <div className="space-y-2"
-        >
+        <div className="space-y-2">
           {steps.map((step, index) => (
             <div
               key={index}
               className={cn(
-                'flex items-center gap-3 p-2.5 rounded-lg transition-all',
+                'flex items-center gap-3 p-3 rounded-lg transition-all duration-300',
                 step.status === 'done'
                   ? 'bg-primary/5'
                   : step.status === 'running'
-                    ? 'bg-accent border border-primary/20'
-                    : 'bg-secondary/30 opacity-60'
+                    ? 'bg-accent border border-primary/20 shadow-sm'
+                    : 'bg-secondary/30 opacity-50'
               )}
             >
               <div
                 className={cn(
-                  'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
+                  'w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all',
                   step.status === 'done'
                     ? 'bg-primary text-primary-foreground'
                     : step.status === 'running'
-                      ? 'border-2 border-primary border-t-transparent animate-spin'
+                      ? 'border-2 border-primary border-t-transparent animate-spin shadow-sm shadow-primary/20'
                       : 'border-2 border-muted-foreground/30'
                 )}
               >
@@ -150,9 +141,9 @@ function ProcessingState({
               </div>
               <span
                 className={cn(
-                  'text-sm',
+                  'text-sm transition-colors',
                   step.status === 'running'
-                    ? 'text-foreground font-medium'
+                    ? 'text-foreground font-semibold'
                     : step.status === 'done'
                       ? 'text-foreground'
                       : 'text-muted-foreground'
@@ -161,7 +152,7 @@ function ProcessingState({
                 {step.label}
               </span>
               {step.status === 'done' && (
-                <CheckCircle2 className="h-3.5 w-3.5 text-primary ml-auto shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-auto shrink-0" />
               )}
             </div>
           ))}
@@ -170,8 +161,7 @@ function ProcessingState({
 
       {/* Skeleton placeholder */}
       {!steps && (
-        <div className="space-y-2"
-        >
+        <div className="space-y-2">
           <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
           <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
           <div className="h-4 bg-muted rounded w-5/6 animate-pulse" />
@@ -334,56 +324,80 @@ function AudioResult({
   const [isPlaying, setIsPlaying] = useState(false)
 
   return (
-    <div className="space-y-4"
-    >
-      {/* Audio Player Card */}
-      <div className="p-5 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10"
-      >
-        <div className="flex items-center gap-4"
-        >
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            {isPlaying ? (
-              <Pause className="h-5 w-5" />
-            ) : (
-              <Play className="h-5 w-5 ml-0.5" />
-            )}
-          </button>
-          <div className="flex-1 min-w-0"
-          >
-            <p className="text-sm font-medium text-foreground truncate"
+    <div className="space-y-4">
+      {/* Professional Audio Player Card */}
+      <div className="rounded-xl overflow-hidden border border-slate-700/40 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="p-5 space-y-4">
+          {/* Top row: Play button + Info */}
+          <div className="flex items-center gap-4">
+            {/* Play/Pause */}
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className={cn(
+                'w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 shrink-0',
+                'bg-white/10 hover:bg-white/15 border border-white/10',
+                isPlaying && 'bg-primary/20 border-primary/30 shadow-sm shadow-primary/10'
+              )}
             >
-              {fileName || '生成的音频'}
-            </p>
-            <p className="text-xs text-muted-foreground"
-            >
-              点击播放预览
-            </p>
+              {isPlaying ? (
+                <Pause className="h-6 w-6 text-white" />
+              ) : (
+                <Play className="h-6 w-6 text-white ml-1" />
+              )}
+            </button>
+
+            {/* File info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white/90 truncate">
+                {fileName || '生成的音频'}
+              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-xs text-white/50">AI 语音合成</span>
+                <span className="inline-flex items-center gap-1 text-xs text-white/40">
+                  <Volume2 className="h-3 w-3" />
+                  MP3
+                </span>
+              </div>
+            </div>
+
+            {/* Type badge */}
+            <Badge className="bg-white/10 text-white/70 border-white/10 text-[10px] shrink-0">
+              <FileAudio className="h-3 w-3 mr-1" />
+              音频
+            </Badge>
           </div>
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"
-          >
-            <Volume2 className="h-4 w-4 text-primary" />
+
+          {/* Waveform visualization (static decorative) */}
+          <div className="flex items-end gap-px h-8 opacity-25">
+            {[4, 8, 12, 6, 16, 10, 20, 14, 18, 8, 22, 12, 16, 24, 10, 14,
+              6, 18, 12, 20, 8, 16, 10, 22, 14, 18, 6, 12, 20, 8, 16, 10,
+              4, 14, 18, 8, 22, 12, 16, 6, 20, 10, 14, 8, 18, 12, 6, 10].map((h, i) => (
+              <div
+                key={i}
+                className="flex-1 rounded-full bg-white/25"
+                style={{ height: `${h}px` }}
+              />
+            ))}
           </div>
+
+          {/* Native audio controls */}
+          {url && (
+            <audio
+              src={url}
+              controls
+              className="w-full mt-3"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+            />
+          )}
         </div>
-        {url && (
-          <audio
-            src={url}
-            controls
-            className="w-full mt-4"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
-        )}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2"
-      >
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          className="flex-1 h-10"
+          className="flex-1 h-10 text-sm"
           onClick={onDownload}
         >
           <Download className="h-4 w-4 mr-2" />
@@ -391,7 +405,7 @@ function AudioResult({
         </Button>
         <Button
           variant="outline"
-          className="flex-1 h-10"
+          className="flex-1 h-10 text-sm"
         >
           <Copy className="h-4 w-4 mr-2" />
           复制链接
@@ -831,42 +845,32 @@ function ResultHeader({
   const info = typeLabels[type]
 
   return (
-    <div className="flex items-center justify-between flex-wrap gap-2"
-    >
-      <div className="flex items-center gap-2"
-      >
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center"
-        >
-          {info.icon}
+    <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-border/50">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <span className="text-primary">{info.icon}</span>
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground"
-          >{info.label}</p>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground"
-          >
+          <p className="text-sm font-semibold text-foreground">{info.label}</p>
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
             {costPoints !== undefined && (
-              <span className="flex items-center gap-0.5"
-              >
-                <Zap className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted">
+                <Zap className="h-3 w-3 text-amber-500" />
                 {costPoints} 智点
               </span>
             )}
             {processTime && (
-              <span className="flex items-center gap-0.5"
-              >
-                <Clock className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted">
+                <Clock className="h-3 w-3 text-sky-500" />
                 {processTime}
               </span>
             )}
           </div>
         </div>
       </div>
-      <Badge
-        variant="secondary"
-        className="bg-emerald-50 text-emerald-700 border-emerald-200"
-      >
+      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
         <CheckCircle2 className="h-3 w-3 mr-1" />
-        处理完成
+        已完成
       </Badge>
     </div>
   )

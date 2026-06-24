@@ -1,28 +1,26 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useCallback, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
 import { Agent } from '@/lib/mock-data'
 import { AgentSceneCards } from './agent-scene-cards'
+import { AgentSpeechToTextIntro } from './agent-speech-to-text-intro'
+import { AgentTextToSpeechIntro } from './agent-text-to-speech-intro'
 import { AgentInputArea } from './agent-input-area'
 import { AgentResultArea, ResultType, SpeakerSegment, StoryboardShot, MultiVoiceResult } from './agent-result-area'
 import {
   ArrowLeft,
   Play,
-  Zap,
-  Clock,
   CheckCircle2,
   Loader2,
   FileText,
   Calendar,
   ChevronRight,
 } from 'lucide-react'
-import * as LucideIcons from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AgentShellProps {
@@ -62,7 +60,31 @@ const mockHistoryTasks = [
 
 export function AgentShell({ agent }: AgentShellProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('experience')
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get('tab')
+    return ['intro', 'experience', 'history'].includes(tab || '') ? tab! : 'experience'
+  })
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['intro', 'experience', 'history'].includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
+
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value)
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === 'experience') {
+      params.delete('tab')
+    } else {
+      params.set('tab', value)
+    }
+    router.replace(`/agent/${agent.id}${params.toString() ? `?${params.toString()}` : ''}`, {
+      scroll: false,
+    })
+  }, [agent.id, router, searchParams])
   const [file, setFile] = useState<File | null>(null)
   const [text, setText] = useState('')
   const [paramValues, setParamValues] = useState<Record<string, any>>(() => {
@@ -85,8 +107,6 @@ export function AgentShell({ agent }: AgentShellProps) {
     storyboard?: StoryboardShot[]
     multiVoiceResults?: MultiVoiceResult[]
   } | null>(null)
-
-  const IconComponent = (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
 
   // 参数变化处理
   const handleParamChange = useCallback((id: string, value: any) => {
@@ -317,66 +337,21 @@ export function AgentShell({ agent }: AgentShellProps) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-background">
-      <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto w-full p-4 md:p-6">
-        {/* ========== 左侧：信息面板 ========== */}
-        <div className="w-full lg:w-80 shrink-0 space-y-4">
-          {/* 返回按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/agent')}
-            className="text-muted-foreground"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            返回智能体广场
-          </Button>
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full p-4 md:p-6">
+        {/* 返回按钮 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/agent')}
+          className="text-muted-foreground w-fit"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          返回智能体广场
+        </Button>
 
-          {/* 智能体信息卡片 */}
-          <Card className="border-border/60">
-            <CardContent className="p-5 space-y-4">
-              {/* 图标和名称 */}
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${agent.gradient} flex items-center justify-center shrink-0`}
-                >
-                  <IconComponent className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-lg font-bold text-foreground truncate">
-                    {agent.name}
-                  </h1>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {agent.description}
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* 统计数据 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-purple-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">消耗智点</p>
-                    <p className="text-sm font-semibold">{agent.costPoints}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-emerald-500" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">平均耗时</p>
-                    <p className="text-sm font-semibold">{agent.avgProcessTime}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ========== 右侧：内容区域 ========== */}
+        {/* ========== 内容区域 ========== */}
         <div className="flex-1 min-w-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="w-full grid grid-cols-3 mb-6">
               <TabsTrigger value="intro" className="text-sm">
                 场景介绍
@@ -391,7 +366,13 @@ export function AgentShell({ agent }: AgentShellProps) {
 
             {/* === 场景介绍 Tab === */}
             <TabsContent value="intro" className="mt-0">
-              <AgentSceneCards scenes={agent.scenes} />
+              {agent.id === 'speech-to-text' ? (
+                <AgentSpeechToTextIntro />
+              ) : agent.id === 'text-to-speech' ? (
+                <AgentTextToSpeechIntro />
+              ) : (
+                <AgentSceneCards scenes={agent.scenes} />
+              )}
             </TabsContent>
 
             {/* === 体验应用 Tab === */}
