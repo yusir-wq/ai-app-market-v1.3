@@ -28,6 +28,9 @@ export interface AgentResultDetail {
   audioFileName?: string
   audioInfo?: { duration: string; format: string; bitrate: string; voiceName: string }
 
+  // 智能总结
+  summary?: string
+
   // 视频类
   videoUrl?: string
   videoFileName?: string
@@ -69,7 +72,7 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
   'result-speech-to-text': {
     id: 'result-speech-to-text',
     agentId: 'speech-to-text',
-    taskName: '会议录音转写',
+    taskName: 'meeting-recording.mp3',
     createdAt: '2024-01-15 14:30',
     status: 'completed',
     costPoints: 20,
@@ -93,6 +96,15 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
       { id: 'seg-4', speaker: '说话人1', startTime: '00:38', endTime: '00:50', text: '最后，AI还可以用于个性化治疗方案的制定。通过分析患者的基因数据和病史，AI可以为每位患者定制最合适的治疗方案。' },
       { id: 'seg-5', speaker: '说话人1', startTime: '00:50', endTime: '00:53', text: '谢谢大家。' },
     ],
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    audioFileName: 'meeting-recording.mp3',
+    summary: `本次会议围绕人工智能在医疗领域的应用展开，核心结论包括：
+
+1. AI辅助诊断：通过深度学习分析医学影像，可识别早期肿瘤迹象，皮肤癌检测准确率已超过部分皮肤科专家。
+2. 加速药物研发：AI可将新药研发周期从10-15年缩短至3-5个月，候选药物筛选时间显著压缩。
+3. 个性化治疗：结合患者基因数据和病史，AI能够制定更精准的个性化治疗方案。
+
+整体来看，AI正在从辅助诊断、药物研发到个性化治疗等多个环节重塑医疗行业，未来应用前景广阔。`,
     params: { language: 'zh', speakerCount: '1', punctuation: true, timestamps: true, summarize: true },
   },
 
@@ -111,6 +123,36 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
     audioInfo: { duration: '00:45', format: 'MP3', bitrate: '320kbps', voiceName: '女声-温柔' },
     sourceText: '新品上市！智能语音助手小V，全新升级第二代。24小时陪伴，懂你说的每句话。现在下单立减100元，前100名用户还送价值299元的智能家居套装。赶快行动吧！',
     params: { voice: 'female-gentle', speed: 1.0, pitch: 0, volume: 100, outputFormat: 'mp3' },
+  },
+  'result-text-to-speech-2': {
+    id: 'result-text-to-speech-2',
+    agentId: 'text-to-speech',
+    taskName: '品牌视频旁白',
+    createdAt: '2024-01-13 16:30',
+    status: 'completed',
+    costPoints: 15,
+    processTime: '12秒',
+    type: 'audio',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    audioFileName: 'brand-narration.mp3',
+    audioInfo: { duration: '00:32', format: 'MP3', bitrate: '320kbps', voiceName: '沉稳男声' },
+    sourceText: '在这个变化的时代，我们始终相信，科技的意义不在于冰冷的数据，而在于温暖每一刻的生活。让AI成为你最好的伙伴，从今天开始。',
+    params: { voice: 'male-calm', speed: 0.9, pitch: -2, volume: 90, outputFormat: 'mp3' },
+  },
+  'result-text-to-speech-3': {
+    id: 'result-text-to-speech-3',
+    agentId: 'text-to-speech',
+    taskName: '在线课程语音',
+    createdAt: '2024-01-12 11:00',
+    status: 'completed',
+    costPoints: 30,
+    processTime: '25秒',
+    type: 'audio',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    audioFileName: 'course-audio.mp3',
+    audioInfo: { duration: '01:20', format: 'MP3', bitrate: '256kbps', voiceName: '温柔女声' },
+    sourceText: '第一章：人工智能基础概念。大家好，欢迎来到AI入门课程。今天我们将从零开始，一步步理解什么是人工智能，它如何改变我们的世界。请准备好笔记，我们马上开始。',
+    params: { voice: 'female-gentle', speed: 0.85, pitch: 0, volume: 95, outputFormat: 'wav' },
   },
 
   // 3. AI视频转文字
@@ -142,6 +184,20 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
       { id: 'seg-5', speaker: '主持人', startTime: '01:15', endTime: '01:22', text: '这三款产品即日起开放预售，前1000名用户可享受8折优惠。感谢大家的关注。' },
     ],
     params: { language: 'auto', speakerCount: 'auto', timestamps: true, mergeConsecutive: true },
+    summary: `【智能总结】
+
+本次产品发布会主要介绍了三款全新AI产品：
+
+1. 智能语音助手V2：搭载全新端侧AI芯片，响应速度提升300%，支持离线唤醒和连续对话，适用于多场景语音交互。
+2. B端企业级AI中台：帮助企业零AI团队搭建智能客服、智能推荐和智能质检系统，已有200+企业接入。
+3. AI开放平台SDK：零代码接入50+项AI能力（语音识别、图像处理、自然语言理解等），注册后10分钟即可完成首个AI应用搭建。
+
+三款产品即日起预售，前1000名用户享8折优惠。`,
+    keyPoints: [
+      '智能语音助手V2：端侧AI芯片，响应速度提升300%',
+      '企业级AI中台：200+企业已接入',
+      'AI开放平台SDK：50+项AI能力，零代码接入',
+    ],
   },
 
   // 4. AI生成视频文案

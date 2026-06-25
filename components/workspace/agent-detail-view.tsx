@@ -26,7 +26,7 @@ import { toast } from 'sonner'
 interface AgentDetailViewProps {
   agent: Agent
   onBack: () => void
-  onViewResult?: (resultId: string) => void
+  onViewResult?: (resultId: string, fileName?: string) => void
 }
 
 // ============================================================
@@ -226,7 +226,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
       setProgress(100)
       setProgressSteps(prev => prev.map(s => ({ ...s, status: 'done' })))
       setIsProcessing(false)
-      onViewResult?.(`result-${agent.id}`)
+      onViewResult?.(`result-${agent.id}`, file?.name)
     }, 3500)
   }, [agent, file, text, generateSteps, onViewResult])
 

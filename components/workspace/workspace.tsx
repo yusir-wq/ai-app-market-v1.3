@@ -97,6 +97,7 @@ export function Workspace() {
   const [agentViewTab, setAgentViewTab] = useState<'scene' | 'experience' | 'history'>('experience')
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null)
+  const [selectedResultFileName, setSelectedResultFileName] = useState<string | null>(null)
   const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'copywriting-to-video'])
 
   // 智点
@@ -1353,8 +1354,9 @@ export function Workspace() {
               setSelectedAgentId(null)
               setViewMode('agent-home')
             }}
-            onViewResult={(resultId) => {
+            onViewResult={(resultId, fileName) => {
               setSelectedResultId(resultId)
+              setSelectedResultFileName(fileName || null)
               setViewMode('result-detail')
             }}
           />
@@ -1366,8 +1368,10 @@ export function Workspace() {
             <AgentResultDetailView
               result={detail}
               agent={agent}
+              fileName={selectedResultFileName}
               onBack={() => {
                 setSelectedResultId(null)
+                setSelectedResultFileName(null)
                 setViewMode('agent-detail')
               }}
             />
