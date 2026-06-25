@@ -236,7 +236,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                 场景介绍
               </TabsTrigger>
               <TabsTrigger value="experience" className="text-sm">
-                体验应用
+                使用应用
               </TabsTrigger>
               <TabsTrigger value="history" className="text-sm">
                 历史任务

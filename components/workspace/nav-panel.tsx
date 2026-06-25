@@ -267,33 +267,30 @@ export function NavPanel({
       </div>
 
       {/* 模型广场 / 智能应用 Tab 切换 */}
-      <div className="px-3 pb-3">
-        <div
-          className="flex items-center p-1 rounded-lg"
-          style={{ backgroundColor: 'var(--secondary)' }}
-        >
+      <div className="px-3 pb-4">
+        <div className="flex items-center p-[3px] rounded-lg" style={{ backgroundColor: '#F7F8FB' }}>
           <button
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all',
+              'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-medium transition-all duration-200',
               activeTab === 'models'
-                ? 'bg-white text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/50'
             )}
             onClick={() => onTabChange?.('models')}
           >
-            <Cpu className="h-3.5 w-3.5" />
+            <Cpu className="h-4 w-4" />
             模型广场
           </button>
           <button
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all',
+              'flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md text-sm font-medium transition-all duration-200',
               activeTab === 'agents'
-                ? 'bg-white text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/50'
             )}
             onClick={() => onTabChange?.('agents')}
           >
-            <Bot className="h-3.5 w-3.5" />
+            <Bot className="h-4 w-4" />
             智能应用
           </button>
         </div>
@@ -305,8 +302,9 @@ export function NavPanel({
           {/* 新建对话按钮 */}
           <div className="px-3 pb-3">
             <Button
+              variant="outline"
               size="default"
-              className="w-full gap-2"
+              className="w-full gap-2 bg-white border-none hover:bg-accent text-foreground shadow-none"
               onClick={handleNewChat}
             >
               <Plus className="h-4 w-4" />
