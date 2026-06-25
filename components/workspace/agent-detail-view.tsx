@@ -311,7 +311,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                     isProcessing={isProcessing}
                     progress={progress}
                     progressSteps={progressSteps}
-                    onStartProcess={agent.id === 'speech-to-text' ? () => handleProcess(true) : undefined}
+                    onStartProcess={(agent.id === 'speech-to-text' || agent.id === 'video-to-text') ? () => handleProcess(true) : undefined}
                   />
 
                   {/* 操作按钮：非语音转文字显示 */}
