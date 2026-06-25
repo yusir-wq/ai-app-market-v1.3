@@ -56,7 +56,7 @@ const steps = [
 function StepsSection() {
   return (
     <section className="mb-8">
-      <h2 className="text-base font-semibold text-foreground mb-5">功能特性</h2>
+      <h2 className="text-base font-semibold text-foreground mb-5">使用流程</h2>
       <div className="relative flex flex-col md:flex-row md:items-start gap-0">
         {steps.map((step, index) => {
           const Icon = step.icon
@@ -125,7 +125,7 @@ const features = [
 function FeaturesSection() {
   return (
     <section className="mb-8">
-      <h2 className="text-base font-semibold text-foreground mb-4">为什么选择视频转文字？</h2>
+      <h2 className="text-base font-semibold text-foreground mb-4">功能特性</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {features.map((item, index) => {
           const Icon = item.icon
