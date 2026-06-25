@@ -786,10 +786,12 @@ function SpeechToTextInputArea({
             拖拽音视频文件到此处，或 <span className="text-primary font-medium">点击上传</span>
           </p>
 
-          {/* Distinguish speaker toggle — only show when parameter exists */}
-          {showDistinguishSpeaker && (
+          {/* Distinguish speaker toggle — always reserve space */}
           <div
-            className="inline-flex items-center gap-2 mb-3"
+            className={cn(
+              'inline-flex items-center gap-2 mb-3',
+              !showDistinguishSpeaker && 'invisible'
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs text-muted-foreground">区分说话人</span>
@@ -798,7 +800,6 @@ function SpeechToTextInputArea({
               onCheckedChange={(checked) => onParamChange('distinguishSpeaker', checked)}
             />
           </div>
-          )}
 
           {/* File requirements */}
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -893,10 +894,12 @@ function SpeechToTextInputArea({
             {isRecording ? '停止录音' : '开始录音'}
           </Button>
 
-          {/* Distinguish speaker toggle — only show when parameter exists */}
-          {showDistinguishSpeaker && (
+          {/* Distinguish speaker toggle — always reserve space */}
           <div
-            className="flex items-center justify-center gap-2 mt-4 mb-3"
+            className={cn(
+              'flex items-center justify-center gap-2 mt-4 mb-3',
+              !showDistinguishSpeaker && 'invisible'
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs text-muted-foreground">区分说话人</span>
@@ -905,7 +908,6 @@ function SpeechToTextInputArea({
               onCheckedChange={(checked) => onParamChange('distinguishSpeaker', checked)}
             />
           </div>
-          )}
 
           {/* File requirements */}
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
