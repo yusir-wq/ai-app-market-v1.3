@@ -711,8 +711,6 @@ function SpeechToTextInputArea({
   const acceptedExtensions = agent.acceptedFiles?.join(',') || '*'
   const showDistinguishSpeaker = 'distinguishSpeaker' in paramValues
   const distinguishSpeaker = !!paramValues.distinguishSpeaker
-  const formatList = agent.acceptedFiles?.map(f => f.replace('.', '')).join('/') || '多种格式'
-  const sizeLimit = agent.maxFileSize ? `≤ ${agent.maxFileSize >= 1000 ? `${(agent.maxFileSize / 1000).toFixed(1)}GB` : `${agent.maxFileSize}M`}` : ''
 
   const renderUploadContent = () => (
     <div className="space-y-4">
@@ -806,14 +804,10 @@ function SpeechToTextInputArea({
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <FileAudio className="h-3 w-3" />
-              {formatList}{agent.acceptedFiles ? `等${agent.acceptedFiles.length}种格式` : ''}
+              mp3/mp4/mov/webm/wav等30种格式
             </span>
-            {sizeLimit && (
-              <>
-                <span className="hidden sm:inline text-border">|</span>
-                <span>{sizeLimit}</span>
-              </>
-            )}
+            <span className="hidden sm:inline text-border">|</span>
+            <span>视频 ≤ 4GB；音频 ≤ 500M</span>
             <span className="hidden sm:inline text-border">|</span>
             <span>时长 ≤ 5小时</span>
           </div>
@@ -915,12 +909,8 @@ function SpeechToTextInputArea({
 
           {/* File requirements */}
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {sizeLimit && (
-              <>
-                <span>{sizeLimit}</span>
-                <span className="hidden sm:inline text-border">|</span>
-              </>
-            )}
+            <span>视频 ≤ 4GB；音频 ≤ 500M</span>
+            <span className="hidden sm:inline text-border">|</span>
             <span>时长 ≤ 5小时</span>
           </div>
 
