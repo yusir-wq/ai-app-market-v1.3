@@ -22,7 +22,7 @@ function HeroSection() {
   return (
     <div className="mb-8">
       <h1 className="text-2xl font-bold text-foreground mb-2">
-        免费在线 AI视频转文字
+        AI视频转文字
       </h1>
       <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
         无需下载或安装程序，即可快速将视频转为精确文字稿。
@@ -56,7 +56,7 @@ const steps = [
 function StepsSection() {
   return (
     <section className="mb-8">
-      <h2 className="text-base font-semibold text-foreground mb-5">如何将视频转为文字？</h2>
+      <h2 className="text-base font-semibold text-foreground mb-5">功能特性</h2>
       <div className="relative flex flex-col md:flex-row md:items-start gap-0">
         {steps.map((step, index) => {
           const Icon = step.icon
