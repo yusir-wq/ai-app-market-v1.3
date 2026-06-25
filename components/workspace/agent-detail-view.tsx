@@ -10,6 +10,9 @@ import { AgentSceneCards } from '@/components/agent/agent-scene-cards'
 import { AgentSpeechToTextIntro } from '@/components/agent/agent-speech-to-text-intro'
 import { AgentTextToSpeechIntro } from '@/components/agent/agent-text-to-speech-intro'
 import { AgentVideoToTextIntro } from '@/components/agent/agent-video-to-text-intro'
+import { AgentCopywritingIntro } from '@/components/agent/agent-copywriting-intro'
+import { CopywritingExperienceArea } from '@/components/agent/agent-copywriting-experience'
+import { CopywritingToVideoExperienceArea } from '@/components/agent/copywriting-to-video-experience'
 import { AgentInputArea } from '@/components/agent/agent-input-area'
 import { AgentResultArea } from '@/components/agent/agent-result-area'
 import { TextToSpeechExperienceArea } from '@/components/agent/agent-text-to-speech-experience'
@@ -28,6 +31,7 @@ interface AgentDetailViewProps {
   agent: Agent
   onBack: () => void
   onViewResult?: (resultId: string, fileName?: string) => void
+  prefillText?: string
 }
 
 // ============================================================
@@ -58,7 +62,9 @@ const mockHistoryTasks: Record<string, HistoryTask[]> = {
     { id: 'ht-13', title: 'online-course-ai-basics.webm', status: 'completed', createdAt: '2024-01-08 14:45', resultPreview: '大家好，欢迎来到AI基础入门课程。今天我们要学习的是深度学习的核心概念。首先，什么是神经网络？简单来说，它是模仿人脑神经元连接方式的计算模型。一个基本的神经网络由输入层、隐藏层和输出层组成，每一层包含多个节点，节点之间通过带权重的连接进行信息传递。通过反向传播算法，网络可以自动调整这些权重，从而不断优化预测结果。', resultId: 'result-video-to-text' },
   ],
   'topic-to-copywriting': [
-    { id: 'ht-4', title: '新品发布短视频脚本', status: 'completed', createdAt: '2024-01-09 16:30', resultPreview: '已生成钩子+正文+CTA...', resultId: 'result-topic-to-copywriting' },
+    { id: 'ht-4', title: '新品智能耳机发布', status: 'completed', createdAt: '2024-01-09 16:30', resultPreview: '已生成5段视频脚本及12个热门关键词：#新品首发 #降噪耳机 #NeoBudsPro3 #真无线耳机...', resultId: 'result-topic-to-copywriting' },
+    { id: 'ht-14', title: '夏季防晒霜推广', status: 'completed', createdAt: '2024-01-06 10:15', resultPreview: '已生成4段种草脚本及10个关键词：#夏日必备 #防晒推荐 #敏感肌友好...', resultId: 'result-topic-to-copywriting' },
+    { id: 'ht-15', title: '亲子露营VLOG脚本', status: 'completed', createdAt: '2024-01-03 14:00', resultPreview: '已生成4段温馨脚本及12个关键词：#亲子时光 #周末露营 #治愈系VLOG...', resultId: 'result-topic-to-copywriting' },
   ],
   'copywriting-to-video': [
     { id: 'ht-5', title: '品牌宣传片生成', status: 'completed', createdAt: '2024-01-08 09:00', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video' },
@@ -81,10 +87,10 @@ function getHistoryTasks(agentId: string): HistoryTask[] {
   return mockHistoryTasks[agentId] || mockHistoryTasks['speech-to-text'] || []
 }
 
-export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailViewProps) {
+export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: AgentDetailViewProps) {
   const [activeTab, setActiveTab] = useState<string>('experience')
   const [file, setFile] = useState<File | null>(null)
-  const [text, setText] = useState('')
+  const [text, setText] = useState(prefillText || '')
   const [paramValues, setParamValues] = useState<Record<string, any>>(() => {
     const defaults: Record<string, any> = {}
     agent.parameters.forEach((p) => {
@@ -150,6 +156,13 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
           { label: '配音合成', status: 'pending' },
           { label: '字幕生成', status: 'pending' },
           { label: '视频合成', status: 'pending' },
+        ]
+      case 'topic-to-copywriting':
+        return [
+          { label: '主题分析', status: 'done' },
+          { label: '脚本撰写', status: 'running' },
+          { label: '关键词提炼', status: 'pending' },
+          { label: '格式整理', status: 'pending' },
         ]
       default:
         return [
@@ -270,6 +283,8 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                 <AgentTextToSpeechIntro />
               ) : agent.id === 'video-to-text' ? (
                 <AgentVideoToTextIntro />
+              ) : agent.id === 'topic-to-copywriting' ? (
+                <AgentCopywritingIntro />
               ) : (
                 <AgentSceneCards scenes={agent.scenes} />
               )}
@@ -281,6 +296,54 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
               {agent.id === 'text-to-speech' ? (
                 <div className="space-y-4">
                   <TextToSpeechExperienceArea
+                    agent={agent}
+                    text={text}
+                    paramValues={paramValues}
+                    onTextChange={setText}
+                    onParamChange={handleParamChange}
+                    error={uploadError}
+                    isProcessing={isProcessing}
+                    onStartProcess={handleProcess}
+                  />
+                  {/* 结果区：仅展示处理进度动画 */}
+                  {isProcessing && (
+                    <AgentResultArea
+                      isProcessing={true}
+                      progress={progress}
+                      progressSteps={progressSteps}
+                      costPoints={agent.costPoints}
+                      processTime={agent.avgProcessTime}
+                    />
+                  )}
+                </div>
+              ) : agent.id === 'topic-to-copywriting' ? (
+                /* AI生成视频文案：自定义左右布局 */
+                <div className="space-y-4">
+                  <CopywritingExperienceArea
+                    agent={agent}
+                    text={text}
+                    paramValues={paramValues}
+                    onTextChange={setText}
+                    onParamChange={handleParamChange}
+                    error={uploadError}
+                    isProcessing={isProcessing}
+                    onStartProcess={handleProcess}
+                  />
+                  {/* 结果区：仅展示处理进度动画 */}
+                  {isProcessing && (
+                    <AgentResultArea
+                      isProcessing={true}
+                      progress={progress}
+                      progressSteps={progressSteps}
+                      costPoints={agent.costPoints}
+                      processTime={agent.avgProcessTime}
+                    />
+                  )}
+                </div>
+              ) : agent.id === 'copywriting-to-video' ? (
+                /* AI文案生视频：顶部标题 + 大输入卡片 + 底部工具栏 */
+                <div className="space-y-4">
+                  <CopywritingToVideoExperienceArea
                     agent={agent}
                     text={text}
                     paramValues={paramValues}
@@ -324,7 +387,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                     <Button
                       className="w-full"
                       size="lg"
-                      onClick={handleProcess}
+                      onClick={() => handleProcess()}
                       disabled={isProcessing}
                     >
                       <Play className="h-4 w-4 mr-2" />

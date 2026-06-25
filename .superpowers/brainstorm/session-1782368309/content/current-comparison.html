@@ -1,0 +1,91 @@
+<h2>当前状态：语音转文字 vs 视频转文字 输入区</h2>
+<p class="subtitle">让视频转文字的输入区与语音转文字保持一致的设计风格</p>
+
+<div class="split">
+  <!-- Left: Speech-to-text -->
+  <div class="mockup">
+    <div class="mockup-header">语音转文字 — 当前输入区（精致设计）</div>
+    <div class="mockup-body" style="font-size: 13px; line-height: 1.5;">
+      <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; margin-bottom:12px;">
+        <!-- Tab bar -->
+        <div style="display:flex; justify-content:center; padding:8px; border-bottom:1px solid #e5e7eb; background:#f8f9fb;">
+          <div style="display:flex; padding:4px; border-radius:99px; background:white; border:1px solid #e5e7eb;">
+            <div style="padding:6px 24px; border-radius:99px; background:#575CE9; color:white; font-weight:600; font-size:13px;">上传文件</div>
+            <div style="padding:6px 24px; border-radius:99px; color:#9ca3af; font-weight:500; font-size:13px;">实时录音</div>
+          </div>
+        </div>
+        <!-- Upload zone -->
+        <div style="padding:16px; position:relative;">
+          <div style="border:2px dashed #d1d5db; border-radius:12px; padding:32px; text-align:center; background:#f8f9fb;">
+            <div style="width:48px; height:48px; border-radius:12px; background:rgba(87,92,233,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#575CE9" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <p style="font-size:13px; margin-bottom:16px; color:#1a1a2e;">拖拽音视频文件到此处，或 <span style="color:#575CE9; font-weight:500;">点击上传</span></p>
+            <div style="display:inline-flex; align-items:center; gap:6px; margin-bottom:12px;">
+              <span style="font-size:11px; color:#9ca3af;">区分说话人</span>
+              <div style="width:32px; height:18px; border-radius:9px; background:#575CE9; padding:2px;"><div style="width:14px; height:14px; border-radius:7px; background:white; margin-left:14px;"></div></div>
+            </div>
+            <div style="font-size:11px; color:#9ca3af; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+              <span>🎵 mp3/mp4/mov/wav等9种格式</span>
+              <span>视频 ≤ 4GB；音频 ≤ 500M</span>
+              <span>时长 ≤ 5小时</span>
+            </div>
+            <div style="position:absolute; right:12px; bottom:8px; font-size:11px; color:#9ca3af;">
+              预计消耗：<span style="font-weight:600; color:#1a1a2e;">20 智点</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px; color:#575CE9; margin-top:4px;">✓ 支持上传+录音双模式 · ✓ 区分说话人开关 · ✓ 格式限制提示 · ✓ 预估费用</div>
+    </div>
+  </div>
+
+  <!-- Right: Video-to-text -->
+  <div class="mockup">
+    <div class="mockup-header">视频转文字 — 当前输入区（通用设计）</div>
+    <div class="mockup-body" style="font-size: 13px; line-height: 1.5;">
+      <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; margin-bottom:12px;">
+        <div style="padding:16px;">
+          <div style="border:2px dashed #d1d5db; border-radius:12px; padding:40px; text-align:center; background:#f8f9fb;">
+            <div style="width:48px; height:48px; border-radius:12px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <p style="font-size:13px; color:#1a1a2e;">拖拽文件到此处，或 <span style="color:#575CE9; font-weight:500;">点击上传</span></p>
+            <p style="font-size:11px; color:#9ca3af; margin-top:4px;">支持 .mp4、.mov、.avi、.mkv、.webm · 最大 1000MB</p>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px; color:#ef4444; margin-top:4px;">✗ 无Tab切换 · ✗ 无区分说话人开关 · ✗ 无预估费用 · ✗ 设计较基础</div>
+    </div>
+  </div>
+</div>
+
+<hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+<div class="section">
+  <h3>你要我做什么？</h3>
+  <p class="subtitle" style="margin-bottom: 16px;">请选择一个方向：</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="synccomponent" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>直接复用 SpeechToTextInputArea 组件</h3>
+        <p>让 video-to-text 也使用同一个自定义输入区，共享相同的 Tab 切换、上传区设计、区分说话人开关、预估费用等</p>
+      </div>
+    </div>
+    <div class="option" data-choice="separate" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>创建独立的 VideoToTextInputArea 组件</h3>
+        <p>从 SpeechToTextInputArea 提取公共模式，但为视频转文字单独定制（去掉录音Tab，增加视频特有参数等）</p>
+      </div>
+    </div>
+    <div class="option" data-choice="fullalign" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>完全对齐：精简为仅「上传文件 + 参数」</h3>
+        <p>视频转文字不需要录音Tab，只保留上传区 + 参数面板，但视觉风格（圆角/间距/颜色/图标）与语音转文字保持一致</p>
+      </div>
+    </div>
+  </div>
+</div>

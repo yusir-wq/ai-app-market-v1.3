@@ -992,7 +992,7 @@ export function AgentInputArea({
 
   // Determine if we should show quick fill bar
   const showQuickFill =
-    agent.id === 'text-to-speech' || agent.id === 'topic-to-copywriting'
+    agent.id === 'text-to-speech'
 
   // Determine if we should show region picker
   const showRegionPicker =
@@ -1238,9 +1238,7 @@ export function AgentInputArea({
             placeholder={
               agent.id === 'text-to-speech'
                 ? '输入你想要的配音文案，AI 即刻生成带情感的自然人声…'
-                : agent.id === 'topic-to-copywriting'
-                  ? '输入主题或产品名称...'
-                  : '请输入内容...'
+                : '请输入内容...'
             }
             value={text}
             onChange={(e) => onTextChange(e.target.value)}

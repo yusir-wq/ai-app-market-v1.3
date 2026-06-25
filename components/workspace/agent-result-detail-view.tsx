@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,6 +20,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import type { AgentResultDetail } from '@/lib/mock-result-data'
 import type { Agent } from '@/lib/mock-data'
+import type { StoryboardShot } from '@/components/agent/agent-result-area'
 import {
   ArrowLeft,
   Download,
@@ -55,6 +56,8 @@ import {
   BookOpen,
   Type,
   Music,
+  Trash2,
+  Clapperboard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -64,6 +67,7 @@ interface AgentResultDetailViewProps {
   agent: Agent
   fileName?: string | null
   onBack: () => void
+  onGenerateVideo?: (text: string, taskName: string) => void
 }
 
 // ============================================================
@@ -965,8 +969,8 @@ function TextToSpeechResult({ result, agent }: { result: AgentResultDetail; agen
       {/* RIGHT: 配音音色 + 背景音乐 + 重新生成按钮                   */}
       {/* ========================================== */}
       <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
-        {/* 配音音色 Card */}
-        <Card className="border-border/60 shadow-sm overflow-hidden">
+          {/* 配音音色 Card */}
+          <Card className="border-border/60 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40 bg-secondary/20">
               <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
@@ -1373,65 +1377,220 @@ function VideoDubbingResult({ result }: { result: AgentResultDetail }) {
 }
 
 // ============================================================
-// 8. 主体生成视频文案 — 结构化脚本
+// 8. AI生成视频文案 — 视频脚本 + 关键词
 // ============================================================
 
-function TopicToCopywritingResult({ result }: { result: AgentResultDetail }) {
+function TopicToCopywritingResult({ result, onGenerateVideo }: { result: AgentResultDetail; onGenerateVideo?: (text: string, taskName: string) => void }) {
+  const [copied, setCopied] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedText, setEditedText] = useState(result.textContent || '')
+
+  const handleCopy = () => {
+    const keywordLine = result.videoKeywords?.join(' ') || ''
+    const text = `${isEditing ? editedText : result.textContent || ''}\n\n${keywordLine}`
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    toast.success('已复制全部文案及关键词')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleExportTxt = () => {
+    const keywordLine = result.videoKeywords?.join(' ') || ''
+    const text = `${isEditing ? editedText : result.textContent || ''}\n\n${keywordLine}`
+    const blob = new Blob([text], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${result.taskName || '视频文案'}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('已导出为 TXT 文件')
+  }
+
+  const handleGenerateVideo = () => {
+    const sourceText = isEditing ? editedText : (result.textContent || '')
+    onGenerateVideo?.(sourceText, result.taskName || '')
+  }
+
+  const handleSaveEdit = () => {
+    setIsEditing(false)
+    toast.success('文案已保存')
+  }
+
   return (
-    <div className="space-y-4">
-      {/* 钩子 */}
-      {result.copywritingHook && (
-        <Card className="border-rose-200/60 dark:border-rose-900/30 bg-gradient-to-r from-rose-50/50 to-transparent dark:from-rose-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-rose-100 text-rose-700 text-[10px] dark:bg-rose-950/50 dark:text-rose-300">🎯 开头钩子</Badge>
+    <div>
+      {/* 视频脚本 + 关键词 合一卡片 */}
+      <Card className="border-border/60 shadow-sm overflow-hidden gap-0">
+        {/* Header + 工具栏 */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-secondary/20">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-900/30 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4 text-fuchsia-600 dark:text-fuchsia-400" />
             </div>
-            <p className="text-base font-medium text-foreground leading-relaxed">"{result.copywritingHook}"</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 正文 */}
-      {result.copywritingBody && (
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Badge className="bg-blue-100 text-blue-700 text-[10px] dark:bg-blue-950/50 dark:text-blue-300">📖 正文内容</Badge>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">生成结果 — {result.taskName}</p>
+              <p className="text-xs text-muted-foreground">
+                AI 已根据主题生成完整视频脚本及推荐关键词
+              </p>
             </div>
-            <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed bg-secondary/20 rounded-lg p-4">{result.copywritingBody}</pre>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          {/* 工具栏按钮 */}
+          <div className="flex items-center gap-1 shrink-0 ml-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (isEditing) {
+                      handleSaveEdit()
+                    } else {
+                      setEditedText(result.textContent || '')
+                      setIsEditing(true)
+                    }
+                  }}
+                >
+                  {isEditing ? <Save className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isEditing ? '保存' : '编辑'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopy}>
+                  {copied ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{copied ? '已复制' : '复制全文'}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleExportTxt}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>导出 TXT</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 rounded-lg"
+                  onClick={handleGenerateVideo}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  生成视频
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>基于脚本生成视频</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
 
-      {/* CTA */}
-      {result.copywritingCTA && (
-        <Card className="border-amber-200/60 dark:border-amber-900/30 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-amber-100 text-amber-700 text-[10px] dark:bg-amber-950/50 dark:text-amber-300">📢 行动号召 (CTA)</Badge>
+        {/* 脚本内容区 */}
+        <CardContent className="p-0">
+          {isEditing ? (
+            <div className="px-5 pb-0">
+              <Textarea
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+                className="min-h-[280px] resize-none rounded-xl border-border/40 bg-secondary/10 focus:bg-background focus-visible:ring-1 focus-visible:ring-primary/30 text-sm leading-relaxed"
+              />
             </div>
-            <p className="text-base font-medium text-foreground leading-relaxed">"{result.copywritingCTA}"</p>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="px-5 pb-0">
+              <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed bg-secondary/10 rounded-xl py-4 px-0 max-h-[60vh] overflow-y-auto">
+                {result.textContent}
+              </pre>
+            </div>
+          )}
 
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 h-10"><Copy className="h-4 w-4 mr-2" />复制全文</Button>
-        <Button variant="outline" className="flex-1 h-10"><Sparkles className="h-4 w-4 mr-2" />一键生成视频</Button>
-      </div>
+          {/* 视频关键词 */}
+          {result.videoKeywords && result.videoKeywords.length > 0 && (
+            <div className="px-5 pt-4 pb-5">
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Hash className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-semibold text-foreground">视频关键词</span>
+                <span className="text-[10px] text-muted-foreground">推荐标签，可直接用于视频发布</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {result.videoKeywords.map((kw, i) => (
+                  <Badge
+                    key={i}
+                    variant="secondary"
+                    className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:text-primary dark:border-primary/25 hover:bg-primary/15 transition-colors cursor-default"
+                  >
+                    {kw}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
 // ============================================================
-// 9. 文案生成视频(高级) — 分镜脚本
+// 9. 文案生成视频(高级) — 分镜脚本 + 视频预览
 // ============================================================
 
+const DEMO_VIDEO_URL = 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4'
+
 function CopywritingToVideoAdvancedResult({ result }: { result: AgentResultDetail }) {
-  const [expandedShot, setExpandedShot] = useState<string | null>(null)
+  const initialShots = result.storyboard || []
+  const [shots, setShots] = useState<StoryboardShot[]>(initialShots)
+  const [activeShotId, setActiveShotId] = useState<string>(initialShots[0]?.id || '')
+  const [editingShotId, setEditingShotId] = useState<string | null>(null)
+  const [isComposing, setIsComposing] = useState(false)
+  const [composedVideoUrl, setComposedVideoUrl] = useState<string>(DEMO_VIDEO_URL)
+  const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+
+  const activeShot = shots.find((s) => s.id === activeShotId) || shots[0]
+  const activeIndex = shots.findIndex((s) => s.id === activeShotId)
+
+  const handleCaptionChange = (id: string, caption: string) => {
+    setShots((prev) => prev.map((s) => (s.id === id ? { ...s, caption } : s)))
+  }
+
+  const handleCopyShot = (shot: StoryboardShot) => {
+    const newShot: StoryboardShot = {
+      ...shot,
+      id: `${shot.id}-copy-${Date.now()}`,
+      index: shots.length + 1,
+      caption: `${shot.caption || shot.description}（复制）`,
+    }
+    setShots((prev) => [...prev, newShot])
+    toast.success('已复制分镜')
+  }
+
+  const handleDeleteShot = (id: string) => {
+    setShots((prev) => {
+      const filtered = prev.filter((s) => s.id !== id)
+      if (activeShotId === id && filtered.length > 0) {
+        setActiveShotId(filtered[0].id)
+      }
+      return filtered.map((s, idx) => ({ ...s, index: idx + 1 }))
+    })
+    toast.success('已删除分镜')
+  }
+
+  const handleCompose = () => {
+    setIsComposing(true)
+    // 模拟合成耗时
+    setTimeout(() => {
+      setComposedVideoUrl(DEMO_VIDEO_URL + '?t=' + Date.now())
+      setIsComposing(false)
+      toast.success('完整视频已合成')
+    }, 2500)
+  }
 
   return (
     <div className="space-y-4">
+      {/* 源文案 */}
       {result.sourceText && (
         <Card className="border-border/60">
           <CardContent className="p-4">
@@ -1444,45 +1603,189 @@ function CopywritingToVideoAdvancedResult({ result }: { result: AgentResultDetai
         </Card>
       )}
 
-      {result.storyboard && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">分镜脚本</h3>
-            <Badge variant="secondary" className="text-[10px]">{result.storyboard.length} 镜</Badge>
-          </div>
-          {result.storyboard.map((shot) => {
-            const isExpanded = expandedShot === shot.id
-            return (
-              <div key={shot.id} className={cn('rounded-xl border overflow-hidden transition-all', isExpanded ? 'border-primary/30 bg-primary/5' : 'border-border bg-card hover:border-primary/20')}>
-                <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => setExpandedShot(isExpanded ? null : shot.id)}>
-                  <Badge variant="secondary" className="shrink-0 text-[10px]">镜{shot.index}</Badge>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{shot.description}</p>
-                    <p className="text-[11px] text-muted-foreground">时长: {shot.duration}</p>
-                  </div>
-                </div>
-                {isExpanded && (
-                  <div className="px-3 pb-3 space-y-3">
-                    {shot.imageUrl && (
-                      <div className="rounded-lg overflow-hidden border border-border">
-                        <img src={shot.imageUrl} alt={`镜${shot.index}`} className="w-full h-40 object-cover" />
-                      </div>
+      {/* 分镜 + 预览 */}
+      {shots.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* 左侧：分镜列表 */}
+          <div className="lg:col-span-3 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clapperboard className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">分镜脚本</h3>
+                <Badge variant="secondary" className="text-[10px]">{shots.length} 镜</Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">点击分镜可在右侧预览</span>
+            </div>
+
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              {shots.map((shot) => {
+                const isActive = activeShotId === shot.id
+                return (
+                  <div
+                    key={shot.id}
+                    onClick={() => setActiveShotId(shot.id)}
+                    className={cn(
+                      'group rounded-xl border bg-card overflow-hidden transition-all cursor-pointer',
+                      isActive
+                        ? 'border-primary/40 ring-1 ring-primary/20'
+                        : 'border-border hover:border-primary/20'
                     )}
-                    {shot.voiceUrl && <audio src={shot.voiceUrl} controls className="w-full" />}
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="text-xs"><ImagePlus className="h-3 w-3 mr-1" />替换画面</Button>
-                      <Button variant="outline" size="sm" className="text-xs"><RefreshCw className="h-3 w-3 mr-1" />重新生成</Button>
+                  >
+                    <div className="flex gap-3 p-3">
+                      {/* 缩略图 */}
+                      <div className="relative shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-secondary/40 border border-border/50">
+                        {shot.imageUrl ? (
+                          <img
+                            src={shot.imageUrl}
+                            alt={`镜${shot.index}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <ImagePlus className="h-5 w-5" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="h-5 w-5 text-white fill-white" />
+                        </div>
+                        <Badge className="absolute bottom-1 left-1 text-[9px] h-4 px-1 bg-black/60 text-white border-0">
+                          镜{shot.index}
+                        </Badge>
+                      </div>
+
+                      {/* 字幕输入 */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <Label className="text-[11px] text-muted-foreground">分镜字幕</Label>
+                          <span className="text-[10px] text-muted-foreground">{shot.duration}</span>
+                        </div>
+                        <Textarea
+                          ref={(el) => { textareaRefs.current[shot.id] = el }}
+                          value={shot.caption || shot.description}
+                          onChange={(e) => handleCaptionChange(shot.id, e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocus={() => setEditingShotId(shot.id)}
+                          onBlur={() => setEditingShotId((prev) => (prev === shot.id ? null : prev))}
+                          className={cn(
+                            'min-h-[56px] h-14 resize-none rounded-lg border bg-secondary/10 text-xs leading-relaxed py-1.5 px-2 transition-all',
+                            editingShotId === shot.id
+                              ? 'border-primary ring-1 ring-primary/20'
+                              : 'border-border/40 focus-visible:ring-1 focus-visible:ring-primary/30'
+                          )}
+                        />
+                      </div>
+
+                      {/* 操作按钮 */}
+                      <div className="shrink-0 flex flex-col gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn('h-7 w-7', editingShotId === shot.id && 'text-primary bg-primary/10')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingShotId(shot.id)
+                            textareaRefs.current[shot.id]?.focus()
+                          }}
+                          title="编辑分镜"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCopyShot(shot)
+                          }}
+                          title="复制分镜"
+                        >
+                          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteShot(shot.id)
+                          }}
+                          title="删除分镜"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 右侧：视频预览 */}
+          <div className="lg:col-span-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <Play className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">视频预览</h3>
+            </div>
+
+            <Card className="border-border/60 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="relative aspect-video bg-black">
+                  <video
+                    key={composedVideoUrl}
+                    src={composedVideoUrl}
+                    controls
+                    className="w-full h-full object-contain"
+                    poster={activeShot?.imageUrl}
+                  />
+                  {activeShot?.caption && (
+                    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 max-w-[90%] px-3 py-1.5 rounded-md bg-black/70 text-white text-xs text-center line-clamp-2">
+                      {activeShot.caption}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      当前分镜：
+                      <span className="text-foreground font-medium ml-1">
+                        镜{activeShot?.index || 1} / {shots.length}
+                      </span>
+                    </span>
+                    <span>{activeShot?.duration}</span>
+                  </div>
+
+                  <Button
+                    className="w-full h-10"
+                    onClick={handleCompose}
+                    disabled={isComposing}
+                  >
+                    {isComposing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        合成中…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        合成完整视频
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
-      <Button className="w-full h-10"><Sparkles className="h-4 w-4 mr-2" />合成完整视频</Button>
+      {shots.length === 0 && (
+        <div className="text-center py-10 text-sm text-muted-foreground border rounded-xl border-border/60">
+          暂无分镜，请重新生成
+        </div>
+      )}
     </div>
   )
 }
@@ -1584,7 +1887,7 @@ function ParamsSummary({ params }: { params?: Record<string, any> }) {
 // Main Component
 // ============================================================
 
-export function AgentResultDetailView({ result, agent, fileName, onBack }: AgentResultDetailViewProps) {
+export function AgentResultDetailView({ result, agent, fileName, onBack, onGenerateVideo }: AgentResultDetailViewProps) {
   // 按 agentId 分派不同的结果渲染
   const renderResult = () => {
     switch (result.agentId) {
@@ -1595,7 +1898,7 @@ export function AgentResultDetailView({ result, agent, fileName, onBack }: Agent
       case 'video-to-text':
         return <SpeechToTextResult result={result} />
       case 'topic-to-copywriting':
-        return <TopicToCopywritingResult result={result} />
+        return <TopicToCopywritingResult result={result} onGenerateVideo={onGenerateVideo} />
       case 'copywriting-to-video':
         return <CopywritingToVideoAdvancedResult result={result} />
       case 'image-to-video':

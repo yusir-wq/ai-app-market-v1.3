@@ -1,228 +1,116 @@
-import type { SpeakerSegment, StoryboardShot, MultiVoiceResult } from '@/components/agent/agent-result-area'
-
-// ============================================================
-// 结果详情类型
-// ============================================================
+import { StoryboardShot } from '@/components/agent/agent-result-area'
 
 export interface AgentResultDetail {
   id: string
   agentId: string
   taskName: string
   createdAt: string
-  status: 'completed' | 'failed'
+  status: string
   costPoints: number
   processTime: string
-  type: 'text' | 'audio' | 'video' | 'image' | 'storyboard'
-
-  // 文本类
+  type: 'text' | 'audio' | 'video' | 'image' | 'file' | 'storyboard'
   textContent?: string
-  segments?: SpeakerSegment[]
-
-  // 摘要类
-  keyPoints?: string[]
-  actionItems?: string[]
-  keywords?: string[]
-
-  // 音频类
+  textInfo?: { wordCount: number; language: string; duration?: string }
   audioUrl?: string
   audioFileName?: string
   audioInfo?: { duration: string; format: string; bitrate: string; voiceName: string }
-
-  // 智能总结
-  summary?: string
-
-  // 视频类
   videoUrl?: string
   videoFileName?: string
   videoInfo?: { resolution: string; duration: string; format: string; frameRate: string }
-  beforeVideoUrl?: string
-
-  // 字幕
-  subtitleTracks?: { index: number; startTime: string; endTime: string; text: string }[]
-
-  // 文案分块
-  copywritingHook?: string
-  copywritingBody?: string
-  copywritingCTA?: string
-
-  // 分镜
-  storyboard?: StoryboardShot[]
-
-  // 图片
   imageUrl?: string
   beforeImageUrl?: string
+  imageFileName?: string
   imageInfo?: { width: number; height: number; format: string; size: string }
-
-  // 多人配音
-  multiVoiceResults?: MultiVoiceResult[]
-
-  // 源文本
+  fileUrl?: string
+  fileName?: string
+  fileInfo?: { size: string; format: string; pages?: number }
+  storyboard?: StoryboardShot[]
   sourceText?: string
-
-  // 处理参数记录
+  videoKeywords?: string[]
+  summary?: string
+  keyPoints?: string[]
+  actionItems?: string[]
+  keywords?: string[]
+  beforeVideoUrl?: string
+  multiVoiceResults?: { speaker: string; voiceType: string; audioUrl: string; text: string }[]
+  segments?: { id: string; speaker: string; startTime: string; endTime: string; text: string }[]
+  subtitleTracks?: { index: number; startTime: string; endTime: string; text: string }[]
   params?: Record<string, any>
 }
 
-// ============================================================
-// 每个智能应用的 Mock 结果详情
-// ============================================================
-
-export const mockResultDetails: Record<string, AgentResultDetail> = {
+// 模拟结果数据
+const mockResultDetails: Record<string, AgentResultDetail> = {
   // 1. AI语音转文字
   'result-speech-to-text': {
     id: 'result-speech-to-text',
     agentId: 'speech-to-text',
-    taskName: 'meeting-recording.mp3',
+    taskName: '会议录音转写',
     createdAt: '2024-01-15 14:30',
     status: 'completed',
-    costPoints: 20,
-    processTime: '1分32秒',
+    costPoints: 10,
+    processTime: '32秒',
     type: 'text',
-    textContent: `【AI语音转文字结果】
-
-大家好，今天我们来讨论一下人工智能在医疗领域的应用。
-
-首先，AI可以帮助医生更准确地诊断疾病。通过深度学习算法，AI系统可以分析医学影像，识别出早期肿瘤的迹象。据斯坦福大学的研究，AI在皮肤癌检测上的准确率已经超过了很多皮肤科专家。
-
-其次，在药物研发方面，AI可以大大缩短新药的研发周期。传统方法需要10到15年，而借助AI技术，这个时间可以缩短到3到5年。最近一家AI制药公司成功将候选药物的筛选时间从18个月压缩到了3个月。
-
-最后，AI还可以用于个性化治疗方案的制定。通过分析患者的基因数据和病史，AI可以为每位患者定制最合适的治疗方案。
-
-谢谢大家。`,
+    textContent: '这是会议录音的转写结果。\n\n主持人：大家好，今天我们来讨论一下下季度的产品规划。\n\n产品经理：根据用户反馈，我们需要重点优化搜索功能和推荐算法。\n\n技术负责人：搜索功能的重构预计需要两周时间，推荐算法优化需要一个月。\n\n主持人：好的，那我们下季度重点推进这两个方向。',
+    textInfo: { wordCount: 120, language: 'zh', duration: '05:23' },
     segments: [
-      { id: 'seg-1', speaker: '说话人1', startTime: '00:00', endTime: '00:08', text: '大家好，今天我们来讨论一下人工智能在医疗领域的应用。' },
-      { id: 'seg-2', speaker: '说话人1', startTime: '00:08', endTime: '00:22', text: '首先，AI可以帮助医生更准确地诊断疾病。通过深度学习算法，AI系统可以分析医学影像，识别出早期肿瘤的迹象。据斯坦福大学的研究，AI在皮肤癌检测上的准确率已经超过了很多皮肤科专家。' },
-      { id: 'seg-3', speaker: '说话人1', startTime: '00:22', endTime: '00:38', text: '其次，在药物研发方面，AI可以大大缩短新药的研发周期。传统方法需要10到15年，而借助AI技术，这个时间可以缩短到3到5年。最近一家AI制药公司成功将候选药物的筛选时间从18个月压缩到了3个月。' },
-      { id: 'seg-4', speaker: '说话人1', startTime: '00:38', endTime: '00:50', text: '最后，AI还可以用于个性化治疗方案的制定。通过分析患者的基因数据和病史，AI可以为每位患者定制最合适的治疗方案。' },
-      { id: 'seg-5', speaker: '说话人1', startTime: '00:50', endTime: '00:53', text: '谢谢大家。' },
+      { id: '1', speaker: '主持人', startTime: '00:00', endTime: '00:08', text: '大家好，今天我们来讨论一下下季度的产品规划。' },
+      { id: '2', speaker: '产品经理', startTime: '00:09', endTime: '00:18', text: '根据用户反馈，我们需要重点优化搜索功能和推荐算法。' },
+      { id: '3', speaker: '技术负责人', startTime: '00:19', endTime: '00:28', text: '搜索功能的重构预计需要两周时间，推荐算法优化需要一个月。' },
+      { id: '4', speaker: '主持人', startTime: '00:29', endTime: '00:35', text: '好的，那我们下季度重点推进这两个方向。' },
     ],
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    audioFileName: 'meeting-recording.mp3',
-    summary: `本次会议围绕人工智能在医疗领域的应用展开，核心结论包括：
-
-1. AI辅助诊断：通过深度学习分析医学影像，可识别早期肿瘤迹象，皮肤癌检测准确率已超过部分皮肤科专家。
-2. 加速药物研发：AI可将新药研发周期从10-15年缩短至3-5个月，候选药物筛选时间显著压缩。
-3. 个性化治疗：结合患者基因数据和病史，AI能够制定更精准的个性化治疗方案。
-
-整体来看，AI正在从辅助诊断、药物研发到个性化治疗等多个环节重塑医疗行业，未来应用前景广阔。`,
-    params: { language: 'zh', speakerCount: '1', punctuation: true, timestamps: true, summarize: true },
+    params: { language: 'zh', speakers: 3, format: 'paragraph' },
   },
 
   // 2. 文字转语音
   'result-text-to-speech': {
     id: 'result-text-to-speech',
     agentId: 'text-to-speech',
-    taskName: '产品宣传配音',
-    createdAt: '2024-01-14 09:15',
+    taskName: '有声书配音',
+    createdAt: '2024-01-14 10:15',
     status: 'completed',
-    costPoints: 15,
+    costPoints: 5,
     processTime: '18秒',
     type: 'audio',
     audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    audioFileName: 'product-ad.mp3',
-    audioInfo: { duration: '00:45', format: 'MP3', bitrate: '320kbps', voiceName: '女声-温柔' },
-    sourceText: '新品上市！智能语音助手小V，全新升级第二代。24小时陪伴，懂你说的每句话。现在下单立减100元，前100名用户还送价值299元的智能家居套装。赶快行动吧！',
-    params: { voice: 'female-gentle', speed: 1.0, pitch: 0, volume: 100, outputFormat: 'mp3' },
-  },
-  'result-text-to-speech-2': {
-    id: 'result-text-to-speech-2',
-    agentId: 'text-to-speech',
-    taskName: '品牌视频旁白',
-    createdAt: '2024-01-13 16:30',
-    status: 'completed',
-    costPoints: 15,
-    processTime: '12秒',
-    type: 'audio',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    audioFileName: 'brand-narration.mp3',
-    audioInfo: { duration: '00:32', format: 'MP3', bitrate: '320kbps', voiceName: '沉稳男声' },
-    sourceText: '在这个变化的时代，我们始终相信，科技的意义不在于冰冷的数据，而在于温暖每一刻的生活。让AI成为你最好的伙伴，从今天开始。',
-    params: { voice: 'male-calm', speed: 0.9, pitch: -2, volume: 90, outputFormat: 'mp3' },
-  },
-  'result-text-to-speech-3': {
-    id: 'result-text-to-speech-3',
-    agentId: 'text-to-speech',
-    taskName: '在线课程语音',
-    createdAt: '2024-01-12 11:00',
-    status: 'completed',
-    costPoints: 30,
-    processTime: '25秒',
-    type: 'audio',
-    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    audioFileName: 'course-audio.mp3',
-    audioInfo: { duration: '01:20', format: 'MP3', bitrate: '256kbps', voiceName: '温柔女声' },
-    sourceText: '第一章：人工智能基础概念。大家好，欢迎来到AI入门课程。今天我们将从零开始，一步步理解什么是人工智能，它如何改变我们的世界。请准备好笔记，我们马上开始。',
-    params: { voice: 'female-gentle', speed: 0.85, pitch: 0, volume: 95, outputFormat: 'wav' },
+    audioFileName: 'audiobook-chapter1.mp3',
+    audioInfo: { duration: '02:35', format: 'MP3', bitrate: '192kbps', voiceName: '女声-温柔' },
+    params: { voice: 'female-gentle', speed: 1.0, volume: 100, format: 'mp3' },
   },
 
   // 3. AI视频转文字
   'result-video-to-text': {
     id: 'result-video-to-text',
     agentId: 'video-to-text',
-    taskName: '产品发布会视频转写',
-    createdAt: '2024-01-13 15:20',
+    taskName: '视频课程转写',
+    createdAt: '2024-01-13 16:45',
     status: 'completed',
-    costPoints: 25,
-    processTime: '1分45秒',
+    costPoints: 20,
+    processTime: '1分15秒',
     type: 'text',
-    textContent: `【AI视频转文字结果】
-
-各位来宾，欢迎参加我们2024年度新品发布会。今天我将为大家介绍三款全新产品。
-
-第一款是我们最新研发的智能语音助手V2，它采用了全新的端侧AI芯片，响应速度提升了300%，支持离线唤醒和连续对话。无论是在嘈杂的地铁还是安静的办公室，它都能精准识别你的指令。
-
-第二款产品是面向B端的企业级AI中台。可以帮助企业在不招募AI团队的情况下，快速搭建自己的智能客服、智能推荐和智能质检系统。目前已经有超过200家企业接入使用。
-
-第三款是面向开发者的AI开放平台SDK，支持零代码接入语音识别、图像处理、自然语言理解等50多项AI能力。开发者注册后10分钟即可完成首个AI应用的搭建。
-
-这三款产品即日起开放预售，前1000名用户可享受8折优惠。感谢大家的关注。`,
+    textContent: '欢迎来到今天的机器学习课程。\n\n机器学习是人工智能的一个重要分支，它让计算机能够从数据中学习规律。\n\n我们将从监督学习开始，逐步深入到无监督学习和强化学习。\n\n首先，让我们来看一下什么是监督学习...',
+    textInfo: { wordCount: 280, language: 'zh', duration: '12:40' },
     segments: [
-      { id: 'seg-1', speaker: '主持人', startTime: '00:00', endTime: '00:08', text: '各位来宾，欢迎参加我们2024年度新品发布会。今天我将为大家介绍三款全新产品。' },
-      { id: 'seg-2', speaker: '主持人', startTime: '00:08', endTime: '00:30', text: '第一款是我们最新研发的智能语音助手V2，它采用了全新的端侧AI芯片，响应速度提升了300%，支持离线唤醒和连续对话。' },
-      { id: 'seg-3', speaker: '主持人', startTime: '00:30', endTime: '00:52', text: '第二款产品是面向B端的企业级AI中台。可以帮助企业在不招募AI团队的情况下，快速搭建自己的智能客服、智能推荐和智能质检系统。' },
-      { id: 'seg-4', speaker: '主持人', startTime: '00:52', endTime: '01:15', text: '第三款是面向开发者的AI开放平台SDK，支持零代码接入语音识别、图像处理、自然语言理解等50多项AI能力。' },
-      { id: 'seg-5', speaker: '主持人', startTime: '01:15', endTime: '01:22', text: '这三款产品即日起开放预售，前1000名用户可享受8折优惠。感谢大家的关注。' },
+      { id: '1', speaker: '讲师', startTime: '00:00', endTime: '00:06', text: '欢迎来到今天的机器学习课程。' },
+      { id: '2', speaker: '讲师', startTime: '00:07', endTime: '00:18', text: '机器学习是人工智能的一个重要分支，它让计算机能够从数据中学习规律。' },
+      { id: '3', speaker: '讲师', startTime: '00:19', endTime: '00:28', text: '我们将从监督学习开始，逐步深入到无监督学习和强化学习。' },
+      { id: '4', speaker: '讲师', startTime: '00:29', endTime: '00:35', text: '首先，让我们来看一下什么是监督学习。' },
     ],
-    params: { language: 'auto', speakerCount: 'auto', timestamps: true, mergeConsecutive: true },
-    summary: `【智能总结】
-
-本次产品发布会主要介绍了三款全新AI产品：
-
-1. 智能语音助手V2：搭载全新端侧AI芯片，响应速度提升300%，支持离线唤醒和连续对话，适用于多场景语音交互。
-2. B端企业级AI中台：帮助企业零AI团队搭建智能客服、智能推荐和智能质检系统，已有200+企业接入。
-3. AI开放平台SDK：零代码接入50+项AI能力（语音识别、图像处理、自然语言理解等），注册后10分钟即可完成首个AI应用搭建。
-
-三款产品即日起预售，前1000名用户享8折优惠。`,
-    keyPoints: [
-      '智能语音助手V2：端侧AI芯片，响应速度提升300%',
-      '企业级AI中台：200+企业已接入',
-      'AI开放平台SDK：50+项AI能力，零代码接入',
-    ],
+    params: { language: 'zh', speakers: 1, format: 'paragraph' },
   },
 
   // 4. AI生成视频文案
   'result-topic-to-copywriting': {
     id: 'result-topic-to-copywriting',
     agentId: 'topic-to-copywriting',
-    taskName: '新品发布短视频脚本',
-    createdAt: '2024-01-09 16:30',
+    taskName: '产品宣传片脚本',
+    createdAt: '2024-01-09 11:00',
     status: 'completed',
-    costPoints: 10,
-    processTime: '8秒',
+    costPoints: 15,
+    processTime: '45秒',
     type: 'text',
-    copywritingHook: '你是不是也有过这样的经历——明明很努力，却总是达不到预期效果？',
-    copywritingBody: `今天我要分享3个让你效率翻倍的小技巧：
-
-1️⃣ 番茄工作法：25分钟专注 + 5分钟休息
-这个方法看似简单，但坚持下来效果惊人。研究表明，短时间高强度专注比长时间低效工作产出高67%。
-
-2️⃣ 两分钟法则：能在2分钟内完成的事立刻做
-回复邮件、整理桌面、记录灵感...这些小事一旦堆积，就会变成让人头疼的大事。
-
-3️⃣ 批量处理：同类任务集中处理，减少切换成本
-大脑在任务切换时需要约23分钟才能完全恢复专注。把同类任务放在一起处理，每天能节省2小时。`,
-    copywritingCTA: '试试这三个方法，评论区告诉我效果！关注我，每天进步一点点！',
-    params: { copywritingType: 'short-video', tone: 'casual', length: 'medium', includeHook: true, includeCTA: true },
+    textContent: '# 30秒产品宣传片脚本\n\n## 开场（0-5秒）\n镜头：产品特写，光影流动\n旁白：当科技遇见美学，一切皆有可能。\n\n## 功能展示（5-20秒）\n镜头：用户手势操作产品\n旁白：全新智能助手，懂你所想，应你所需。\n\n## 结尾（20-30秒）\n镜头：品牌Logo + 产品全景\n旁白：未来已来，立即体验。',
+    textInfo: { wordCount: 150, language: 'zh', duration: '30秒脚本' },
+    params: { style: 'promotional', duration: '30', target: 'product' },
   },
 
   // 5. AI文案生视频
@@ -236,12 +124,12 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
     processTime: '5分20秒',
     type: 'storyboard',
     storyboard: [
-      { id: 'shot-1', index: 1, duration: '0:00-0:03', description: '品牌Logo动画渐入，配轻快背景音乐，纯黑背景凸显质感', imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { id: 'shot-2', index: 2, duration: '0:03-0:08', description: '产品全景展示，慢推镜头，突出产品的流线型设计和金属质感', imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { id: 'shot-3', index: 3, duration: '0:08-0:15', description: '产品核心功能特写：AI智能识别、语音控制、手势交互，配合功能说明字幕', imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { id: 'shot-4', index: 4, duration: '0:15-0:22', description: '用户使用场景：家庭、办公室、户外，展示真实使用体验和便捷性', imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { id: 'shot-5', index: 5, duration: '0:22-0:28', description: '产品对比画面：传统方案 vs 本产品，关键指标数据可视化', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-      { id: 'shot-6', index: 6, duration: '0:28-0:30', description: 'CTA行动号召：立即购买 + 品牌Slogan，配强烈节奏收尾音乐', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-1', index: 1, duration: '0:00-0:03', caption: '品牌Logo动画渐入，配轻快背景音乐，纯黑背景凸显质感', description: '品牌Logo动画渐入，配轻快背景音乐，纯黑背景凸显质感', imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-2', index: 2, duration: '0:03-0:08', caption: '产品全景展示，慢推镜头，突出产品的流线型设计和金属质感', description: '产品全景展示，慢推镜头，突出产品的流线型设计和金属质感', imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-3', index: 3, duration: '0:08-0:15', caption: '产品核心功能特写：AI智能识别、语音控制、手势交互，配合功能说明字幕', description: '产品核心功能特写：AI智能识别、语音控制、手势交互，配合功能说明字幕', imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-4', index: 4, duration: '0:15-0:22', caption: '用户使用场景：家庭、办公室、户外，展示真实使用体验和便捷性', description: '用户使用场景：家庭、办公室、户外，展示真实使用体验和便捷性', imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-5', index: 5, duration: '0:22-0:28', caption: '产品对比画面：传统方案 vs 本产品，关键指标数据可视化', description: '产品对比画面：传统方案 vs 本产品，关键指标数据可视化', imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+      { id: 'shot-6', index: 6, duration: '0:28-0:30', caption: 'CTA行动号召：立即购买 + 品牌Slogan，配强烈节奏收尾音乐', description: 'CTA行动号召：立即购买 + 品牌Slogan，配强烈节奏收尾音乐', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop', voiceUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
     ],
     sourceText: '全新一代智能语音助手，重新定义人机交互体验。AI驱动、声纹识别、多设备联动，让科技真正融入生活。',
     params: { videoStyle: 'modern', duration: '30', ratio: '9:16', bgm: true, captions: true },
@@ -286,7 +174,7 @@ export const mockResultDetails: Record<string, AgentResultDetail> = {
       { index: 7, startTime: '00:25', endTime: '00:35', text: 'Common examples include spam detection, image classification, and speech recognition' },
       { index: 8, startTime: '00:25', endTime: '00:35', text: '常见示例包括垃圾邮件检测、图像分类和语音识别' },
     ],
-    params: { sourceLanguage: 'en', targetLanguage: 'zh', outputType: 'burn', bilingual: true },
+    params: { sourceLanguage: 'en', targetLanguage: 'zh', voiceType: 'female-zh', keepOriginalAudio: false },
   },
 
   // 8. AI视频配音

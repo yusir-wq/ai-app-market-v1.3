@@ -98,6 +98,7 @@ export function Workspace() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null)
   const [selectedResultFileName, setSelectedResultFileName] = useState<string | null>(null)
+  const [prefillAgentText, setPrefillAgentText] = useState<string>('')
   const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'copywriting-to-video'])
 
   // 智点
@@ -1292,6 +1293,7 @@ export function Workspace() {
 
   const handleSelectAgent = useCallback((agentId: string) => {
     setSelectedAgentId(agentId)
+    setPrefillAgentText('')
     setViewMode('agent-detail')
     setRecentAgents(prev => {
       const updated = [agentId, ...prev.filter(id => id !== agentId)]
@@ -1343,6 +1345,7 @@ export function Workspace() {
           <AgentHomeView
             onSelectAgent={(id) => {
               setSelectedAgentId(id)
+              setPrefillAgentText('')
               setViewMode('agent-detail')
             }}
           />
@@ -1352,8 +1355,10 @@ export function Workspace() {
             agent={getAgentById(selectedAgentId)!}
             onBack={() => {
               setSelectedAgentId(null)
+              setPrefillAgentText('')
               setViewMode('agent-home')
             }}
+            prefillText={prefillAgentText}
             onViewResult={(resultId, fileName) => {
               setSelectedResultId(resultId)
               setSelectedResultFileName(fileName || null)
@@ -1373,6 +1378,14 @@ export function Workspace() {
                 setSelectedResultId(null)
                 setSelectedResultFileName(null)
                 setViewMode('agent-detail')
+              }}
+              onGenerateVideo={(text, taskName) => {
+                setPrefillAgentText(text)
+                setSelectedAgentId('copywriting-to-video')
+                setSelectedResultId(null)
+                setSelectedResultFileName(null)
+                setViewMode('agent-detail')
+                toast.success(`已跳转到"${taskName}"，可配置参数后生成视频`)
               }}
             />
           ) : null

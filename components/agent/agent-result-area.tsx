@@ -49,6 +49,7 @@ export interface StoryboardShot {
   index: number
   duration: string
   description: string
+  caption?: string
   imageUrl?: string
   voiceUrl?: string
 }
