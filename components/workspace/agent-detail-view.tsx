@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { AgentSpeechToTextIntro } from '@/components/agent/agent-speech-to-text-
 import { AgentTextToSpeechIntro } from '@/components/agent/agent-text-to-speech-intro'
 import { AgentInputArea } from '@/components/agent/agent-input-area'
 import { AgentResultArea } from '@/components/agent/agent-result-area'
+import { TextToSpeechExperienceArea } from '@/components/agent/agent-text-to-speech-experience'
 import {
   ArrowLeft,
   Play,
@@ -43,10 +44,12 @@ interface HistoryTask {
 
 const mockHistoryTasks: Record<string, HistoryTask[]> = {
   'speech-to-text': [
-    { id: 'ht-1', title: '会议录音转写', status: 'completed', createdAt: '2024-01-15 14:30', resultPreview: '会议讨论了Q4产品规划，确定了三个主要方向...', resultId: 'result-speech-to-text' },
+    { id: 'ht-1', title: 'meeting-recording.mp3', status: 'completed', createdAt: '2024-01-15 14:30', resultPreview: '会议讨论了Q4产品规划，确定了三个主要方向：一是继续深化AI语音识别在医疗、教育、金融等垂直行业的应用；二是加强多语言模型训练，支持50种以上语言的实时转写和翻译；三是在用户体验层面引入智能分段、自动摘要、关键词提取等新功能模块。会议还重点探讨了如何在有限算力条件下，通过模型蒸馏和量化压缩来实现产品落地，预计Q4将完成内部测试版本并向部分客户开放试点。', resultId: 'result-speech-to-text' },
   ],
   'text-to-speech': [
-    { id: 'ht-2', title: '产品宣传配音', status: 'completed', createdAt: '2024-01-14 09:15', resultPreview: '音频文件：product-ad.mp3', resultId: 'result-text-to-speech' },
+    { id: 'ht-2', title: '请帮我写一段关于智能科技改变生活的品牌宣传文案，要求语言生动、富有感染力，适合用于视频配音，让听众沉浸其中。', status: 'completed', createdAt: '2024-01-14 09:15', resultPreview: '音频文件：product-ad.mp3', resultId: 'result-text-to-speech' },
+    { id: 'ht-10', title: '萤火虫的秘密\n深夜，九岁的阿布悄悄溜出外婆家，提着一盏熄灭的马灯走向神秘的黑森林。\n他想抓住传说中能实现愿望的"黄金萤火虫"，来治好外婆的眼睛。', status: 'completed', createdAt: '2024-01-13 16:30', resultPreview: '温柔的AI女声演绎品牌故事…', resultId: 'result-text-to-speech-2' },
+    { id: 'ht-11', title: '在这个快速迭代的时代，科技创新正以前所未有的速度改变着我们的生活。从清晨智能闹钟的轻柔唤醒，到夜晚智能助手的贴心陪伴，科技已经融入了我们生命中的每一个角落。', status: 'completed', createdAt: '2024-01-12 11:00', resultPreview: '已生成3章节课程旁白音频…', resultId: 'result-text-to-speech-3' },
   ],
   'video-to-text': [
     { id: 'ht-3', title: '产品发布会视频转写', status: 'completed', createdAt: '2024-01-13 15:20', resultPreview: '三款新品介绍，主持人口播转文字...', resultId: 'result-video-to-text' },
@@ -154,22 +157,35 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
     }
   }, [agent.id])
 
-  // 开始处理
-  const handleProcess = useCallback(() => {
-    if (agent.inputType === 'file' || agent.inputType === 'both') {
-      if (!file) {
-        setUploadError('请先上传文件')
-        return
-      }
+  // 语音转文字 / 视频转文字：上传文件后自动开始处理
+  useEffect(() => {
+    if (agent.id !== 'speech-to-text' && agent.id !== 'video-to-text') return
+    if (file && !isProcessing) {
+      const timer = setTimeout(() => {
+        handleProcess()
+      }, 300)
+      return () => clearTimeout(timer)
     }
-    if (agent.inputType === 'text' || agent.inputType === 'both') {
-      if (!text.trim()) {
-        setUploadError('请输入内容')
-        return
+  }, [agent.id, file, isProcessing])
+
+  // 开始处理
+  const handleProcess = useCallback((skipValidation?: boolean) => {
+    if (!skipValidation) {
+      if (agent.inputType === 'file' || agent.inputType === 'both') {
+        if (!file) {
+          setUploadError('请先上传文件')
+          return
+        }
       }
-      if (text.length > 5000) {
-        setUploadError('内容不能超过5000字')
-        return
+      if (agent.inputType === 'text' || agent.inputType === 'both') {
+        if (!text.trim()) {
+          setUploadError('请输入内容')
+          return
+        }
+        if (text.length > 5000) {
+          setUploadError('内容不能超过5000字')
+          return
+        }
       }
     }
 
@@ -212,7 +228,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
       setIsProcessing(false)
       onViewResult?.(`result-${agent.id}`)
     }, 3500)
-  }, [agent, file, text, generateSteps])
+  }, [agent, file, text, generateSteps, onViewResult])
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-background">
@@ -256,48 +272,82 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
 
             {/* === 体验应用 Tab === */}
             <TabsContent value="experience" className="mt-0 space-y-4">
-              {/* 输入区 */}
-              <AgentInputArea
-                agent={agent}
-                file={file}
-                text={text}
-                paramValues={paramValues}
-                onFileChange={handleFileChange}
-                onTextChange={setText}
-                onParamChange={handleParamChange}
-                error={uploadError}
-              />
+              {/* 文字转语音：自定义左右布局 */}
+              {agent.id === 'text-to-speech' ? (
+                <div className="space-y-4">
+                  <TextToSpeechExperienceArea
+                    agent={agent}
+                    text={text}
+                    paramValues={paramValues}
+                    onTextChange={setText}
+                    onParamChange={handleParamChange}
+                    error={uploadError}
+                    isProcessing={isProcessing}
+                    onStartProcess={handleProcess}
+                  />
+                  {/* 结果区：仅展示处理进度动画 */}
+                  {isProcessing && (
+                    <AgentResultArea
+                      isProcessing={true}
+                      progress={progress}
+                      progressSteps={progressSteps}
+                      costPoints={agent.costPoints}
+                      processTime={agent.avgProcessTime}
+                    />
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* 输入区 */}
+                  <AgentInputArea
+                    agent={agent}
+                    file={file}
+                    text={text}
+                    paramValues={paramValues}
+                    onFileChange={handleFileChange}
+                    onTextChange={setText}
+                    onParamChange={handleParamChange}
+                    error={uploadError}
+                    isProcessing={isProcessing}
+                    progress={progress}
+                    progressSteps={progressSteps}
+                    onStartProcess={agent.id === 'speech-to-text' ? () => handleProcess(true) : undefined}
+                  />
 
-              {/* 操作按钮 */}
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleProcess}
-                disabled={isProcessing}
-              >
-                <Play className="h-4 w-4 mr-2" />
-                {isProcessing ? '处理中...' : '开始处理'}
-              </Button>
+                  {/* 操作按钮：非语音转文字显示 */}
+                  {agent.id !== 'speech-to-text' && agent.id !== 'video-to-text' && (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={handleProcess}
+                      disabled={isProcessing}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      {isProcessing ? '处理中...' : '开始处理'}
+                    </Button>
+                  )}
 
-              {/* 结果区：仅展示处理进度动画 */}
-              {isProcessing && (
-                <AgentResultArea
-                  isProcessing={true}
-                  progress={progress}
-                  progressSteps={progressSteps}
-                  costPoints={agent.costPoints}
-                  processTime={agent.avgProcessTime}
-                />
+                  {/* 结果区：仅展示处理进度动画 */}
+                  {isProcessing && agent.id !== 'speech-to-text' && agent.id !== 'video-to-text' && (
+                    <AgentResultArea
+                      isProcessing={true}
+                      progress={progress}
+                      progressSteps={progressSteps}
+                      costPoints={agent.costPoints}
+                      processTime={agent.avgProcessTime}
+                    />
+                  )}
+                </>
               )}
             </TabsContent>
 
             {/* === 历史任务 Tab === */}
             <TabsContent value="history" className="mt-0">
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {(() => {
                   const tasks = getHistoryTasks(agent.id)
                   return tasks.length === 0 ? (
-                  <Card className="border-border/60">
+                  <Card className="border-border/60 col-span-full">
                     <CardContent className="p-8 text-center">
                       <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground">
@@ -309,11 +359,11 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                   tasks.map((task) => (
                     <Card
                       key={task.id}
-                      className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group"
+                      className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col"
                       onClick={() => onViewResult?.(task.resultId)}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
+                      <CardContent className="p-4 flex flex-col flex-1">
+                        <div className="flex items-start gap-3 flex-1">
                           <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
                             {task.status === 'completed' ? (
                               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -323,9 +373,9 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                               <Loader2 className="h-5 w-5 text-primary animate-spin" />
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="text-sm font-medium text-foreground truncate">
+                          <div className="flex-1 min-w-0 flex flex-col">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h4 className="text-sm font-medium text-foreground line-clamp-5 whitespace-pre-line leading-relaxed">
                                 {task.title}
                               </h4>
                               <Badge
@@ -336,7 +386,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                                       ? 'destructive'
                                       : 'default'
                                 }
-                                className="text-[10px] shrink-0"
+                                className="text-[10px] shrink-0 mt-0.5"
                               >
                                 {task.status === 'completed'
                                   ? '已完成'
@@ -345,10 +395,10 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                                     : '处理中'}
                               </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate mb-1.5">
+                            <p className="text-xs text-muted-foreground line-clamp-5 mb-1.5 flex-1">
                               {task.resultPreview}
                             </p>
-                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-auto">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {task.createdAt}

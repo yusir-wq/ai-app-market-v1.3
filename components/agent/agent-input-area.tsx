@@ -17,6 +17,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
   Upload,
   X,
   FileAudio,
@@ -38,6 +43,9 @@ import {
   Trash2,
   CheckCircle2,
   Loader2,
+  Mic,
+  Languages,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Agent } from '@/lib/mock-data'
@@ -63,6 +71,10 @@ export interface AgentInputAreaProps {
   onTextChange: (text: string) => void
   onParamChange: (id: string, value: any) => void
   error?: string
+  isProcessing?: boolean
+  progress?: number
+  progressSteps?: { label: string; status: 'pending' | 'running' | 'done' }[]
+  onStartProcess?: () => void
 }
 
 // ============================================================
@@ -614,6 +626,366 @@ function ParamField({
 }
 
 // ============================================================
+// Speech-to-Text Custom Input Area
+// ============================================================
+
+function SpeechToTextInputArea({
+  agent,
+  file,
+  onFileChange,
+  paramValues,
+  onParamChange,
+  error,
+  isProcessing,
+  progress,
+  progressSteps,
+  onStartProcess,
+}: {
+  agent: Agent
+  file: File | null
+  onFileChange: (file: File | null) => void
+  paramValues: Record<string, any>
+  onParamChange: (id: string, value: any) => void
+  error?: string
+  isProcessing?: boolean
+  progress?: number
+  progressSteps?: { label: string; status: 'pending' | 'running' | 'done' }[]
+  onStartProcess?: () => void
+}) {
+  const [activeTab, setActiveTab] = useState<'file' | 'record'>('file')
+  const [isDragging, setIsDragging] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragging(false)
+      const droppedFile = e.dataTransfer.files[0]
+      if (droppedFile) onFileChange(droppedFile)
+    },
+    [onFileChange]
+  )
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0] || null
+      onFileChange(selectedFile)
+      e.target.value = ''
+    },
+    [onFileChange]
+  )
+
+  const toggleRecording = useCallback(() => {
+    if (isRecording) {
+      setIsRecording(false)
+      if (timerRef.current) clearInterval(timerRef.current)
+      onStartProcess?.()
+    } else {
+      setIsRecording(true)
+      setRecordingSeconds(0)
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1)
+      }, 1000)
+    }
+  }, [isRecording, onStartProcess])
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  const acceptedExtensions = agent.acceptedFiles?.join(',') || '*'
+  const showDistinguishSpeaker = 'distinguishSpeaker' in paramValues
+  const distinguishSpeaker = !!paramValues.distinguishSpeaker
+  const formatList = agent.acceptedFiles?.map(f => f.replace('.', '')).join('/') || '多种格式'
+  const sizeLimit = agent.maxFileSize ? `≤ ${agent.maxFileSize >= 1000 ? `${(agent.maxFileSize / 1000).toFixed(1)}GB` : `${agent.maxFileSize}M`}` : ''
+
+  const renderUploadContent = () => (
+    <div className="space-y-4">
+      {/* Upload zone / loading zone */}
+      {isProcessing ? (
+        <div className="rounded-xl border border-border bg-secondary/30 p-8 text-center space-y-4">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">AI 正在转写中...</p>
+            {progressSteps && progressSteps.length > 0 && (
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {progressSteps.map((step, idx) => (
+                  <span
+                    key={idx}
+                    className={cn(
+                      'text-xs px-2 py-0.5 rounded-full transition-colors',
+                      step.status === 'done'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : step.status === 'running'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden max-w-xs mx-auto">
+            <div
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: `${progress ?? 0}%` }}
+            />
+          </div>
+        </div>
+      ) : file ? (
+        <div className="rounded-xl border border-border bg-secondary/30 overflow-hidden">
+          <div className="flex items-center gap-3 p-3">
+            <FileAudio className="h-8 w-8 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onFileChange(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            'relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer',
+            'bg-secondary/30',
+            isDragging
+              ? 'border-primary bg-primary/5'
+              : 'border-border hover:border-primary/30 hover:bg-accent/50'
+          )}
+        >
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+            <Upload className="h-5 w-5 text-primary" />
+          </div>
+          <p className="text-sm text-foreground mb-4">
+            拖拽音视频文件到此处，或 <span className="text-primary font-medium">点击上传</span>
+          </p>
+
+          {/* Distinguish speaker toggle — only show when parameter exists */}
+          {showDistinguishSpeaker && (
+          <div
+            className="inline-flex items-center gap-2 mb-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-xs text-muted-foreground">区分说话人</span>
+            <Switch
+              checked={distinguishSpeaker}
+              onCheckedChange={(checked) => onParamChange('distinguishSpeaker', checked)}
+            />
+          </div>
+          )}
+
+          {/* File requirements */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <FileAudio className="h-3 w-3" />
+              {formatList}{agent.acceptedFiles ? `等${agent.acceptedFiles.length}种格式` : ''}
+            </span>
+            {sizeLimit && (
+              <>
+                <span className="hidden sm:inline text-border">|</span>
+                <span>{sizeLimit}</span>
+              </>
+            )}
+            <span className="hidden sm:inline text-border">|</span>
+            <span>时长 ≤ 5小时</span>
+          </div>
+
+          {/* Estimated cost */}
+          <div className="absolute right-3 bottom-2 text-xs text-muted-foreground">
+            预计消耗：
+            <span className="font-semibold text-foreground">{agent.costPoints} 智点</span>
+          </div>
+
+          <input
+            ref={inputRef}
+            type="file"
+            accept={acceptedExtensions}
+            className="hidden"
+            onChange={handleFileInput}
+          />
+        </div>
+      )}
+    </div>
+  )
+
+  const renderRecorder = () => (
+    <div className="space-y-4">
+      {isProcessing ? (
+        <div className="rounded-xl border border-border bg-secondary/30 p-8 text-center space-y-4">
+          <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">AI 正在转写中...</p>
+            {progressSteps && progressSteps.length > 0 && (
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {progressSteps.map((step, idx) => (
+                  <span
+                    key={idx}
+                    className={cn(
+                      'text-xs px-2 py-0.5 rounded-full transition-colors',
+                      step.status === 'done'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : step.status === 'running'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden max-w-xs mx-auto">
+            <div
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: `${progress ?? 0}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">预计耗时 {agent.avgProcessTime}</p>
+        </div>
+      ) : (
+        <div className="relative border-2 border-dashed rounded-xl p-8 text-center bg-secondary/30 border-border">
+          <div className={cn(
+            'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-all',
+            isRecording ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10'
+          )}>
+            {isRecording ? (
+              <Mic className="h-6 w-6 text-destructive" />
+            ) : (
+              <Mic className="h-6 w-6 text-primary" />
+            )}
+          </div>
+          <p className="text-sm text-foreground mb-4">
+            {isRecording ? '正在录音...' : '点击开始实时录音转写'}
+          </p>
+          {isRecording && (
+            <p className="text-2xl font-semibold text-primary tabular-nums mb-4">
+              {formatTime(recordingSeconds)}
+            </p>
+          )}
+          <Button
+            type="button"
+            variant={isRecording ? 'destructive' : 'default'}
+            onClick={toggleRecording}
+          >
+            {isRecording ? '停止录音' : '开始录音'}
+          </Button>
+
+          {/* Distinguish speaker toggle — only show when parameter exists */}
+          {showDistinguishSpeaker && (
+          <div
+            className="flex items-center justify-center gap-2 mt-4 mb-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-xs text-muted-foreground">区分说话人</span>
+            <Switch
+              checked={distinguishSpeaker}
+              onCheckedChange={(checked) => onParamChange('distinguishSpeaker', checked)}
+            />
+          </div>
+          )}
+
+          {/* File requirements */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {sizeLimit && (
+              <>
+                <span>{sizeLimit}</span>
+                <span className="hidden sm:inline text-border">|</span>
+              </>
+            )}
+            <span>时长 ≤ 5小时</span>
+          </div>
+
+          {/* Estimated cost */}
+          <div className="absolute right-3 bottom-2 text-xs text-muted-foreground">
+            预计消耗：
+            <span className="font-semibold text-foreground">{agent.costPoints} 智点</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="space-y-4 w-full">
+      <Card className="border-border/60 shadow-sm overflow-hidden">
+        {/* Tabs inside the upload card */}
+        <div className="flex items-center justify-center p-2 border-b border-border/40 bg-secondary/30">
+          <div className="flex items-center p-1 rounded-full bg-background border border-border/40">
+            <button
+              type="button"
+              onClick={() => setActiveTab('file')}
+              disabled={isProcessing}
+              className={cn(
+                'py-1.5 px-6 rounded-full text-sm font-medium transition-all disabled:opacity-50',
+                activeTab === 'file'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              上传文件
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('record')}
+              disabled={isProcessing}
+              className={cn(
+                'py-1.5 px-6 rounded-full text-sm font-medium transition-all disabled:opacity-50',
+                activeTab === 'record'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              实时录音
+            </button>
+          </div>
+        </div>
+
+        <CardContent className="p-4">
+          {activeTab === 'file' ? renderUploadContent() : renderRecorder()}
+        </CardContent>
+      </Card>
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
 // Main Component
 // ============================================================
 
@@ -626,6 +998,10 @@ export function AgentInputArea({
   onTextChange,
   onParamChange,
   error,
+  isProcessing,
+  progress,
+  progressSteps,
+  onStartProcess,
 }: AgentInputAreaProps) {
   const [regions, setRegions] = useState<SelectedRegion[]>([])
 
@@ -641,17 +1017,89 @@ export function AgentInputArea({
   // Handle quick fill actions
   const handleQuickFill = useCallback(
     (actionId: string) => {
-      const fills: Record<string, string> = {
-        'ai-write': '请帮我写一段关于智能科技改变生活的品牌宣传文案，要求语言生动、富有感染力，适合用于视频配音，让听众沉浸其中。',
-        'random-story': '从前有一个小村庄，村里的人们过着平静的生活。直到有一天，一位旅行者带来了一个神秘的盒子...',
-        'translate': text,
-        pause: text + ' [停顿] ',
+      if (actionId === 'random-story') {
+        onTextChange('萤火虫的秘密\n深夜，九岁的阿布悄悄溜出外婆家，提着一盏熄灭的马灯走向神秘的黑森林。\n他想抓住传说中能实现愿望的"黄金萤火虫"，来治好外婆的眼睛。林子里静得只能听到他自己的心跳，微风吹过，树叶沙沙作响。突然，前方亮起了一团温暖的微光。那不是一只，而是成千上万只萤火虫聚在一起，宛如地上的银河。\n当它们围绕着阿布翩翩起舞时，阿布闭上眼睛，在心里虔诚地许愿。等他再次睁开眼，手里的马灯竟然自己亮了起来，散发出永不熄灭的柔和光芒。阿布开心地笑了，他捧着这盏希望之灯，朝着外婆家的方向飞奔而去。')
+        return
       }
-      const newText = fills[actionId] || text
-      onTextChange(newText)
+      if (actionId === 'pause') {
+        const ta = document.getElementById('agent-input-textarea') as HTMLTextAreaElement | null
+        if (ta) {
+          const cursorPos = ta.selectionEnd ?? ta.value.length
+          const before = text.slice(0, cursorPos)
+          const after = text.slice(cursorPos)
+          const newText = before + '((⏰=1s))' + after
+          onTextChange(newText)
+          requestAnimationFrame(() => {
+            const newPos = cursorPos + '((⏰=1s))'.length
+            ta.selectionStart = newPos
+            ta.selectionEnd = newPos
+            ta.focus()
+          })
+          return
+        }
+        onTextChange(text + '((⏰=1s))')
+        return
+      }
     },
     [text, onTextChange]
   )
+
+  // AI写/翻译 状态
+  const [aiWriteKeyword, setAiWriteKeyword] = useState('')
+  const [aiWriteGenerating, setAiWriteGenerating] = useState(false)
+  const [translateLang, setTranslateLang] = useState('zh-CN')
+  const [translateOpen, setTranslateOpen] = useState(false)
+  const [translateGenerating, setTranslateGenerating] = useState(false)
+
+  const languageOptions = [
+    { label: '简体中文', value: 'zh-CN' },
+    { label: 'English', value: 'en' },
+    { label: '繁體中文', value: 'zh-TW' },
+    { label: 'Español', value: 'es' },
+    { label: 'Português', value: 'pt' },
+    { label: '日本語', value: 'ja' },
+    { label: 'Français', value: 'fr' },
+    { label: 'Deutsch', value: 'de' },
+    { label: '한국어', value: 'ko' },
+  ]
+
+  const handleTranslateApply = () => {
+    if (translateGenerating || !text.trim()) return
+    setTranslateGenerating(true)
+    setTranslateOpen(false)
+    const mockTranslations: Record<string, string> = {
+      'zh-CN': text,
+      'en': '[English Translation]\n\n' + (text || 'No content to translate.'),
+      'zh-TW': '【繁體中文翻譯】\n\n' + (text || '暫無內容可翻譯。'),
+      'es': '[Traducción al Español]\n\n' + (text || 'No hay contenido para traducir.'),
+      'pt': '[Tradução para Português]\n\n' + (text || 'Sem conteúdo para traduzir.'),
+      'ja': '【日本語翻訳】\n\n' + (text || '翻訳するコンテンツがありません。'),
+      'fr': '[Traduction Française]\n\n' + (text || 'Aucun contenu à traduire.'),
+      'de': '[Deutsche Übersetzung]\n\n' + (text || 'Kein Inhalt zum Übersetzen.'),
+      'ko': '[한국어 번역]\n\n' + (text || '번역할 내용이 없습니다.'),
+    }
+    setTimeout(() => {
+      onTextChange(mockTranslations[translateLang] || text)
+      setTranslateGenerating(false)
+    }, 1200)
+  }
+
+  const handleAiWriteGenerate = () => {
+    if (aiWriteGenerating || !aiWriteKeyword.trim()) return
+    setAiWriteGenerating(true)
+    setTimeout(() => {
+      onTextChange(
+        '【' + aiWriteKeyword + '】\n\n' +
+        '针对"${keyword}"这一主题，我为您撰写了以下配音文案：\n\n'.replace('${keyword}', aiWriteKeyword) +
+        '在这个快速迭代的时代，科技创新正以前所未有的速度改变着我们的生活。' +
+        '从清晨智能闹钟的轻柔唤醒，到夜晚智能助手的贴心陪伴，科技已经融入了我们生命中的每一个角落。\n\n' +
+        '想象一下，当你迈进家门的那一刻，灯光自动亮起，温度已经调整到最舒适的度数，' +
+        '就连你最爱的音乐也已经在背景中轻轻流淌……这一切，不再是科幻电影中的场景，而是正在发生的现实。\n\n' +
+        '让我们一起拥抱这个充满无限可能的智能时代，用科技的力量，去创造更美好的明天。'
+      )
+      setAiWriteGenerating(false)
+    }, 1500)
+  }
 
   // Handle txt upload for quick fill
   const handleTxtUpload = useCallback(
@@ -668,6 +1116,24 @@ export function AgentInputArea({
     },
     [onTextChange]
   )
+
+  // Custom input area for speech-to-text and video-to-text
+  if (agent.id === 'speech-to-text' || agent.id === 'video-to-text') {
+    return (
+      <SpeechToTextInputArea
+        agent={agent}
+        file={file}
+        onFileChange={onFileChange}
+        paramValues={paramValues}
+        onParamChange={onParamChange}
+        error={error}
+        isProcessing={isProcessing}
+        progress={progress}
+        progressSteps={progressSteps}
+        onStartProcess={onStartProcess}
+      />
+    )
+  }
 
   return (
     <div className="space-y-4 w-full">
@@ -709,15 +1175,70 @@ export function AgentInputArea({
 
           {/* Quick fill bar */}
           {showQuickFill && (
-            <QuickFillBar
-              onAction={(id) => {
-                if (id === 'upload-txt') {
-                  document.getElementById('txt-upload')?.click()
-                } else {
-                  handleQuickFill(id)
-                }
-              }}
-            />
+            <div className="flex items-center gap-1 flex-wrap p-1 rounded-xl bg-secondary/50 border border-border/40">
+              {/* AI帮我写 — Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all">
+                    <Wand2 className="h-3 w-3 text-muted-foreground" />
+                    AI帮我写
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
+                  <div className="p-4 space-y-3">
+                    <Input value={aiWriteKeyword} onChange={(e) => setAiWriteKeyword(e.target.value)} placeholder="输入关键词，使用AI帮写生成完整故事内容" className="h-9 text-sm rounded-lg" onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()} />
+                    <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleAiWriteGenerate} disabled={aiWriteGenerating}>
+                      {aiWriteGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />生成中...</> : (<><Sparkles className="h-3.5 w-3.5" />生成<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />1</span></>)}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* 随机故事 */}
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => handleQuickFill('random-story')}>
+                <BookOpen className="h-3 w-3 text-muted-foreground" />
+                随机故事
+              </Button>
+
+              {/* 上传txt */}
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => document.getElementById('txt-upload')?.click()}>
+                <FileText className="h-3 w-3 text-muted-foreground" />
+                上传txt
+              </Button>
+
+              {/* 翻译 — Popover */}
+              <Popover open={translateOpen} onOpenChange={setTranslateOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all">
+                    {translateGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3 text-muted-foreground" />}
+                    翻译
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-56 p-0 overflow-hidden shadow-xl border-border/80">
+                  <div className="p-3">
+                    <div className="max-h-[220px] overflow-y-auto space-y-0.5 mb-3">
+                      {languageOptions.map((lang) => (
+                        <button key={lang.value} onClick={() => setTranslateLang(lang.value)} className={cn(
+                          'w-full text-xs py-2 px-3 rounded-md text-left transition-colors',
+                          translateLang === lang.value ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-secondary text-foreground'
+                        )}>
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                    <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleTranslateApply} disabled={translateGenerating}>
+                      {translateGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />翻译中...</> : (<><Languages className="h-3.5 w-3.5" />开始翻译<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />2</span></>)}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* 插入停顿 */}
+              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => handleQuickFill('pause')}>
+                <Type className="h-3 w-3 text-muted-foreground" />
+                插入停顿
+              </Button>
+            </div>
           )}
           <input
             id="txt-upload"
@@ -728,6 +1249,7 @@ export function AgentInputArea({
           />
 
           <Textarea
+            id="agent-input-textarea"
             placeholder={
               agent.id === 'text-to-speech'
                 ? '输入你想要的配音文案，AI 即刻生成带情感的自然人声…'
