@@ -709,7 +709,6 @@ function SpeechToTextInputArea({
   }
 
   const acceptedExtensions = agent.acceptedFiles?.join(',') || '*'
-  const showDistinguishSpeaker = 'distinguishSpeaker' in paramValues
   const distinguishSpeaker = !!paramValues.distinguishSpeaker
 
   const renderUploadContent = () => (
@@ -786,12 +785,9 @@ function SpeechToTextInputArea({
             拖拽音视频文件到此处，或 <span className="text-primary font-medium">点击上传</span>
           </p>
 
-          {/* Distinguish speaker toggle — always reserve space */}
+          {/* Distinguish speaker toggle */}
           <div
-            className={cn(
-              'inline-flex items-center gap-2 mb-3',
-              !showDistinguishSpeaker && 'invisible'
-            )}
+            className="inline-flex items-center gap-2 mb-3"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs text-muted-foreground">区分说话人</span>
@@ -894,12 +890,9 @@ function SpeechToTextInputArea({
             {isRecording ? '停止录音' : '开始录音'}
           </Button>
 
-          {/* Distinguish speaker toggle — always reserve space */}
+          {/* Distinguish speaker toggle */}
           <div
-            className={cn(
-              'flex items-center justify-center gap-2 mt-4 mb-3',
-              !showDistinguishSpeaker && 'invisible'
-            )}
+            className="flex items-center justify-center gap-2 mt-4 mb-3"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-xs text-muted-foreground">区分说话人</span>
