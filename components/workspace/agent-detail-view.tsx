@@ -9,6 +9,7 @@ import { Agent } from '@/lib/mock-data'
 import { AgentSceneCards } from '@/components/agent/agent-scene-cards'
 import { AgentSpeechToTextIntro } from '@/components/agent/agent-speech-to-text-intro'
 import { AgentTextToSpeechIntro } from '@/components/agent/agent-text-to-speech-intro'
+import { AgentVideoToTextIntro } from '@/components/agent/agent-video-to-text-intro'
 import { AgentInputArea } from '@/components/agent/agent-input-area'
 import { AgentResultArea } from '@/components/agent/agent-result-area'
 import { TextToSpeechExperienceArea } from '@/components/agent/agent-text-to-speech-experience'
@@ -267,6 +268,8 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                 <AgentSpeechToTextIntro />
               ) : agent.id === 'text-to-speech' ? (
                 <AgentTextToSpeechIntro />
+              ) : agent.id === 'video-to-text' ? (
+                <AgentVideoToTextIntro />
               ) : (
                 <AgentSceneCards scenes={agent.scenes} />
               )}
