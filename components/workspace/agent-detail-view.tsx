@@ -52,7 +52,9 @@ const mockHistoryTasks: Record<string, HistoryTask[]> = {
     { id: 'ht-11', title: '在这个快速迭代的时代，科技创新正以前所未有的速度改变着我们的生活。从清晨智能闹钟的轻柔唤醒，到夜晚智能助手的贴心陪伴，科技已经融入了我们生命中的每一个角落。', status: 'completed', createdAt: '2024-01-12 11:00', resultPreview: '已生成3章节课程旁白音频…', resultId: 'result-text-to-speech-3' },
   ],
   'video-to-text': [
-    { id: 'ht-3', title: '产品发布会视频转写', status: 'completed', createdAt: '2024-01-13 15:20', resultPreview: '三款新品介绍，主持人口播转文字...', resultId: 'result-video-to-text' },
+    { id: 'ht-3', title: 'product-launch-2024.mp4', status: 'completed', createdAt: '2024-01-13 15:20', resultPreview: '各位来宾，欢迎参加我们2024年度新品发布会。今天我将为大家介绍三款全新产品。第一款是我们最新研发的智能语音助手V2，它采用了全新的端侧AI芯片，响应速度提升了300%，支持离线唤醒和连续对话。无论是在嘈杂的地铁还是安静的办公室，它都能精准识别你的指令。第二款产品是面向B端的企业级AI中台。可以帮助企业在不招募AI团队的情况下，快速搭建自己的智能客服、智能推荐和智能质检系统。目前已经有超过200家企业接入使用。', resultId: 'result-video-to-text' },
+    { id: 'ht-12', title: 'q4-strategy-meeting.mov', status: 'completed', createdAt: '2024-01-11 09:00', resultPreview: '今天会议的主要议题是Q4的产品战略规划。首先我们回顾一下Q3的整体表现，AI语音助手V1的市场占有率从15%提升到了22%，企业级AI中台的客户续费率达到了91%。接下来我们要讨论的是如何在Q4将新产品推向更广阔的市场，特别是海外市场的拓展计划。技术团队已经完成了多语言模型的预训练，预计下个月可以上线测试。', resultId: 'result-video-to-text' },
+    { id: 'ht-13', title: 'online-course-ai-basics.webm', status: 'completed', createdAt: '2024-01-08 14:45', resultPreview: '大家好，欢迎来到AI基础入门课程。今天我们要学习的是深度学习的核心概念。首先，什么是神经网络？简单来说，它是模仿人脑神经元连接方式的计算模型。一个基本的神经网络由输入层、隐藏层和输出层组成，每一层包含多个节点，节点之间通过带权重的连接进行信息传递。通过反向传播算法，网络可以自动调整这些权重，从而不断优化预测结果。', resultId: 'result-video-to-text' },
   ],
   'topic-to-copywriting': [
     { id: 'ht-4', title: '新品发布短视频脚本', status: 'completed', createdAt: '2024-01-09 16:30', resultPreview: '已生成钩子+正文+CTA...', resultId: 'result-topic-to-copywriting' },
