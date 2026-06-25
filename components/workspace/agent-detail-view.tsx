@@ -362,7 +362,7 @@ export function AgentDetailView({ agent, onBack, onViewResult }: AgentDetailView
                     <Card
                       key={task.id}
                       className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col"
-                      onClick={() => onViewResult?.(task.resultId)}
+                      onClick={() => onViewResult?.(task.resultId, task.title)}
                     >
                       <CardContent className="p-4 flex flex-col flex-1">
                         <div className="flex items-start gap-3 flex-1">
