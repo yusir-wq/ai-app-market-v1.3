@@ -1345,10 +1345,10 @@ export interface Agent {
 }
 
 export const agentCategories: { id: AgentCategory; name: string; icon: string }[] = [
-  { id: 'video', name: '视频处理', icon: 'Film' },
-  { id: 'audio', name: '音频处理', icon: 'Mic' },
-  { id: 'copywriting', name: '文案生成', icon: 'PenTool' },
-  { id: 'image', name: '图片处理', icon: 'Image' },
+  { id: 'copywriting', name: '文案', icon: 'PenTool' },
+  { id: 'video', name: '视频', icon: 'Film' },
+  { id: 'image', name: '图片', icon: 'Image' },
+  { id: 'audio', name: '音频', icon: 'Mic' },
 ]
 
 export const mockAgents: Agent[] = [

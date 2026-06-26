@@ -98,6 +98,7 @@ export function Workspace() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null)
   const [selectedResultFileName, setSelectedResultFileName] = useState<string | null>(null)
+  const [skipStoryboard, setSkipStoryboard] = useState(false)
   const [prefillAgentText, setPrefillAgentText] = useState<string>('')
   const [recentAgents, setRecentAgents] = useState<string[]>(['speech-to-text', 'text-to-speech', 'copywriting-to-video'])
 
@@ -1364,6 +1365,16 @@ export function Workspace() {
               setSelectedResultFileName(fileName || null)
               setViewMode('result-detail')
             }}
+            onHistoryTaskClick={(resultId, fileName) => {
+              setSelectedResultId(resultId)
+              setSelectedResultFileName(fileName || null)
+              // 从历史任务进入AI文案生视频，直接显示合成视频结果页
+              const agent = getAgentById(selectedAgentId)
+              if (agent?.id === 'copywriting-to-video') {
+                setSkipStoryboard(true)
+              }
+              setViewMode('result-detail')
+            }}
           />
         )}
         {viewMode === 'result-detail' && selectedResultId && (() => {
@@ -1374,9 +1385,11 @@ export function Workspace() {
               result={detail}
               agent={agent}
               fileName={selectedResultFileName}
+              skipStoryboard={skipStoryboard}
               onBack={() => {
                 setSelectedResultId(null)
                 setSelectedResultFileName(null)
+                setSkipStoryboard(false)
                 setViewMode('agent-detail')
               }}
               onGenerateVideo={(text, taskName) => {

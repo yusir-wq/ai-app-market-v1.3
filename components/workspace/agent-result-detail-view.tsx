@@ -1540,12 +1540,20 @@ function TopicToCopywritingResult({ result, onGenerateVideo }: { result: AgentRe
 
 const DEMO_VIDEO_URL = 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4'
 
-function CopywritingToVideoAdvancedResult({ result }: { result: AgentResultDetail }) {
+function CopywritingToVideoAdvancedResult({ 
+  result, 
+  showVideoResult = false 
+}: { 
+  result: AgentResultDetail
+  showVideoResult?: boolean  // 是否直接显示合成视频结果页（从历史任务进入时为true）
+}) {
   const initialShots = result.storyboard || []
   const [shots, setShots] = useState<StoryboardShot[]>(initialShots)
   const [activeShotId, setActiveShotId] = useState<string>(initialShots[0]?.id || '')
   const [editingShotId, setEditingShotId] = useState<string | null>(null)
   const [isComposing, setIsComposing] = useState(false)
+  const [composingProgress, setComposingProgress] = useState(0)
+  const [showFinalVideo, setShowFinalVideo] = useState(showVideoResult) // 根据参数初始化
   const [composedVideoUrl, setComposedVideoUrl] = useState<string>(DEMO_VIDEO_URL)
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
 
@@ -1578,213 +1586,350 @@ function CopywritingToVideoAdvancedResult({ result }: { result: AgentResultDetai
     toast.success('已删除分镜')
   }
 
+  const handleCopySourceText = () => {
+    if (result.sourceText) {
+      navigator.clipboard.writeText(result.sourceText)
+      toast.success('文案已复制')
+    }
+  }
+
   const handleCompose = () => {
     setIsComposing(true)
-    // 模拟合成耗时
+    setComposingProgress(0)
+    
+    // 模拟进度
+    const interval = setInterval(() => {
+      setComposingProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return prev
+        }
+        return prev + Math.random() * 15 + 5
+      })
+    }, 300)
+    
+    // 模拟合成完成
     setTimeout(() => {
-      setComposedVideoUrl(DEMO_VIDEO_URL + '?t=' + Date.now())
+      setComposingProgress(100)
       setIsComposing(false)
+      setShowFinalVideo(true)
+      setComposedVideoUrl(DEMO_VIDEO_URL + '?t=' + Date.now())
+      clearInterval(interval)
       toast.success('完整视频已合成')
-    }, 2500)
+    }, 3500)
   }
 
   return (
     <div className="space-y-4">
-      {/* 源文案 */}
-      {result.sourceText && (
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">源文案</h3>
+      {/* 如果正在合成或已合成完整视频，显示合成界面 */}
+      {isComposing || showFinalVideo ? (
+        <div className="flex flex-col items-center">
+          {isComposing ? (
+            <div className="w-full max-w-2xl">
+              {/* Loading 状态 */}
+              <Card className="border-border/60">
+                <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      视频生成中…{Math.round(composingProgress)}%
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      我的灵感噼啪作响，客官的视频马上就好~
+                    </p>
+                  </div>
+                  
+                  {/* 进度条 */}
+                  <div className="w-full max-w-sm">
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${composingProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{result.sourceText}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 分镜 + 预览 */}
-      {shots.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          {/* 左侧：分镜列表 */}
-          <div className="lg:col-span-3 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Clapperboard className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">分镜脚本</h3>
-                <Badge variant="secondary" className="text-[10px]">{shots.length} 镜</Badge>
+          ) : (
+            <div className="w-full max-w-3xl space-y-4">
+              {/* 合成完成 - 视频预览 */}
+              <Card className="border-border/60 overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="relative aspect-video bg-black">
+                    <video
+                      src={composedVideoUrl}
+                      controls
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* 下载按钮 */}
+              <div className="flex gap-3">
+                <Button className="flex-1 h-10">
+                  <Download className="h-4 w-4 mr-2" />
+                  下载视频
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-10"
+                  onClick={() => setShowFinalVideo(false)}
+                >
+                  返回编辑
+                </Button>
               </div>
-              <span className="text-xs text-muted-foreground">点击分镜可在右侧预览</span>
-            </div>
-
-            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-              {shots.map((shot) => {
-                const isActive = activeShotId === shot.id
-                return (
-                  <div
-                    key={shot.id}
-                    onClick={() => setActiveShotId(shot.id)}
-                    className={cn(
-                      'group rounded-xl border bg-card overflow-hidden transition-all cursor-pointer',
-                      isActive
-                        ? 'border-primary/40 ring-1 ring-primary/20'
-                        : 'border-border hover:border-primary/20'
-                    )}
-                  >
-                    <div className="flex gap-3 p-3">
-                      {/* 缩略图 */}
-                      <div className="relative shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-secondary/40 border border-border/50">
-                        {shot.imageUrl ? (
-                          <img
-                            src={shot.imageUrl}
-                            alt={`镜${shot.index}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            <ImagePlus className="h-5 w-5" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Play className="h-5 w-5 text-white fill-white" />
-                        </div>
-                        <Badge className="absolute bottom-1 left-1 text-[9px] h-4 px-1 bg-black/60 text-white border-0">
-                          镜{shot.index}
-                        </Badge>
+              
+              {/* 可复制的文案 */}
+              {result.sourceText && (
+                <Card className="border-border/60">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="text-sm font-semibold">视频文案</h3>
                       </div>
-
-                      {/* 字幕输入 */}
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <Label className="text-[11px] text-muted-foreground">分镜字幕</Label>
-                          <span className="text-[10px] text-muted-foreground">{shot.duration}</span>
-                        </div>
-                        <Textarea
-                          ref={(el) => { textareaRefs.current[shot.id] = el }}
-                          value={shot.caption || shot.description}
-                          onChange={(e) => handleCaptionChange(shot.id, e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          onFocus={() => setEditingShotId(shot.id)}
-                          onBlur={() => setEditingShotId((prev) => (prev === shot.id ? null : prev))}
-                          className={cn(
-                            'min-h-[56px] h-14 resize-none rounded-lg border bg-secondary/10 text-xs leading-relaxed py-1.5 px-2 transition-all',
-                            editingShotId === shot.id
-                              ? 'border-primary ring-1 ring-primary/20'
-                              : 'border-border/40 focus-visible:ring-1 focus-visible:ring-primary/30'
-                          )}
-                        />
-                      </div>
-
-                      {/* 操作按钮 */}
-                      <div className="shrink-0 flex flex-col gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={cn('h-7 w-7', editingShotId === shot.id && 'text-primary bg-primary/10')}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditingShotId(shot.id)
-                            textareaRefs.current[shot.id]?.focus()
-                          }}
-                          title="编辑分镜"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleCopyShot(shot)
-                          }}
-                          title="复制分镜"
-                        >
-                          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteShot(shot.id)
-                          }}
-                          title="删除分镜"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 text-xs"
+                        onClick={handleCopySourceText}
+                      >
+                        <Copy className="h-3 w-3 mr-1" />
+                        复制
+                      </Button>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* 右侧：视频预览 */}
-          <div className="lg:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <Play className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">视频预览</h3>
-            </div>
-
-            <Card className="border-border/60 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative aspect-video bg-black">
-                  <video
-                    key={composedVideoUrl}
-                    src={composedVideoUrl}
-                    controls
-                    className="w-full h-full object-contain"
-                    poster={activeShot?.imageUrl}
-                  />
-                  {activeShot?.caption && (
-                    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 max-w-[90%] px-3 py-1.5 rounded-md bg-black/70 text-white text-xs text-center line-clamp-2">
-                      {activeShot.caption}
+                    <div className="bg-secondary/10 rounded-lg p-3 border border-border/40">
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {result.sourceText}
+                      </p>
                     </div>
-                  )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* 源文案 */}
+          {result.sourceText && (
+            <Card className="border-border/60">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">源文案</h3>
                 </div>
-
-                <div className="p-4 space-y-4">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      当前分镜：
-                      <span className="text-foreground font-medium ml-1">
-                        镜{activeShot?.index || 1} / {shots.length}
-                      </span>
-                    </span>
-                    <span>{activeShot?.duration}</span>
-                  </div>
-
-                  <Button
-                    className="w-full h-10"
-                    onClick={handleCompose}
-                    disabled={isComposing}
-                  >
-                    {isComposing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        合成中…
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        合成完整视频
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">{result.sourceText}</p>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      )}
+          )}
 
-      {shots.length === 0 && (
-        <div className="text-center py-10 text-sm text-muted-foreground border rounded-xl border-border/60">
-          暂无分镜，请重新生成
-        </div>
+          {/* 分镜 + 预览 */}
+          {shots.length > 0 && (
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* 左侧：分镜列表 - 占 40% 宽度，固定高度可滚动 */}
+              <div className="w-full lg:w-2/5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clapperboard className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold">分镜脚本</h3>
+                    <Badge variant="secondary" className="text-[10px]">{shots.length} 镜</Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">点击分镜可在右侧预览</span>
+                </div>
+
+                {/* 分镜卡片容器 - 固定高度可滚动 */}
+                <div 
+                  className="space-y-3 overflow-y-auto pr-1"
+                  style={{ height: 'calc(100vh - 120px)' }}
+                >
+                  {shots.map((shot) => {
+                    const isActive = activeShotId === shot.id
+                    return (
+                      <div
+                        key={shot.id}
+                        onClick={() => setActiveShotId(shot.id)}
+                        className={cn(
+                          'group rounded-[8px] border bg-card overflow-hidden transition-all cursor-pointer shadow-sm hover:shadow-md',
+                          isActive
+                            ? 'border-primary/40 ring-1 ring-primary/20'
+                            : 'border-border/60 hover:border-primary/20'
+                        )}
+                      >
+                        <div className="flex gap-3 p-3">
+                          {/* 左侧：视频缩略图 - 固定宽度 */}
+                          <div className="relative shrink-0 w-[140px] aspect-video rounded-[8px] overflow-hidden bg-secondary/40 border border-border/50">
+                            {shot.imageUrl ? (
+                              <img
+                                src={shot.imageUrl}
+                                alt={`镜${shot.index}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                <ImagePlus className="h-6 w-6" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play className="h-6 w-6 text-white fill-white" />
+                            </div>
+                            <Badge className="absolute bottom-2 left-2 text-[10px] h-4 px-1 bg-black/70 text-white border-0">
+                              镜{shot.index}
+                            </Badge>
+                          </div>
+
+                          {/* 右侧：分镜内容区 */}
+                          <div className="flex-1 min-w-0 flex flex-col gap-2">
+                            {/* 顶部：分镜序号 + 操作按钮 */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-foreground">
+                                  镜 {shot.index}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {shot.duration}
+                                </span>
+                              </div>
+                              {/* 操作按钮 */}
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn('h-6 w-6', editingShotId === shot.id && 'text-primary bg-primary/10')}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingShotId(shot.id)
+                                    textareaRefs.current[shot.id]?.focus()
+                                  }}
+                                  title="编辑分镜"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleCopyShot(shot)
+                                  }}
+                                  title="复制分镜"
+                                >
+                                  <Copy className="h-3 w-3 text-muted-foreground" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteShot(shot.id)
+                                  }}
+                                  title="删除分镜"
+                                >
+                                  <Trash2 className="h-3 w-3 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* 底部：分镜字幕文本框 */}
+                            <div className="flex-1 min-h-0">
+                              <Textarea
+                                ref={(el) => { textareaRefs.current[shot.id] = el }}
+                                value={shot.caption || shot.description}
+                                onChange={(e) => handleCaptionChange(shot.id, e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                onFocus={() => setEditingShotId(shot.id)}
+                                onBlur={() => setEditingShotId((prev) => (prev === shot.id ? null : prev))}
+                                placeholder="输入分镜字幕..."
+                                className={cn(
+                                  'h-full min-h-[60px] resize-none rounded-[6px] border bg-secondary/10 text-xs leading-relaxed py-1.5 px-2 transition-all',
+                                  editingShotId === shot.id
+                                    ? 'border-primary ring-1 ring-primary/20'
+                                    : 'border-border/40 focus-visible:ring-1 focus-visible:ring-primary/30'
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 右侧：视频预览 - 占 60% 宽度，高度与左侧保持一致 */}
+              <div className="w-full lg:w-3/5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold">视频预览</h3>
+                </div>
+
+                <Card className="border-border/60 overflow-hidden h-full">
+                  <CardContent className="p-0 flex flex-col h-full" style={{ height: 'calc(100vh - 120px)' }}>
+                    {/* 视频播放器 - 占主要空间 */}
+                    <div className="relative flex-1 bg-black">
+                      <video
+                        key={composedVideoUrl}
+                        src={composedVideoUrl}
+                        controls
+                        className="w-full h-full object-contain"
+                        poster={activeShot?.imageUrl}
+                      />
+                      {activeShot?.caption && (
+                        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 max-w-[90%] px-3 py-1.5 rounded-md bg-black/70 text-white text-xs text-center line-clamp-2">
+                          {activeShot.caption}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 底部控制区 */}
+                    <div className="p-4 border-t border-border/40 bg-card space-y-3">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          当前分镜：
+                          <span className="text-foreground font-medium ml-1">
+                            镜{activeShot?.index || 1} / {shots.length}
+                          </span>
+                        </span>
+                        <span>{activeShot?.duration}</span>
+                      </div>
+
+                      <Button
+                        className="w-full h-10"
+                        onClick={handleCompose}
+                        disabled={isComposing}
+                      >
+                        {isComposing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            合成中…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            合成完整视频
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {shots.length === 0 && (
+            <div className="text-center py-10 text-sm text-muted-foreground border rounded-xl border-border/60">
+              暂无分镜，请重新生成
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -1887,7 +2032,14 @@ function ParamsSummary({ params }: { params?: Record<string, any> }) {
 // Main Component
 // ============================================================
 
-export function AgentResultDetailView({ result, agent, fileName, onBack, onGenerateVideo }: AgentResultDetailViewProps) {
+export function AgentResultDetailView({ 
+  result, 
+  agent, 
+  fileName, 
+  onBack, 
+  onGenerateVideo,
+  skipStoryboard = false 
+}: AgentResultDetailViewProps & { skipStoryboard?: boolean }) {
   // 按 agentId 分派不同的结果渲染
   const renderResult = () => {
     switch (result.agentId) {
@@ -1900,7 +2052,7 @@ export function AgentResultDetailView({ result, agent, fileName, onBack, onGener
       case 'topic-to-copywriting':
         return <TopicToCopywritingResult result={result} onGenerateVideo={onGenerateVideo} />
       case 'copywriting-to-video':
-        return <CopywritingToVideoAdvancedResult result={result} />
+        return <CopywritingToVideoAdvancedResult result={result} showVideoResult={skipStoryboard} />
       case 'image-to-video':
         return <CopywritingToVideoResult result={result} />
       case 'video-translate':

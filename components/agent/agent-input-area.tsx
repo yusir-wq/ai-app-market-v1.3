@@ -558,12 +558,12 @@ function ParamField({
       return (
         <div className="space-y-2">
           <Label className="text-sm font-medium text-foreground">{param.label}</Label>
-          <Select value={String(value)} onValueChange={onChange}>
+          <Select value={String(value ?? param.options?.[0]?.value ?? '')} onValueChange={onChange}>
             <SelectTrigger className="w-full h-10 rounded-xl border-border/60 bg-secondary/30 hover:bg-background transition-colors">
-              <SelectValue />
+              <SelectValue placeholder={param.label} />
             </SelectTrigger>
             <SelectContent>
-              {param.options?.map((opt) => (
+              {param.options?.filter(opt => opt.value !== '' && opt.value != null).map((opt) => (
                 <SelectItem key={String(opt.value)} value={String(opt.value)}>
                   {opt.label}
                 </SelectItem>
@@ -971,6 +971,160 @@ function SpeechToTextInputArea({
 }
 
 // ============================================================
+// Video Translate Custom Input Area
+// (参考 reccloud.cn/ai-translate 上传区设计)
+// ============================================================
+
+function VideoTranslateInputArea({
+  agent,
+  file,
+  onFileChange,
+  error,
+  isProcessing,
+  progress,
+  progressSteps,
+}: {
+  agent: Agent
+  file: File | null
+  onFileChange: (file: File | null) => void
+  error?: string
+  isProcessing?: boolean
+  progress?: number
+  progressSteps?: { label: string; status: 'pending' | 'running' | 'done' }[]
+}) {
+  const [isDragging, setIsDragging] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragging(false)
+      const droppedFile = e.dataTransfer.files[0]
+      if (droppedFile) onFileChange(droppedFile)
+    },
+    [onFileChange]
+  )
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0] || null
+      onFileChange(selectedFile)
+      e.target.value = ''
+    },
+    [onFileChange]
+  )
+
+  const acceptedExtensions = agent.acceptedFiles?.join(',') || '*'
+
+  // Processing state — (已废弃，由 experience area 处理)
+  if (isProcessing) {
+    return (
+      <Card className="border-border/60 shadow-sm overflow-hidden">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <p className="text-sm font-medium text-foreground">AI 正在翻译处理中...</p>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden max-w-xs">
+              <div
+                className="h-full bg-primary transition-all duration-300 rounded-full"
+                style={{ width: `${progress ?? 0}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Empty state — upload drop zone (参考 reccloud.cn 设计)
+  return (
+    <Card className="border-border/60 shadow-sm overflow-hidden">
+      <CardContent className="p-0">
+        {/* Drag & drop area — 上传区与按钮视觉一体 */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            'p-4 text-center transition-all flex flex-col items-center gap-5',
+            'bg-secondary/20',
+            isDragging && 'bg-primary/5'
+          )}
+        >
+          {/* Dashed border zone — 上传按钮与提示文案都在虚线区内 */}
+          <div
+            onClick={() => inputRef.current?.click()}
+            className={cn(
+              'relative w-full border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center gap-5',
+              isDragging
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/30 hover:bg-accent/30'
+            )}
+          >
+            {/* Center upload icon */}
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <Upload className="h-6 w-6 text-primary" />
+            </div>
+            {/* Drag hint text */}
+            <p className="text-sm text-muted-foreground">
+              拖拽本地音视频文件到这里
+            </p>
+
+            {/* Upload button — inside dashed zone */}
+            <Button
+              className="h-11 gap-2 px-8"
+              onClick={(e) => {
+                e.stopPropagation()
+                inputRef.current?.click()
+              }}
+            >
+              <Upload className="h-4 w-4" />
+              上传文件
+            </Button>
+
+            {/* Format / size / duration hints */}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span>mp3/mp4/mov/webm/wav等30种格式</span>
+              <span className="text-border/60">|</span>
+              <span>视频 ≤ 4GB；音频 ≤ 500M</span>
+              <span className="text-border/60">|</span>
+              <span>时长 ≤ 3小时</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+
+      {/* Hidden file input */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={acceptedExtensions}
+        className="hidden"
+        onChange={handleFileInput}
+      />
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+// ============================================================
 // Main Component
 // ============================================================
 
@@ -1116,6 +1270,21 @@ export function AgentInputArea({
         progress={progress}
         progressSteps={progressSteps}
         onStartProcess={onStartProcess}
+      />
+    )
+  }
+
+  // Custom input area for video translate
+  if (agent.id === 'video-translate') {
+    return (
+      <VideoTranslateInputArea
+        agent={agent}
+        file={file}
+        onFileChange={onFileChange}
+        error={error}
+        isProcessing={isProcessing}
+        progress={progress}
+        progressSteps={progressSteps}
       />
     )
   }

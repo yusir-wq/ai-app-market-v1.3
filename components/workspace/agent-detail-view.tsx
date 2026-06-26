@@ -11,8 +11,14 @@ import { AgentSpeechToTextIntro } from '@/components/agent/agent-speech-to-text-
 import { AgentTextToSpeechIntro } from '@/components/agent/agent-text-to-speech-intro'
 import { AgentVideoToTextIntro } from '@/components/agent/agent-video-to-text-intro'
 import { AgentCopywritingIntro } from '@/components/agent/agent-copywriting-intro'
+import { AgentCopywritingToVideoIntro } from '@/components/agent/agent-copywriting-to-video-intro'
+import { AgentVideoTranslateIntro } from '@/components/agent/agent-video-translate-intro'
+import { VideoTranslateExperienceArea } from '@/components/agent/agent-video-translate-experience'
+import { VideoTranslateResultPage } from '@/components/agent/agent-video-translate-result'
 import { CopywritingExperienceArea } from '@/components/agent/agent-copywriting-experience'
 import { CopywritingToVideoExperienceArea } from '@/components/agent/copywriting-to-video-experience'
+import { ImageToVideoExperienceArea } from '@/components/agent/image-to-video-experience'
+import { AgentImageToVideoIntro } from '@/components/agent/agent-image-to-video-intro'
 import { AgentInputArea } from '@/components/agent/agent-input-area'
 import { AgentResultArea } from '@/components/agent/agent-result-area'
 import { TextToSpeechExperienceArea } from '@/components/agent/agent-text-to-speech-experience'
@@ -24,6 +30,7 @@ import {
   FileText,
   Calendar,
   ChevronRight,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -45,6 +52,7 @@ interface HistoryTask {
   createdAt: string
   resultPreview: string
   resultId: string
+  videoThumbnail?: string // 视频预览图（AI 文案生视频、AI 图生视频、AI 视频翻译使用）
 }
 
 const mockHistoryTasks: Record<string, HistoryTask[]> = {
@@ -67,13 +75,25 @@ const mockHistoryTasks: Record<string, HistoryTask[]> = {
     { id: 'ht-15', title: '亲子露营VLOG脚本', status: 'completed', createdAt: '2024-01-03 14:00', resultPreview: '已生成4段温馨脚本及12个关键词：#亲子时光 #周末露营 #治愈系VLOG...', resultId: 'result-topic-to-copywriting' },
   ],
   'copywriting-to-video': [
-    { id: 'ht-5', title: '品牌宣传片生成', status: 'completed', createdAt: '2024-01-08 09:00', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video' },
+    { id: 'ht-5', title: '品牌宣传片生成', status: 'completed', createdAt: '2024-01-08 09:00', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video1/400/225' },
+    { id: 'ht-16', title: '产品介绍视频', status: 'completed', createdAt: '2024-01-07 15:30', resultPreview: '已生成8镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video2/400/225' },
+    { id: 'ht-17', title: '企业文化宣传', status: 'completed', createdAt: '2024-01-06 10:45', resultPreview: '已生成5镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video3/400/225' },
+    { id: 'ht-18', title: '节日祝福视频', status: 'completed', createdAt: '2024-01-05 14:20', resultPreview: '已生成7镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video4/400/225' },
+    { id: 'ht-19', title: '新品发布预告', status: 'completed', createdAt: '2024-01-04 09:15', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video5/400/225' },
   ],
   'image-to-video': [
-    { id: 'ht-6', title: '旅行相册MV', status: 'completed', createdAt: '2024-01-12 10:30', resultPreview: '已生成15秒运镜视频...', resultId: 'result-image-to-video' },
+    { id: 'ht-6', title: '旅行相册MV', status: 'completed', createdAt: '2024-01-12 10:30', resultPreview: '已生成15秒运镜视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-travel/400/225' },
+    { id: 'ht-20', title: '产品动态展示', status: 'completed', createdAt: '2024-01-11 09:15', resultPreview: '已生成10秒产品运镜...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-product/400/225' },
+    { id: 'ht-21', title: '风景延时摄影', status: 'completed', createdAt: '2024-01-09 16:40', resultPreview: '已生成8秒延时视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-landscape/400/225' },
+    { id: 'ht-22', title: '人物肖像动画', status: 'completed', createdAt: '2024-01-07 14:20', resultPreview: '已生成5秒人像动态...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-portrait/400/225' },
+    { id: 'ht-23', title: '美食制作过程', status: 'completed', createdAt: '2024-01-05 11:00', resultPreview: '已生成12秒美食视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-food/400/225' },
   ],
   'video-translate': [
-    { id: 'ht-7', title: '英文课程中文字幕', status: 'completed', createdAt: '2024-01-11 14:00', resultPreview: '已生成8条双语字幕...', resultId: 'result-video-translate' },
+    { id: 'ht-7', title: 'product_launch_2024.mp4', status: 'completed', createdAt: '2025-01-15 14:30', resultPreview: '已生成12条中英双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-product/400/225' },
+    { id: 'ht-24', title: 'online_course_ai.mp4', status: 'completed', createdAt: '2025-01-14 09:15', resultPreview: '已生成18条日中双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-course/400/225' },
+    { id: 'ht-25', title: 'marketing_sizzle_reel.mov', status: 'completed', createdAt: '2025-01-13 16:40', resultPreview: '已生成10条中英双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-marketing/400/225' },
+    { id: 'ht-26', title: 'tutorial_edit_basics.mp4', status: 'completed', createdAt: '2025-01-12 11:20', resultPreview: '已生成15条韩中双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-tutorial/400/225' },
+    { id: 'ht-27', title: 'conference_keynote.mp4', status: 'completed', createdAt: '2025-01-11 08:45', resultPreview: '已生成22条法中双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-keynote/400/225' },
   ],
   'video-dubbing': [
     { id: 'ht-8', title: '解说视频配音', status: 'completed', createdAt: '2024-01-10 11:20', resultPreview: '旁白、专家、用户三角色配音...', resultId: 'result-video-dubbing' },
@@ -102,6 +122,7 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [progressSteps, setProgressSteps] = useState<{ label: string; status: 'pending' | 'running' | 'done' }[]>([])
+  const [videoTranslateResult, setVideoTranslateResult] = useState<any>(null)
 
   // 参数变化处理
   const handleParamChange = useCallback((id: string, value: any) => {
@@ -157,6 +178,13 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
           { label: '字幕生成', status: 'pending' },
           { label: '视频合成', status: 'pending' },
         ]
+      case 'image-to-video':
+        return [
+          { label: '图片分析', status: 'done' },
+          { label: '生成图像', status: 'running' },
+          { label: '图像优化', status: 'pending' },
+          { label: '准备视频生成', status: 'pending' },
+        ]
       case 'topic-to-copywriting':
         return [
           { label: '主题分析', status: 'done' },
@@ -187,13 +215,16 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
   // 开始处理
   const handleProcess = useCallback((skipValidation?: boolean) => {
     if (!skipValidation) {
-      if (agent.inputType === 'file' || agent.inputType === 'both') {
-        if (!file) {
-          setUploadError('请先上传文件')
-          return
+      // image-to-video 由体验区组件内部管理图片上传，跳过文件校验
+      if (agent.id !== 'image-to-video') {
+        if (agent.inputType === 'file' || agent.inputType === 'both') {
+          if (!file) {
+            setUploadError('请先上传文件')
+            return
+          }
         }
       }
-      if (agent.inputType === 'text' || agent.inputType === 'both') {
+      if (agent.inputType === 'text' || agent.inputType === 'both' || agent.id === 'image-to-video') {
         if (!text.trim()) {
           setUploadError('请输入内容')
           return
@@ -203,6 +234,25 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
           return
         }
       }
+    }
+    
+    // image-to-video：体验组件内部自管理对话流程，此处仅标记开始处理
+    if (agent.id === 'image-to-video') {
+      setUploadError(undefined)
+      setIsProcessing(true)
+      // 不做进度模拟和结果页跳转，组件自行管理完成后的重置
+      setTimeout(() => {
+        setIsProcessing(false)
+      }, 6000)
+      return
+    }
+
+    // video-translate：由体验组件内部管理处理流程，此处仅标记开始处理
+    if (agent.id === 'video-translate') {
+      setUploadError(undefined)
+      setIsProcessing(true)
+      // 不做进度模拟和结果页跳转，组件自行管理完成后的状态
+      return
     }
 
     setUploadError(undefined)
@@ -285,6 +335,12 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                 <AgentVideoToTextIntro />
               ) : agent.id === 'topic-to-copywriting' ? (
                 <AgentCopywritingIntro />
+              ) : agent.id === 'copywriting-to-video' ? (
+                <AgentCopywritingToVideoIntro />
+              ) : agent.id === 'video-translate' ? (
+                <AgentVideoTranslateIntro />
+              ) : agent.id === 'image-to-video' ? (
+                <AgentImageToVideoIntro />
               ) : (
                 <AgentSceneCards scenes={agent.scenes} />
               )}
@@ -342,19 +398,45 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                 </div>
               ) : agent.id === 'copywriting-to-video' ? (
                 /* AI文案生视频：顶部标题 + 大输入卡片 + 底部工具栏 */
+                <CopywritingToVideoExperienceArea
+                  agent={agent}
+                  text={text}
+                  paramValues={paramValues}
+                  onTextChange={setText}
+                  onParamChange={handleParamChange}
+                  error={uploadError}
+                  isProcessing={isProcessing}
+                  onStartProcess={handleProcess}
+                />
+              ) : agent.id === 'image-to-video' ? (
+                /* AI图生视频：顶部标题 + 大输入卡片 + 底部工具栏 */
+                <ImageToVideoExperienceArea
+                  agent={agent}
+                  text={text}
+                  paramValues={paramValues}
+                  onTextChange={setText}
+                  onParamChange={handleParamChange}
+                  error={uploadError}
+                  isProcessing={isProcessing}
+                  onStartProcess={handleProcess}
+                />
+              ) : agent.id === 'video-translate' ? (
+                /* AI视频翻译：上传区 → 视频编辑页 → 结果页（三阶段） */
                 <div className="space-y-4">
-                  <CopywritingToVideoExperienceArea
-                    agent={agent}
-                    text={text}
-                    paramValues={paramValues}
-                    onTextChange={setText}
-                    onParamChange={handleParamChange}
-                    error={uploadError}
-                    isProcessing={isProcessing}
-                    onStartProcess={handleProcess}
-                  />
-                  {/* 结果区：仅展示处理进度动画 */}
-                  {isProcessing && (
+                  {videoTranslateResult ? (
+                    <VideoTranslateResultPage 
+                      result={videoTranslateResult} 
+                      onBackToEdit={() => setVideoTranslateResult(null)}
+                    />
+                  ) : (
+                    <VideoTranslateExperienceArea
+                      agent={agent}
+                      onStartProcess={() => handleProcess()}
+                      onProcessComplete={(result) => setVideoTranslateResult(result)}
+                    />
+                  )}
+                  {/* 结果区：处理进度动画 */}
+                  {isProcessing && !videoTranslateResult && (
                     <AgentResultArea
                       isProcessing={true}
                       progress={progress}
@@ -427,55 +509,103 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                   tasks.map((task) => (
                     <Card
                       key={task.id}
-                      className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col"
+                      className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col overflow-hidden"
                       onClick={() => onViewResult?.(task.resultId, task.title)}
                     >
-                      <CardContent className="p-4 flex flex-col flex-1">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      {/* AI 文案生视频 / AI 图生视频 / AI 视频翻译：显示视频预览图 */}
+                      {(agent.id === 'copywriting-to-video' || agent.id === 'image-to-video' || agent.id === 'video-translate') && task.videoThumbnail ? (
+                        <>
+                          {/* 视频预览图 */}
+                          <div className="relative aspect-video bg-black">
+                            <img
+                              src={task.videoThumbnail}
+                              alt={task.title}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* 播放按钮遮罩 */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center">
+                                <Play className="h-6 w-6 text-black ml-1 fill-current" />
+                              </div>
+                            </div>
+                            {/* 状态角标 */}
                             {task.status === 'completed' ? (
-                              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                                <CheckCircle2 className="h-4 w-4 text-white" />
+                              </div>
                             ) : task.status === 'failed' ? (
-                              <Loader2 className="h-5 w-5 text-destructive" />
+                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive flex items-center justify-center">
+                                <X className="h-4 w-4 text-white" />
+                              </div>
                             ) : (
-                              <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                <Loader2 className="h-4 w-4 text-white animate-spin" />
+                              </div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0 flex flex-col">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <h4 className="text-sm font-medium text-foreground line-clamp-5 whitespace-pre-line leading-relaxed">
-                                {task.title}
-                              </h4>
-                              <Badge
-                                variant={
-                                  task.status === 'completed'
-                                    ? 'secondary'
-                                    : task.status === 'failed'
-                                      ? 'destructive'
-                                      : 'default'
-                                }
-                                className="text-[10px] shrink-0 mt-0.5"
-                              >
-                                {task.status === 'completed'
-                                  ? '已完成'
-                                  : task.status === 'failed'
-                                    ? '失败'
-                                    : '处理中'}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-muted-foreground line-clamp-5 mb-1.5 flex-1">
-                              {task.resultPreview}
-                            </p>
-                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-auto">
+                          {/* 底部信息 */}
+                          <CardContent className="p-3">
+                            <h4 className="text-sm font-medium text-foreground mb-1 line-clamp-2">
+                              {task.title}
+                            </h4>
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
                                 {task.createdAt}
                               </span>
-                              <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                              <ChevronRight className="h-3 w-3 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                            </div>
+                          </CardContent>
+                        </>
+                      ) : (
+                        /* 其他应用：保持原卡片样式 */
+                        <CardContent className="p-4 flex flex-col flex-1">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              {task.status === 'completed' ? (
+                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                              ) : task.status === 'failed' ? (
+                                <Loader2 className="h-5 w-5 text-destructive" />
+                              ) : (
+                                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <h4 className="text-sm font-medium text-foreground line-clamp-5 whitespace-pre-line leading-relaxed">
+                                  {task.title}
+                                </h4>
+                                <Badge
+                                  variant={
+                                    task.status === 'completed'
+                                      ? 'secondary'
+                                      : task.status === 'failed'
+                                        ? 'destructive'
+                                        : 'default'
+                                  }
+                                  className="text-[10px] shrink-0 mt-0.5"
+                                >
+                                  {task.status === 'completed'
+                                    ? '已完成'
+                                    : task.status === 'failed'
+                                      ? '失败'
+                                      : '处理中'}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground line-clamp-5 mb-1.5 flex-1">
+                                {task.resultPreview}
+                              </p>
+                              <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-auto">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {task.createdAt}
+                                </span>
+                                <ChevronRight className="h-3 w-3 ml-auto text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
+                        </CardContent>
+                      )}
                     </Card>
                   ))
                 )})()}
