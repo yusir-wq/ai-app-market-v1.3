@@ -56,6 +56,8 @@ import {
   BookOpen,
   Type,
   Music,
+  X,
+  Eraser,
   Trash2,
   Clapperboard,
 } from 'lucide-react'
@@ -1215,43 +1217,150 @@ function VideoRemoveWatermarkResult({ result }: { result: AgentResultDetail }) {
 }
 
 // ============================================================
-// 5. 视频配字幕 — 视频 + 字幕轨道
+// 5. 视频配字幕 — 左右布局：视频预览 + 字幕列表
 // ============================================================
 
 function VideoSubtitleResult({ result }: { result: AgentResultDetail }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [editingIdx, setEditingIdx] = useState<number | null>(null)
+  const [editingText, setEditingText] = useState('')
+  const [langMode, setLangMode] = useState<'bilingual' | 'original' | 'translated'>('bilingual')
+  const [subtitles, setSubtitles] = useState(result.subtitleTracks?.map(t => ({
+    ...t,
+    translatedText: t.translatedText || '',
+  })) || [])
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) { videoRef.current.play(); setIsPlaying(true) }
+      else { videoRef.current.pause(); setIsPlaying(false) }
+    }
+  }
+  const ft = (t: number) => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` }
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const t = parseFloat(e.target.value); setCurrentTime(t)
+    if (videoRef.current) videoRef.current.currentTime = t
+  }
+  const startEdit = (idx: number, text: string) => { setEditingIdx(idx); setEditingText(text) }
+  const saveEdit = () => {
+    if (editingIdx !== null) {
+      setSubtitles(prev => prev.map((s, i) => i === editingIdx ? { ...s, translatedText: editingText } : s))
+      setEditingIdx(null)
+    }
+  }
+  const deleteSub = (idx: number) => { setSubtitles(prev => prev.filter((_, i) => i !== idx)) }
+
+  // Find active subtitle
+  const activeSub = subtitles.find(s => {
+    const [sh, sm, ss] = s.startTime.split(':').map(Number)
+    const [eh, em, es] = s.endTime.split(':').map(Number)
+    return currentTime >= sh * 3600 + sm * 60 + ss && currentTime <= eh * 3600 + em * 60 + es
+  })
+
   return (
-    <div className="space-y-4">
-      {/* 视频 */}
-      <div className="rounded-xl overflow-hidden border border-border bg-black">
-        {result.videoUrl && <video controls className="w-full max-h-[300px]"><source src={result.videoUrl} /></video>}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* LEFT: Video with subtitle overlay */}
+      <div className="flex flex-col gap-3">
+        <Card className="border-border/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="relative bg-black">
+            {result.videoUrl && (
+              <video ref={videoRef} src={result.videoUrl} className="w-full aspect-video"
+                onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
+                onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
+                onEnded={() => setIsPlaying(false)} />
+            )}
+            {/* Subtitle overlay */}
+            {activeSub && (
+              <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none">
+                {(langMode === 'bilingual' || langMode === 'original') && (
+                  <p className="text-white text-sm font-medium drop-shadow-lg bg-black/50 px-3 py-1 rounded">{activeSub.text}</p>
+                )}
+                {(langMode === 'bilingual' || langMode === 'translated') && activeSub.translatedText && (
+                  <p className="text-yellow-300 text-xs drop-shadow-lg bg-black/50 px-3 py-0.5 rounded">{activeSub.translatedText}</p>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-10">{ft(currentTime)}</span>
+              <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek}
+                className="flex-1 h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" />
+              <span className="text-xs text-muted-foreground w-10 text-right">{duration ? ft(duration) : '00:00'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={togglePlay}>
+                  {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              {result.videoUrl && (
+                <a href={result.videoUrl} download={result.videoFileName || 'subtitle-video.mp4'}>
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
+                    <Download className="h-3 w-3" />下载视频
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
+        </Card>
+        <div className="flex items-center gap-2 px-1">
+          <FileVideo className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium text-foreground truncate">{result.videoFileName || 'subtitle-video.mp4'}</span>
+        </div>
       </div>
 
-      {/* 字幕列表 */}
-      {result.subtitleTracks && (
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Languages className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">字幕轨道</h3>
-              <Badge variant="secondary" className="text-[10px]">{result.subtitleTracks.length} 条</Badge>
-            </div>
-            <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
-              {result.subtitleTracks.map((track) => (
-                <div key={track.index} className="flex items-start gap-3 p-2 rounded-lg hover:bg-secondary/30 transition-colors group">
-                  <span className="text-[11px] text-muted-foreground font-mono shrink-0 mt-0.5 w-10">{track.index}</span>
-                  <span className="text-[11px] text-muted-foreground font-mono shrink-0 mt-0.5 w-20">{track.startTime} - {track.endTime}</span>
-                  <span className="text-sm text-foreground leading-relaxed flex-1">{track.text}</span>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground/30 group-hover:text-primary shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-all" />
+      {/* RIGHT: Subtitle list */}
+      <div className="flex flex-col gap-3">
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Type className="h-3 w-3" />字幕样式</Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Globe className="h-3 w-3" />查找/替换</Button>
+          <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5 ml-auto">
+            <button onClick={() => setLangMode('original')} className={cn('h-7 text-[11px] px-2 rounded transition-colors', langMode === 'original' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>原文</button>
+            <button onClick={() => setLangMode('translated')} className={cn('h-7 text-[11px] px-2 rounded transition-colors', langMode === 'translated' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>译文</button>
+            <button onClick={() => setLangMode('bilingual')} className={cn('h-7 text-[11px] px-2 rounded transition-colors', langMode === 'bilingual' ? 'bg-background shadow-sm' : 'text-muted-foreground')}>双语</button>
+          </div>
+        </div>
+
+        {/* Subtitle list */}
+        <Card className="border-border/60 shadow-sm flex-1">
+          <CardContent className="p-4 max-h-[420px] overflow-y-auto">
+            <div className="space-y-2">
+              {subtitles.map((sub, idx) => (
+                <div key={idx} className="p-3 rounded-lg border border-border/50 bg-card hover:bg-accent/30 transition-colors">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{sub.startTime} - {sub.endTime}</span>
+                    <div className="flex items-center gap-0.5">
+                      {editingIdx === idx ? (
+                        <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5 text-emerald-600" onClick={saveEdit}>保存</Button>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5" onClick={() => startEdit(idx, sub.translatedText)}>编辑</Button>
+                      )}
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteSub(idx)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{sub.text}</p>
+                  {editingIdx === idx ? (
+                    <input className="w-full mt-1 text-sm border border-border rounded px-2 py-1 bg-background" value={editingText}
+                      onChange={e => setEditingText(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') saveEdit() }} />
+                  ) : (
+                    <p className="text-sm font-medium text-primary">{sub.translatedText}</p>
+                  )}
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
-      )}
 
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 h-10"><Download className="h-4 w-4 mr-2" />下载字幕</Button>
-        <Button variant="outline" className="flex-1 h-10"><Download className="h-4 w-4 mr-2" />下载视频</Button>
+        <Button className="w-full h-11 gap-2">
+          <Download className="h-4 w-4" />导出字幕文件（SRT）
+        </Button>
       </div>
     </div>
   )
@@ -1305,79 +1414,210 @@ function CopywritingToVideoResult({ result }: { result: AgentResultDetail }) {
 }
 
 // ============================================================
-// 7. 视频配音 — 多人配音分段
+// 7. 视频配音 — 新设计：视频+字幕+音频
 // ============================================================
 
 function VideoDubbingResult({ result }: { result: AgentResultDetail }) {
-  const [playingId, setPlayingId] = useState<string | null>(null)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [viewMode, setViewMode] = useState<'after' | 'before'>('after')
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const ft = (t: number) => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` }
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) { videoRef.current.play(); setIsPlaying(true) }
+      else { videoRef.current.pause(); setIsPlaying(false) }
+    }
+  }
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const t = parseFloat(e.target.value); setCurrentTime(t)
+    if (videoRef.current) videoRef.current.currentTime = t
+  }
+
+  // Find active subtitle
+  const activeSub = result.subtitleTracks?.find(s => {
+    const [sh, sm, ss] = s.startTime.split(':').map(Number)
+    const [eh, em, es] = s.endTime.split(':').map(Number)
+    return currentTime >= sh * 3600 + sm * 60 + ss && currentTime <= eh * 3600 + em * 60 + es
+  })
 
   return (
-    <div className="space-y-4">
-      {result.audioUrl && (
-        <Card className="border-border/60">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setPlayingId(playingId === 'main' ? null : 'main')}
-                className={cn('w-12 h-12 rounded-full flex items-center justify-center transition-colors shrink-0',
-                  playingId === 'main' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
-                )}
-              >
-                {playingId === 'main' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
-              </button>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">{result.audioFileName}</p>
-                <p className="text-xs text-muted-foreground">{result.audioInfo?.voiceName} · {result.audioInfo?.duration} · {result.audioInfo?.format}</p>
-              </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* LEFT: Video with subtitles */}
+      <div className="flex flex-col gap-3">
+        <Card className="border-border/60 shadow-sm overflow-hidden">
+          <div className="relative bg-black">
+            {/* Before/After tabs */}
+            <div className="absolute top-3 right-3 z-10 flex rounded-lg bg-black/50 p-0.5 gap-0.5">
+              <button onClick={() => setViewMode('before')}
+                className={cn('px-3 py-1 rounded-md text-[11px] font-medium transition-all',
+                  viewMode === 'before' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80')}>处理前</button>
+              <button onClick={() => setViewMode('after')}
+                className={cn('px-3 py-1 rounded-md text-[11px] font-medium transition-all',
+                  viewMode === 'after' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80')}>处理后</button>
             </div>
-            {result.audioUrl && playingId === 'main' && <audio src={result.audioUrl} autoPlay controls className="w-full mt-3" onEnded={() => setPlayingId(null)} />}
+            <video ref={videoRef} src={result.videoUrl} className="w-full aspect-video"
+              onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
+              onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
+              onEnded={() => setIsPlaying(false)} />
+            {/* Subtitle overlay — only in 处理后 mode */}
+            {viewMode === 'after' && activeSub && (
+              <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-1 pointer-events-none">
+                <p className="text-white text-sm font-medium drop-shadow-lg bg-black/50 px-3 py-1 rounded">{activeSub.text}</p>
+                <p className="text-yellow-300 text-xs drop-shadow-lg bg-black/50 px-3 py-0.5 rounded">{activeSub.translatedText}</p>
+              </div>
+            )}
+            {/* Dubbing badge */}
+            {viewMode === 'after' && (
+              <div className="absolute top-3 left-3 bg-green-600 text-white text-[11px] font-medium px-2 py-1 rounded-md flex items-center gap-1">
+                <Volume2 className="h-3 w-3" /> 已配音
+              </div>
+            )}
+          </div>
+          {/* Controls */}
+          <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-10">{ft(currentTime)}</span>
+              <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek}
+                className="flex-1 h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" />
+              <span className="text-xs text-muted-foreground w-10 text-right">{duration ? ft(duration) : '00:00'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={togglePlay}>
+                  {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              <a href={result.videoUrl} download={result.videoFileName || 'dubbed-video.mp4'}>
+                <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
+                  <Download className="h-3 w-3" />下载配音视频
+                </Button>
+              </a>
+            </div>
+          </div>
+        </Card>
+
+        {/* File name */}
+        <div className="flex items-center gap-2 px-1">
+          <FileVideo className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm font-medium text-foreground truncate">{result.videoFileName || 'dubbed-video.mp4'}</span>
+        </div>
+
+        {/* Audio player */}
+        {result.audioUrl && (
+          <Card className="border-border/60 shadow-sm">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Music className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">AI配音音频</span>
+                  <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                    {result.audioInfo?.voiceName} · {result.audioInfo?.duration}
+                  </span>
+                </div>
+                <a href={result.audioUrl} download={result.audioFileName}>
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
+                    <Download className="h-3 w-3" />下载
+                  </Button>
+                </a>
+              </div>
+              <audio src={result.audioUrl} controls className="w-full h-8" />
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* RIGHT: Subtitle list */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">字幕内容</h3>
+          <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5">
+            <button className="h-7 text-[11px] px-2 rounded bg-background shadow-sm">双语</button>
+            <button className="h-7 text-[11px] px-2 rounded text-muted-foreground">原文</button>
+            <button className="h-7 text-[11px] px-2 rounded text-muted-foreground">译文</button>
+          </div>
+        </div>
+        <Card className="border-border/60 shadow-sm flex-1">
+          <CardContent className="p-3 max-h-[420px] overflow-y-auto">
+            <div className="space-y-2">
+              {result.subtitleTracks?.map((s, i) => (
+                <div key={i} className="p-3 rounded-lg border border-border/50 bg-card">
+                  <span className="text-[11px] font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{s.startTime} - {s.endTime}</span>
+                  <p className="text-sm text-muted-foreground mt-1">{s.text}</p>
+                  <p className="text-sm font-medium text-primary">{s.translatedText}</p>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
-      )}
 
-      {result.multiVoiceResults && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />分角色配音
-          </h3>
-          {result.multiVoiceResults.map((mv) => {
-            const isPlaying = playingId === mv.audioUrl
-            return (
-              <Card key={mv.speaker} className="border-border/60">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <button
-                      onClick={() => setPlayingId(isPlaying ? null : mv.audioUrl)}
-                      className={cn('w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0',
-                        isPlaying ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
-                      )}
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-                    </button>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{mv.speaker}</p>
-                        <Badge variant="secondary" className="text-[10px]">{mv.voiceType}</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{mv.text.length}字</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground bg-secondary/30 rounded-lg p-3">{mv.text}</p>
-                  {mv.audioUrl && isPlaying && <audio src={mv.audioUrl} autoPlay controls className="w-full mt-3" onEnded={() => setPlayingId(null)} />}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-
-      <Button variant="outline" className="w-full h-10"><Download className="h-4 w-4 mr-2" />下载全部音频</Button>
+        {/* Params info */}
+        <Card className="border-border/60 shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex flex-wrap gap-3 text-xs">
+              <span className="text-muted-foreground">配音音色：<span className="text-foreground font-medium">{result.audioInfo?.voiceName}</span></span>
+              <span className="text-muted-foreground">语速：<span className="text-foreground font-medium">1.0x</span></span>
+              <span className="text-muted-foreground">消耗：<span className="text-foreground font-medium">{result.costPoints} 智点</span></span>
+              <span className="text-muted-foreground">耗时：<span className="text-foreground font-medium">{result.processTime}</span></span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
 
 // ============================================================
-// 8. AI生成视频文案 — 视频脚本 + 关键词
+// 8. AI视频去水印 — 视频 + 处理详情
+// ============================================================
+
+function VideoWatermarkRemovalResult({ result }: { result: AgentResultDetail }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [viewMode, setViewMode] = useState<'after' | 'before'>('after')
+
+  const ft = (t: number) => { const m = Math.floor(t / 60), s = Math.floor(t % 60); return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` }
+  const togglePlay = () => {
+    if (videoRef.current) { if (videoRef.current.paused) { videoRef.current.play(); setIsPlaying(true) } else { videoRef.current.pause(); setIsPlaying(false) } }
+  }
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => { const t = parseFloat(e.target.value); setCurrentTime(t); if (videoRef.current) videoRef.current.currentTime = t }
+
+  const params = result.params || {}
+  const fillModeLabel = params.fillMode === 'ai-inpaint' ? 'AI智能填充' : params.fillMode === 'blur' ? '模糊处理' : '纯色填充'
+  const regionCount = params.regions?.length || 0
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="flex flex-col gap-3">
+        <Card className="border-border/60 shadow-sm overflow-hidden">
+          <div className="relative bg-black">
+            <div className="absolute top-3 right-3 z-10 flex rounded-lg bg-black/50 p-0.5 gap-0.5">
+              <button onClick={() => setViewMode('before')} className={cn('px-3 py-1 rounded-md text-[11px] font-medium transition-all', viewMode === 'before' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80')}>处理前</button>
+              <button onClick={() => setViewMode('after')} className={cn('px-3 py-1 rounded-md text-[11px] font-medium transition-all', viewMode === 'after' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80')}>处理后</button>
+            </div>
+            {result.videoUrl && <video ref={videoRef} src={result.videoUrl} className="w-full aspect-video" onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)} onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)} onEnded={() => setIsPlaying(false)} />}
+            {viewMode === 'after' && <div className="absolute top-3 left-3 bg-green-600 text-white text-[11px] font-medium px-2 py-1 rounded-md flex items-center gap-1"><Eraser className="h-3 w-3" />已去除</div>}
+          </div>
+          <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+            <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground w-10">{ft(currentTime)}</span><input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek} className="flex-1 h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" /><span className="text-xs text-muted-foreground w-10 text-right">{duration ? ft(duration) : '00:00'}</span></div>
+            <div className="flex items-center justify-between"><div className="flex items-center gap-1.5"><Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={togglePlay}>{isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</Button></div>{result.videoUrl && <a href={result.videoUrl} download={result.videoFileName || 'clean-video.mp4'}><Button variant="outline" size="sm" className="h-7 text-[11px] gap-1"><Download className="h-3 w-3" />下载去水印视频</Button></a>}</div>
+          </div>
+        </Card>
+        <div className="flex items-center gap-2 px-1"><FileVideo className="h-4 w-4 text-primary shrink-0" /><span className="text-sm font-medium text-foreground truncate">{result.videoFileName || 'clean-video.mp4'}</span></div>
+      </div>
+      <div className="flex flex-col gap-3">
+        <Card className="border-border/60 shadow-sm"><CardContent className="p-4 space-y-3"><h3 className="text-sm font-semibold text-foreground mb-3">处理详情</h3><div className="grid grid-cols-2 gap-3"><div className="p-3 rounded-lg bg-secondary/30"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">去除模式</p><p className="text-sm font-medium text-foreground mt-0.5">{params.removalMode === 'smart' ? '智能识别' : '手动框选'}</p></div><div className="p-3 rounded-lg bg-secondary/30"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">填充方式</p><p className="text-sm font-medium text-foreground mt-0.5">{fillModeLabel}</p></div><div className="p-3 rounded-lg bg-secondary/30"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">框选区域</p><p className="text-sm font-medium text-foreground mt-0.5">{regionCount} 个</p></div><div className="p-3 rounded-lg bg-secondary/30"><p className="text-[10px] text-muted-foreground uppercase tracking-wider">消耗</p><p className="text-sm font-medium text-foreground mt-0.5">{result.costPoints} 智点</p></div></div><div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20"><div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500" /><span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">处理完成</span></div><p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">AI已成功去除指定区域的水印/字幕，视频画面已智能填充修复。</p></div></CardContent></Card>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// 9. AI生成视频文案 — 视频脚本 + 关键词
 // ============================================================
 
 function TopicToCopywritingResult({ result, onGenerateVideo }: { result: AgentResultDetail; onGenerateVideo?: (text: string, taskName: string) => void }) {
@@ -2061,6 +2301,8 @@ export function AgentResultDetailView({
         return <VideoDubbingResult result={result} />
       case 'video-subtitle':
         return <VideoSubtitleResult result={result} />
+      case 'video-watermark-removal':
+        return <VideoWatermarkRemovalResult result={result} />
       default:
         return <SpeechToTextResult result={result} />
     }

@@ -15,6 +15,13 @@ import { AgentCopywritingToVideoIntro } from '@/components/agent/agent-copywriti
 import { AgentVideoTranslateIntro } from '@/components/agent/agent-video-translate-intro'
 import { VideoTranslateExperienceArea } from '@/components/agent/agent-video-translate-experience'
 import { VideoTranslateResultPage } from '@/components/agent/agent-video-translate-result'
+import { VideoSubtitleExperienceArea } from '@/components/agent/agent-video-subtitle-experience'
+import type { VideoSubtitleResult } from '@/components/agent/agent-video-subtitle-experience'
+import { AgentVideoSubtitleIntro } from '@/components/agent/agent-video-subtitle-intro'
+import { VideoDubbingExperienceArea } from '@/components/agent/agent-video-dubbing-experience'
+import { AgentVideoDubbingIntro } from '@/components/agent/agent-video-dubbing-intro'
+import { VideoWatermarkRemovalExperienceArea } from '@/components/agent/agent-video-watermark-removal-experience'
+import { AgentVideoWatermarkRemovalIntro } from '@/components/agent/agent-video-watermark-removal-intro'
 import { CopywritingExperienceArea } from '@/components/agent/agent-copywriting-experience'
 import { CopywritingToVideoExperienceArea } from '@/components/agent/copywriting-to-video-experience'
 import { ImageToVideoExperienceArea } from '@/components/agent/image-to-video-experience'
@@ -52,7 +59,7 @@ interface HistoryTask {
   createdAt: string
   resultPreview: string
   resultId: string
-  videoThumbnail?: string // 视频预览图（AI 文案生视频、AI 图生视频、AI 视频翻译使用）
+  videoThumbnail?: string // 视频预览图（AI 文案生视频、AI 图生视频、AI 视频翻译、AI 字幕生成、AI 视频配音、AI 视频去水印使用）
 }
 
 const mockHistoryTasks: Record<string, HistoryTask[]> = {
@@ -96,10 +103,25 @@ const mockHistoryTasks: Record<string, HistoryTask[]> = {
     { id: 'ht-27', title: 'conference_keynote.mp4', status: 'completed', createdAt: '2025-01-11 08:45', resultPreview: '已生成22条法中双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-keynote/400/225' },
   ],
   'video-dubbing': [
-    { id: 'ht-8', title: '解说视频配音', status: 'completed', createdAt: '2024-01-10 11:20', resultPreview: '旁白、专家、用户三角色配音...', resultId: 'result-video-dubbing' },
+    { id: 'ht-8', title: 'product_demo.mp4', status: 'completed', createdAt: '2025-01-10 11:20', resultPreview: '已生成三角色配音版本', resultId: 'result-video-dubbing', videoThumbnail: 'https://picsum.photos/seed/vd-product/400/225' },
+    { id: 'ht-32', title: 'tutorial_voiceover.mp4', status: 'completed', createdAt: '2025-01-09 09:15', resultPreview: '已生成磁性男声配音', resultId: 'result-video-dubbing', videoThumbnail: 'https://picsum.photos/seed/vd-tutorial/400/225' },
+    { id: 'ht-33', title: 'brand_story.mp4', status: 'completed', createdAt: '2025-01-08 14:30', resultPreview: '已生成沉稳男声配音', resultId: 'result-video-dubbing', videoThumbnail: 'https://picsum.photos/seed/vd-brand/400/225' },
+    { id: 'ht-34', title: 'kids_animation.mp4', status: 'completed', createdAt: '2025-01-07 10:45', resultPreview: '已生成可爱童声配音', resultId: 'result-video-dubbing', videoThumbnail: 'https://picsum.photos/seed/vd-kids/400/225' },
+    { id: 'ht-35', title: 'news_report.mp4', status: 'completed', createdAt: '2025-01-06 16:00', resultPreview: '已生成温柔女声配音', resultId: 'result-video-dubbing', videoThumbnail: 'https://picsum.photos/seed/vd-news/400/225' },
   ],
   'video-subtitle': [
-    { id: 'ht-9', title: '课程视频配字幕', status: 'completed', createdAt: '2024-01-12 10:30', resultPreview: '已生成10条字幕轨道...', resultId: 'result-video-subtitle' },
+    { id: 'ht-9', title: 'tutorial_edit_basics.mp4', status: 'completed', createdAt: '2025-01-12 10:30', resultPreview: '已生成10条中英双语字幕', resultId: 'result-video-subtitle', videoThumbnail: 'https://picsum.photos/seed/vs-tutorial/400/225' },
+    { id: 'ht-28', title: 'product_overview.mp4', status: 'completed', createdAt: '2025-01-11 09:15', resultPreview: '已生成8条日中双语字幕', resultId: 'result-video-subtitle', videoThumbnail: 'https://picsum.photos/seed/vs-product/400/225' },
+    { id: 'ht-29', title: 'team_meeting_recap.mp4', status: 'completed', createdAt: '2025-01-10 16:40', resultPreview: '已生成12条字幕轨道', resultId: 'result-video-subtitle', videoThumbnail: 'https://picsum.photos/seed/vs-meeting/400/225' },
+    { id: 'ht-30', title: 'social_vlog_2025.mp4', status: 'completed', createdAt: '2025-01-09 14:20', resultPreview: '已生成15条中英双语字幕', resultId: 'result-video-subtitle', videoThumbnail: 'https://picsum.photos/seed/vs-vlog/400/225' },
+    { id: 'ht-31', title: 'keynote_presentation.mov', status: 'completed', createdAt: '2025-01-08 11:00', resultPreview: '已生成18条法中双语字幕', resultId: 'result-video-subtitle', videoThumbnail: 'https://picsum.photos/seed/vs-keynote/400/225' },
+  ],
+  'video-watermark-removal': [
+    { id: 'ht-36', title: 'tutorial_watermark.mp4', status: 'completed', createdAt: '2025-01-05 09:30', resultPreview: '已去除右下角Logo水印', resultId: 'result-video-watermark-removal', videoThumbnail: 'https://picsum.photos/seed/wr-tutorial/400/225' },
+    { id: 'ht-37', title: 'brand_cleanup.mp4', status: 'completed', createdAt: '2025-01-04 14:15', resultPreview: '已去除顶部字幕和角标', resultId: 'result-video-watermark-removal', videoThumbnail: 'https://picsum.photos/seed/wr-brand/400/225' },
+    { id: 'ht-38', title: 'vlog_subtitle_removal.mp4', status: 'completed', createdAt: '2025-01-03 11:00', resultPreview: '已消除3处硬字幕', resultId: 'result-video-watermark-removal', videoThumbnail: 'https://picsum.photos/seed/wr-vlog/400/225' },
+    { id: 'ht-39', title: 'presentation_clean.mov', status: 'completed', createdAt: '2025-01-02 16:45', resultPreview: '已移除画面中心和底部水印', resultId: 'result-video-watermark-removal', videoThumbnail: 'https://picsum.photos/seed/wr-present/400/225' },
+    { id: 'ht-40', title: 'stock_footage_fix.mp4', status: 'completed', createdAt: '2025-01-01 10:20', resultPreview: 'AI填充修复左上角版权标记', resultId: 'result-video-watermark-removal', videoThumbnail: 'https://picsum.photos/seed/wr-stock/400/225' },
   ],
 }
 
@@ -123,6 +145,7 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
   const [progress, setProgress] = useState(0)
   const [progressSteps, setProgressSteps] = useState<{ label: string; status: 'pending' | 'running' | 'done' }[]>([])
   const [videoTranslateResult, setVideoTranslateResult] = useState<any>(null)
+  const [videoSubtitleResult, setVideoSubtitleResult] = useState<VideoSubtitleResult | null>(null)
 
   // 参数变化处理
   const handleParamChange = useCallback((id: string, value: any) => {
@@ -341,6 +364,12 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                 <AgentVideoTranslateIntro />
               ) : agent.id === 'image-to-video' ? (
                 <AgentImageToVideoIntro />
+              ) : agent.id === 'video-dubbing' ? (
+                <AgentVideoDubbingIntro />
+              ) : agent.id === 'video-subtitle' ? (
+                <AgentVideoSubtitleIntro />
+              ) : agent.id === 'video-watermark-removal' ? (
+                <AgentVideoWatermarkRemovalIntro />
               ) : (
                 <AgentSceneCards scenes={agent.scenes} />
               )}
@@ -446,6 +475,41 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                     />
                   )}
                 </div>
+              ) : agent.id === 'video-subtitle' ? (
+                /* AI字幕生成：上传区 → 编辑页 → loading → 结果页（四阶段） */
+                <div className="space-y-4">
+                  <VideoSubtitleExperienceArea
+                    agent={agent}
+                    onStartProcess={() => handleProcess()}
+                    onProcessComplete={(result) => setVideoSubtitleResult(result)}
+                  />
+                  {/* 结果区：处理进度动画 */}
+                  {isProcessing && !videoSubtitleResult && (
+                    <AgentResultArea
+                      isProcessing={true}
+                      progress={progress}
+                      progressSteps={progressSteps}
+                      costPoints={agent.costPoints}
+                      processTime={agent.avgProcessTime}
+                    />
+                  )}
+                </div>
+              ) : agent.id === 'video-dubbing' ? (
+                /* AI视频配音：上传区 → 编辑页 → 结果页（三阶段） */
+                <div className="space-y-4">
+                  <VideoDubbingExperienceArea
+                    agent={agent}
+                    onStartProcess={() => handleProcess()}
+                  />
+                </div>
+              ) : agent.id === 'video-watermark-removal' ? (
+                /* AI视频去水印：上传区 → 框选编辑页 → 结果页（四阶段） */
+                <div className="space-y-4">
+                  <VideoWatermarkRemovalExperienceArea
+                    agent={agent}
+                    onStartProcess={() => handleProcess()}
+                  />
+                </div>
               ) : (
                 <>
                   {/* 输入区 */}
@@ -512,8 +576,8 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                       className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col overflow-hidden"
                       onClick={() => onViewResult?.(task.resultId, task.title)}
                     >
-                      {/* AI 文案生视频 / AI 图生视频 / AI 视频翻译：显示视频预览图 */}
-                      {(agent.id === 'copywriting-to-video' || agent.id === 'image-to-video' || agent.id === 'video-translate') && task.videoThumbnail ? (
+                      {/* AI 文案生视频 / AI 图生视频 / AI 视频翻译 / AI 字幕生成 / AI 视频配音 / AI 视频去水印：显示视频预览图 */}
+                      {(agent.id === 'copywriting-to-video' || agent.id === 'image-to-video' || agent.id === 'video-translate' || agent.id === 'video-subtitle' || agent.id === 'video-dubbing' || agent.id === 'video-watermark-removal') && task.videoThumbnail ? (
                         <>
                           {/* 视频预览图 */}
                           <div className="relative aspect-video bg-black">

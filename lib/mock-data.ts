@@ -1573,6 +1573,28 @@ export const mockAgents: Agent[] = [
     costPoints: 30,
     avgProcessTime: '30秒-2分钟',
   },
+  {
+    id: 'video-watermark-removal',
+    name: 'AI视频去水印',
+    category: 'video',
+    description: '上传视频，框选指定区域，AI智能剔除字幕或水印',
+    icon: 'Eraser',
+    gradient: 'from-orange-400 to-red-500',
+    scenes: [
+      { icon: 'Youtube', title: '内容搬运', description: '去除原视频Logo和平台水印' },
+      { icon: 'Camera', title: '视频素材清理', description: '清除拍摄画面中的杂物和遮挡' },
+      { icon: 'Subtitles', title: '字幕去除', description: '智能消除视频中的硬字幕' },
+    ],
+    inputType: 'file',
+    acceptedFiles: ['.mp4', '.mov', '.avi', '.mkv'],
+    maxFileSize: 2000,
+    parameters: [
+      { id: 'removalMode', type: 'select', label: '去除模式', defaultValue: 'smart', options: [{ label: '智能识别', value: 'smart' }, { label: '手动框选', value: 'manual' }] },
+      { id: 'fillMode', type: 'select', label: '填充方式', defaultValue: 'ai-inpaint', options: [{ label: 'AI填充', value: 'ai-inpaint' }, { label: '模糊处理', value: 'blur' }, { label: '纯色填充', value: 'solid' }] },
+    ],
+    costPoints: 50,
+    avgProcessTime: '1-3分钟',
+  },
 ]
 
 // 根据category获取智能体

@@ -34,7 +34,7 @@ export interface AgentResultDetail {
   beforeVideoUrl?: string
   multiVoiceResults?: { speaker: string; voiceType: string; audioUrl: string; text: string }[]
   segments?: { id: string; speaker: string; startTime: string; endTime: string; text: string }[]
-  subtitleTracks?: { index: number; startTime: string; endTime: string; text: string }[]
+  subtitleTracks?: { index: number; startTime: string; endTime: string; text: string; translatedText?: string }[]
   params?: Record<string, any>
 }
 
@@ -181,21 +181,25 @@ const mockResultDetails: Record<string, AgentResultDetail> = {
   'result-video-dubbing': {
     id: 'result-video-dubbing',
     agentId: 'video-dubbing',
-    taskName: '解说视频配音',
-    createdAt: '2024-01-10 11:20',
+    taskName: '产品演示视频配音',
+    createdAt: '2025-01-10 11:20',
     status: 'completed',
     costPoints: 40,
     processTime: '1分28秒',
-    type: 'audio',
+    type: 'video',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4',
+    videoFileName: 'product_demo_dubbed.mp4',
     audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
     audioFileName: 'dubbing-output.mp3',
     audioInfo: { duration: '01:20', format: 'MP3', bitrate: '256kbps', voiceName: '男声-沉稳' },
-    multiVoiceResults: [
-      { speaker: '旁白', voiceType: '男声-沉稳', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', text: '在这个快速变化的时代，人工智能正在重塑每一个行业。' },
-      { speaker: '专家', voiceType: '男声-活力', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', text: '我们看到，AI技术已经从实验室走向了实际应用。在医疗、教育、金融等领域，AI正在发挥越来越重要的作用。' },
-      { speaker: '用户', voiceType: '女声-活泼', audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', text: '用了这个AI助手之后，我的工作效率提高了至少三倍！以前需要花一天完成的工作，现在两个小时就搞定了。' },
+    subtitleTracks: [
+      { index: 1, startTime: '00:00', endTime: '00:04', text: '欢迎来到AI视频配音工具的使用教程。', translatedText: 'Welcome to the AI video dubbing tutorial.' },
+      { index: 2, startTime: '00:01', endTime: '00:05', text: '今天我们将演示如何为视频自动添加AI配音。', translatedText: 'Today we demonstrate how to add AI dubbing to videos.' },
+      { index: 3, startTime: '00:05', endTime: '00:10', text: '首先选择你喜欢的配音音色，系统会自动合成配音。', translatedText: 'First choose your favorite voice, and the system will synthesize the dubbing.' },
+      { index: 4, startTime: '00:10', endTime: '00:15', text: '你还可以添加背景音乐，让视频更加生动有趣。', translatedText: 'You can also add background music to make the video more lively.' },
+      { index: 5, startTime: '00:15', endTime: '00:20', text: '处理完成后，即可预览带配音和字幕的视频效果。', translatedText: 'Once done, preview the video with dubbing and subtitles.' },
     ],
-    params: { voice: 'male-calm', speed: 1.0, volume: 100, keepOriginalAudio: false },
+    params: { voice: 'male-calm', bgm: 'inspire', speed: 1.0, volume: 100 },
   },
 
   // 9. AI字幕生成
@@ -224,6 +228,21 @@ const mockResultDetails: Record<string, AgentResultDetail> = {
       { index: 10, startTime: '01:10', endTime: '01:15', text: '谢谢大家，我们下节课再见' },
     ],
     params: { sourceLanguage: 'zh', targetLanguage: 'zh', subtitleStyle: 'burn', bilingual: false },
+  },
+
+  // 10. AI视频去水印
+  'result-video-watermark-removal': {
+    id: 'result-video-watermark-removal',
+    agentId: 'video-watermark-removal',
+    taskName: '教程视频去水印',
+    createdAt: '2025-01-05 09:30',
+    status: 'completed',
+    costPoints: 50,
+    processTime: '1分28秒',
+    type: 'video',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4',
+    videoFileName: 'clean_tutorial.mp4',
+    params: { removalMode: 'smart', fillMode: 'ai-inpaint', regions: [{ x: 500, y: 20, width: 80, height: 40 }] },
   },
 }
 
