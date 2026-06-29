@@ -72,11 +72,6 @@ interface ChatTurn {
   status: 'processing' | 'done'
 }
 
-const modeOptions = [
-  { value: 'text-to-video', label: '文生视频' },
-  { value: 'image-to-video', label: '图生视频' },
-]
-
 const ratioOptions = [
   { value: 'auto', label: '自适应' },
   { value: '9:16', label: '9:16' },
@@ -347,16 +342,6 @@ function VideoThumbnail({ turn }: { turn: ChatTurn }) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="h-8 w-8 rounded-lg" onClick={() => navigator.clipboard.writeText(turn.prompt)}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">复制提示词</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
               <Button variant="ghost" size="icon-sm" className="h-8 w-8 rounded-lg" onClick={() => {
                 setChatInputValue(turn.prompt)
                 setChatImage(turn.referenceImage)
@@ -425,7 +410,6 @@ export function ImageToVideoExperienceArea({
   isProcessing,
   onStartProcess,
 }: ImageToVideoExperienceProps) {
-  const mode = paramValues.mode || 'image-to-video'
   const ratio = paramValues.ratio || 'auto'
   const resolution = paramValues.resolution || '540p'
   const duration = String(paramValues.duration || '5')
@@ -494,7 +478,7 @@ export function ImageToVideoExperienceArea({
   // ---- Send handler (first send from input card) ----
   const handleSend = useCallback(() => {
     if (processingTurnId) return
-    if (mode === 'image-to-video' && !uploadedImage) {
+    if (!uploadedImage) {
       toast.error('请先上传图片', { description: '上传一张图片作为视频生成的参考图' })
       return
     }
@@ -507,7 +491,7 @@ export function ImageToVideoExperienceArea({
       id: `turn-${Date.now()}`,
       prompt: text,
       referenceImage: uploadedImage,
-      params: { mode, ratio, resolution, duration, bgm },
+      params: { ratio, resolution, duration, bgm },
       videoUrl: null,
       status: 'processing',
     }
@@ -520,7 +504,7 @@ export function ImageToVideoExperienceArea({
     setProcessingTurnId(turn.id)
     onStartProcess()
     onTextChange('')
-  }, [processingTurnId, mode, uploadedImage, text, ratio, resolution, duration, bgm, onStartProcess, onTextChange])
+  }, [processingTurnId, uploadedImage, text, ratio, resolution, duration, bgm, onStartProcess, onTextChange])
 
   // ---- Send handler (from chat input) ----
   const handleChatSend = useCallback(() => {
@@ -531,7 +515,7 @@ export function ImageToVideoExperienceArea({
       id: `turn-${Date.now()}`,
       prompt: chatInputValue,
       referenceImage: chatImage,
-      params: { mode, ratio, resolution, duration, bgm },
+      params: { ratio, resolution, duration, bgm },
       videoUrl: null,
       status: 'processing',
     }
@@ -542,7 +526,7 @@ export function ImageToVideoExperienceArea({
     setActiveStepIndex(0)
     setProcessingTurnId(turn.id)
     onStartProcess()
-  }, [processingTurnId, chatInputValue, chatImage, mode, ratio, resolution, duration, bgm, onStartProcess])
+  }, [processingTurnId, chatInputValue, chatImage, ratio, resolution, duration, bgm, onStartProcess])
 
   // ---- Image upload for chat input ----
   const handleChatImageUpload = () => {
@@ -718,19 +702,6 @@ export function ImageToVideoExperienceArea({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
-                        <ToolbarSelect value={mode} options={modeOptions} onChange={(v) => onParamChange('mode', v)} className="min-w-[5rem] h-8 text-xs" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>选择生成模式</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <div className="w-px h-4 bg-border/50 mx-1" />
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
                         <ToolbarSelect value={ratio} options={ratioOptions} onChange={(v) => onParamChange('ratio', v)} className="min-w-[4rem] h-8 text-xs" />
                       </div>
                     </TooltipTrigger>
@@ -802,12 +773,8 @@ export function ImageToVideoExperienceArea({
       {/* Input Card */}
       <Card className="border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0 flex flex-col">
-          <div className={cn(
-            'min-h-[260px] h-full p-5',
-            mode === 'image-to-video' ? 'flex gap-4' : ''
-          )}>
-            {mode === 'image-to-video' && (
-              <div className="w-40 flex-shrink-0">
+          <div className={cn('min-h-[260px] h-full p-5', 'flex gap-4')}>
+            <div className="w-40 flex-shrink-0">
                 {uploadedImage ? (
                   <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-border/60">
                     <img src={uploadedImage} alt="上传的图片" className="w-full h-full object-cover" />
@@ -821,8 +788,7 @@ export function ImageToVideoExperienceArea({
                     <span className="text-xs text-muted-foreground">上传图片</span>
                   </button>
                 )}
-              </div>
-            )}
+            </div>
 
             <div className="flex-1">
               <Textarea
@@ -840,17 +806,6 @@ export function ImageToVideoExperienceArea({
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border/40 bg-card">
             <div className="flex items-center gap-2 flex-wrap">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div><ToolbarSelect value={mode} options={modeOptions} onChange={(v) => onParamChange('mode', v)} className="min-w-[6rem]" /></div>
-                  </TooltipTrigger>
-                  <TooltipContent>选择生成模式</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <div className="w-px h-4 bg-border/60" />
-
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

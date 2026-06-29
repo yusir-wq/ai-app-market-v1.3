@@ -264,15 +264,9 @@ function ConfigPanel({
         {isProcessing ? (
           <><div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />处理中...</>
         ) : (
-          <><Sparkles className="h-4 w-4" />开始处理</>
+          <><Sparkles className="h-4 w-4" />开始处理<span className="text-xs font-normal opacity-70 ml-1">{agent.costPoints} 智点</span></>
         )}
       </Button>
-
-      <p className="text-center text-xs text-muted-foreground">预计消耗：{agent.costPoints} 智点 · 预计耗时 {agent.avgProcessTime}</p>
-
-      {onBack && (
-        <Button variant="outline" size="sm" className="w-full" onClick={onBack}>返回重选文件</Button>
-      )}
     </div>
   )
 }
@@ -421,14 +415,18 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
         <FileVideo className="h-4 w-4 text-primary shrink-0" />
         <span className="text-sm font-medium text-foreground truncate">{fileName}</span>
         {fileSize !== undefined && <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(fileSize)}</span>}
-        {subtitles && (
-          <a href={src} download={`dubbed_${fileName}`} className="ml-auto shrink-0">
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+          <a href={src} download={`dubbed_${fileName}`}>
             <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
               <Download className="h-3 w-3" />
-              下载配音视频
+              下载视频
             </Button>
           </a>
-        )}
+          <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
+            <Download className="h-3 w-3" />
+            下载音频
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -540,32 +538,8 @@ function ResultPage({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="flex flex-col gap-3">
         <VideoPreview src={src} originalSrc={originalSrc} fileName={fileName} subtitles={MOCK_SUBTITLES} beforeAfterMode />
-        
-        {/* Audio track section */}
-        <Card className="border-border/60 shadow-sm">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Music className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">AI配音音频</span>
-                <span className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">温柔女声 · 1.0x</span>
-              </div>
-              <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
-                <Download className="h-3 w-3" />下载
-              </Button>
-            </div>
-            {/* Audio player */}
-            <div className="flex items-center gap-3 py-2 px-3 rounded-lg bg-secondary/30">
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                <Play className="h-3.5 w-3.5" />
-              </Button>
-              <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full w-0" />
-              </div>
-              <span className="text-xs text-muted-foreground">00:00 / 00:24</span>
-            </div>
-          </CardContent>
-        </Card>
+
+        <Button variant="outline" size="sm" className="w-full" onClick={onBack}>返回重选文件</Button>
       </div>
       <ConfigPanel agent={agent}
         selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice}

@@ -43,7 +43,6 @@ import {
   Trash2,
   CheckCircle2,
   Loader2,
-  Mic,
   Languages,
   Zap,
 } from 'lucide-react'
@@ -652,12 +651,8 @@ function SpeechToTextInputArea({
   progressSteps?: { label: string; status: 'pending' | 'running' | 'done' }[]
   onStartProcess?: () => void
 }) {
-  const [activeTab, setActiveTab] = useState<'file' | 'record'>('file')
   const [isDragging, setIsDragging] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingSeconds, setRecordingSeconds] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -688,32 +683,12 @@ function SpeechToTextInputArea({
     [onFileChange]
   )
 
-  const toggleRecording = useCallback(() => {
-    if (isRecording) {
-      setIsRecording(false)
-      if (timerRef.current) clearInterval(timerRef.current)
-      onStartProcess?.()
-    } else {
-      setIsRecording(true)
-      setRecordingSeconds(0)
-      timerRef.current = setInterval(() => {
-        setRecordingSeconds((s) => s + 1)
-      }, 1000)
-    }
-  }, [isRecording, onStartProcess])
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
-
   const acceptedExtensions = agent.acceptedFiles?.join(',') || '*'
   const distinguishSpeaker = !!paramValues.distinguishSpeaker
 
-  const renderUploadContent = () => (
-    <div className="space-y-4">
-      {/* Upload zone / loading zone */}
+  return (
+    <div className="space-y-4 w-full">
+      {/* Processing state */}
       {isProcessing ? (
         <div className="rounded-xl border border-border bg-secondary/30 p-8 text-center space-y-4">
           <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
@@ -747,6 +722,7 @@ function SpeechToTextInputArea({
           </div>
         </div>
       ) : file ? (
+        /* File selected state */
         <div className="rounded-xl border border-border bg-secondary/30 overflow-hidden">
           <div className="flex items-center gap-3 p-3">
             <FileAudio className="h-8 w-8 text-primary" />
@@ -765,6 +741,7 @@ function SpeechToTextInputArea({
           </div>
         </div>
       ) : (
+        /* Upload drop zone */
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -824,140 +801,6 @@ function SpeechToTextInputArea({
           />
         </div>
       )}
-    </div>
-  )
-
-  const renderRecorder = () => (
-    <div className="space-y-4">
-      {isProcessing ? (
-        <div className="rounded-xl border border-border bg-secondary/30 p-8 text-center space-y-4">
-          <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">AI 正在转写中...</p>
-            {progressSteps && progressSteps.length > 0 && (
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                {progressSteps.map((step, idx) => (
-                  <span
-                    key={idx}
-                    className={cn(
-                      'text-xs px-2 py-0.5 rounded-full transition-colors',
-                      step.status === 'done'
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : step.status === 'running'
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {step.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden max-w-xs mx-auto">
-            <div
-              className="h-full bg-primary transition-all duration-300 rounded-full"
-              style={{ width: `${progress ?? 0}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">预计耗时 {agent.avgProcessTime}</p>
-        </div>
-      ) : (
-        <div className="relative border-2 border-dashed rounded-xl p-8 text-center bg-secondary/30 border-border">
-          <div className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-all',
-            isRecording ? 'bg-destructive/10 animate-pulse' : 'bg-primary/10'
-          )}>
-            {isRecording ? (
-              <Mic className="h-6 w-6 text-destructive" />
-            ) : (
-              <Mic className="h-6 w-6 text-primary" />
-            )}
-          </div>
-          <p className="text-sm text-foreground mb-4">
-            {isRecording ? '正在录音...' : '点击开始实时录音转写'}
-          </p>
-          {isRecording && (
-            <p className="text-2xl font-semibold text-primary tabular-nums mb-4">
-              {formatTime(recordingSeconds)}
-            </p>
-          )}
-          <Button
-            type="button"
-            variant={isRecording ? 'destructive' : 'default'}
-            onClick={toggleRecording}
-          >
-            {isRecording ? '停止录音' : '开始录音'}
-          </Button>
-
-          {/* Distinguish speaker toggle */}
-          <div
-            className="flex items-center justify-center gap-2 mt-4 mb-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="text-xs text-muted-foreground">区分说话人</span>
-            <Switch
-              checked={distinguishSpeaker}
-              onCheckedChange={(checked) => onParamChange('distinguishSpeaker', checked)}
-            />
-          </div>
-
-          {/* File requirements */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>视频 ≤ 4GB；音频 ≤ 500M</span>
-            <span className="hidden sm:inline text-border">|</span>
-            <span>时长 ≤ 5小时</span>
-          </div>
-
-          {/* Estimated cost */}
-          <div className="absolute right-3 bottom-2 text-xs text-muted-foreground">
-            预计消耗：
-            <span className="font-semibold text-foreground">{agent.costPoints} 智点</span>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-  return (
-    <div className="space-y-4 w-full">
-      <Card className="border-border/60 shadow-sm overflow-hidden">
-        {/* Tabs inside the upload card */}
-        <div className="flex items-center justify-center p-2 border-b border-border/40 bg-secondary/30">
-          <div className="flex items-center p-1 rounded-full bg-background border border-border/40">
-            <button
-              type="button"
-              onClick={() => setActiveTab('file')}
-              disabled={isProcessing}
-              className={cn(
-                'py-1.5 px-6 rounded-full text-sm font-medium transition-all disabled:opacity-50',
-                activeTab === 'file'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              上传文件
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('record')}
-              disabled={isProcessing}
-              className={cn(
-                'py-1.5 px-6 rounded-full text-sm font-medium transition-all disabled:opacity-50',
-                activeTab === 'record'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              实时录音
-            </button>
-          </div>
-        </div>
-
-        <CardContent className="p-4">
-          {activeTab === 'file' ? renderUploadContent() : renderRecorder()}
-        </CardContent>
-      </Card>
 
       {/* Error */}
       {error && (
@@ -1160,68 +1003,13 @@ export function AgentInputArea({
         onTextChange('萤火虫的秘密\n深夜，九岁的阿布悄悄溜出外婆家，提着一盏熄灭的马灯走向神秘的黑森林。\n他想抓住传说中能实现愿望的"黄金萤火虫"，来治好外婆的眼睛。林子里静得只能听到他自己的心跳，微风吹过，树叶沙沙作响。突然，前方亮起了一团温暖的微光。那不是一只，而是成千上万只萤火虫聚在一起，宛如地上的银河。\n当它们围绕着阿布翩翩起舞时，阿布闭上眼睛，在心里虔诚地许愿。等他再次睁开眼，手里的马灯竟然自己亮了起来，散发出永不熄灭的柔和光芒。阿布开心地笑了，他捧着这盏希望之灯，朝着外婆家的方向飞奔而去。')
         return
       }
-      if (actionId === 'pause') {
-        const ta = document.getElementById('agent-input-textarea') as HTMLTextAreaElement | null
-        if (ta) {
-          const cursorPos = ta.selectionEnd ?? ta.value.length
-          const before = text.slice(0, cursorPos)
-          const after = text.slice(cursorPos)
-          const newText = before + '((⏰=1s))' + after
-          onTextChange(newText)
-          requestAnimationFrame(() => {
-            const newPos = cursorPos + '((⏰=1s))'.length
-            ta.selectionStart = newPos
-            ta.selectionEnd = newPos
-            ta.focus()
-          })
-          return
-        }
-        onTextChange(text + '((⏰=1s))')
-        return
-      }
     },
     [text, onTextChange]
   )
 
-  // AI写/翻译 状态
+  // AI写状态
   const [aiWriteKeyword, setAiWriteKeyword] = useState('')
   const [aiWriteGenerating, setAiWriteGenerating] = useState(false)
-  const [translateLang, setTranslateLang] = useState('zh-CN')
-  const [translateOpen, setTranslateOpen] = useState(false)
-  const [translateGenerating, setTranslateGenerating] = useState(false)
-
-  const languageOptions = [
-    { label: '简体中文', value: 'zh-CN' },
-    { label: 'English', value: 'en' },
-    { label: '繁體中文', value: 'zh-TW' },
-    { label: 'Español', value: 'es' },
-    { label: 'Português', value: 'pt' },
-    { label: '日本語', value: 'ja' },
-    { label: 'Français', value: 'fr' },
-    { label: 'Deutsch', value: 'de' },
-    { label: '한국어', value: 'ko' },
-  ]
-
-  const handleTranslateApply = () => {
-    if (translateGenerating || !text.trim()) return
-    setTranslateGenerating(true)
-    setTranslateOpen(false)
-    const mockTranslations: Record<string, string> = {
-      'zh-CN': text,
-      'en': '[English Translation]\n\n' + (text || 'No content to translate.'),
-      'zh-TW': '【繁體中文翻譯】\n\n' + (text || '暫無內容可翻譯。'),
-      'es': '[Traducción al Español]\n\n' + (text || 'No hay contenido para traducir.'),
-      'pt': '[Tradução para Português]\n\n' + (text || 'Sem conteúdo para traduzir.'),
-      'ja': '【日本語翻訳】\n\n' + (text || '翻訳するコンテンツがありません。'),
-      'fr': '[Traduction Française]\n\n' + (text || 'Aucun contenu à traduire.'),
-      'de': '[Deutsche Übersetzung]\n\n' + (text || 'Kein Inhalt zum Übersetzen.'),
-      'ko': '[한국어 번역]\n\n' + (text || '번역할 내용이 없습니다.'),
-    }
-    setTimeout(() => {
-      onTextChange(mockTranslations[translateLang] || text)
-      setTranslateGenerating(false)
-    }, 1200)
-  }
 
   const handleAiWriteGenerate = () => {
     if (aiWriteGenerating || !aiWriteKeyword.trim()) return
@@ -1360,38 +1148,7 @@ export function AgentInputArea({
                 上传txt
               </Button>
 
-              {/* 翻译 — Popover */}
-              <Popover open={translateOpen} onOpenChange={setTranslateOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all">
-                    {translateGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3 text-muted-foreground" />}
-                    翻译
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-56 p-0 overflow-hidden shadow-xl border-border/80">
-                  <div className="p-3">
-                    <div className="max-h-[220px] overflow-y-auto space-y-0.5 mb-3">
-                      {languageOptions.map((lang) => (
-                        <button key={lang.value} onClick={() => setTranslateLang(lang.value)} className={cn(
-                          'w-full text-xs py-2 px-3 rounded-md text-left transition-colors',
-                          translateLang === lang.value ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-secondary text-foreground'
-                        )}>
-                          {lang.label}
-                        </button>
-                      ))}
-                    </div>
-                    <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleTranslateApply} disabled={translateGenerating}>
-                      {translateGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />翻译中...</> : (<><Languages className="h-3.5 w-3.5" />开始翻译<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />2</span></>)}
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
 
-              {/* 插入停顿 */}
-              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => handleQuickFill('pause')}>
-                <Type className="h-3 w-3 text-muted-foreground" />
-                插入停顿
-              </Button>
             </div>
           )}
           <input

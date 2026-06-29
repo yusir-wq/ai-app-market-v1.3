@@ -235,7 +235,6 @@ function EditorPage({
   agent, file, onBack, onFileChange, onProcess,
 }: { agent: Agent; file: File; onBack: () => void; onFileChange: (f: File) => void; onProcess: (params: Record<string, any>) => void }) {
   const [regions, setRegions] = useState<WatermarkRegion[]>([])
-  const [removalMode, setRemovalMode] = useState('smart')
   const [fillMode, setFillMode] = useState('ai-inpaint')
   const inputRef = useRef<HTMLInputElement>(null)
   const [currentTime, setCurrentTime] = useState(0)
@@ -271,23 +270,6 @@ function EditorPage({
       <div className="flex flex-col gap-4">
         <Card className="border-border/60 shadow-sm">
           <CardContent className="p-4 space-y-4">
-            {/* 去除模式 */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">去除模式</Label>
-              <div className="flex rounded-lg bg-secondary/50 p-1 gap-1">
-                <button onClick={() => setRemovalMode('smart')}
-                  className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    removalMode === 'smart' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
-                  <Wand2 className="h-3.5 w-3.5" />智能识别
-                </button>
-                <button onClick={() => setRemovalMode('manual')}
-                  className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    removalMode === 'manual' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
-                  <Target className="h-3.5 w-3.5" />手动框选
-                </button>
-              </div>
-            </div>
-
             {/* 填充方式 */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">填充方式</Label>
@@ -303,12 +285,6 @@ function EditorPage({
                   <input type="radio" name="fillMode" className="sr-only" checked={fillMode === 'blur'} onChange={() => setFillMode('blur')} />
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"><Image className="h-4 w-4 text-muted-foreground" /></div>
                   <div><p className="text-sm font-medium text-foreground">模糊处理</p><p className="text-xs text-muted-foreground">高斯模糊覆盖目标区域</p></div>
-                </label>
-                <label className={cn('flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all',
-                  fillMode === 'solid' ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/25' : 'border-border/50 hover:border-primary/20')}>
-                  <input type="radio" name="fillMode" className="sr-only" checked={fillMode === 'solid'} onChange={() => setFillMode('solid')} />
-                  <div className="w-8 h-8 rounded-lg bg-foreground/10 flex items-center justify-center"><div className="w-4 h-4 rounded bg-muted-foreground/40" /></div>
-                  <div><p className="text-sm font-medium text-foreground">纯色填充</p><p className="text-xs text-muted-foreground">使用纯色块遮挡目标区域</p></div>
                 </label>
               </div>
             </div>
@@ -326,10 +302,9 @@ function EditorPage({
           </CardContent>
         </Card>
 
-        <Button className="w-full h-12 text-base gap-2" onClick={() => onProcess({ regions, removalMode, fillMode })}>
-          <Eraser className="h-4 w-4" />开始去除水印
+        <Button className="w-full h-12 text-base gap-2" onClick={() => onProcess({ regions, fillMode })}>
+          <Eraser className="h-4 w-4" />开始去除水印<span className="text-xs font-normal opacity-70 ml-1">{agent.costPoints} 智点</span>
         </Button>
-        <p className="text-center text-xs text-muted-foreground">预计消耗：{agent.costPoints} 智点 · 预计耗时 {agent.avgProcessTime}</p>
       </div>
     </div>
   )
@@ -401,7 +376,7 @@ function ResultPage({ agent, src, fileName, onBack, params }: {
     if (videoRef.current) videoRef.current.currentTime = t
   }
 
-  const fillModeLabel = params.fillMode === 'ai-inpaint' ? 'AI智能填充' : params.fillMode === 'blur' ? '模糊处理' : '纯色填充'
+  const fillModeLabel = params.fillMode === 'ai-inpaint' ? 'AI智能填充' : '模糊处理'
   const regionCount = params.regions?.length || 0
 
   return (
@@ -465,10 +440,6 @@ function ResultPage({ agent, src, fileName, onBack, params }: {
             <div><h3 className="text-sm font-semibold text-foreground mb-3">处理详情</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-secondary/30">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">去除模式</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">{params.removalMode === 'smart' ? '智能识别' : '手动框选'}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary/30">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">填充方式</p>
                   <p className="text-sm font-medium text-foreground mt-0.5">{fillModeLabel}</p>
                 </div>
@@ -481,14 +452,6 @@ function ResultPage({ agent, src, fileName, onBack, params }: {
                   <p className="text-sm font-medium text-foreground mt-0.5">{agent.costPoints} 智点</p>
                 </div>
               </div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">处理完成</span>
-              </div>
-              <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">AI已成功去除指定区域的水印/字幕，视频画面已智能填充修复。</p>
             </div>
           </CardContent>
         </Card>

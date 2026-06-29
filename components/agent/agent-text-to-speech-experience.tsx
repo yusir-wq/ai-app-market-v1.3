@@ -26,13 +26,10 @@ import {
   Wand2,
   BookOpen,
   FileText,
-  Globe,
-  Type,
   Music,
   Volume2,
   Zap,
   Sparkles,
-  Languages,
   Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -63,8 +60,6 @@ const quickFillActions = [
   { id: 'ai-write', label: 'AI帮我写', icon: Wand2 },
   { id: 'random-story', label: '随机故事', icon: BookOpen },
   { id: 'upload-txt', label: '上传txt', icon: FileText },
-  { id: 'translate', label: '翻译', icon: Globe },
-  { id: 'pause', label: '插入停顿', icon: Type },
 ]
 
 // ============================================================
@@ -130,17 +125,13 @@ const bgmOptions = [
 
 function VoiceSettingsPopover({
   speed,
-  pitch,
   volume,
   onSpeedChange,
-  onPitchChange,
   onVolumeChange,
 }: {
   speed: number
-  pitch: number
   volume: number
   onSpeedChange: (v: number) => void
-  onPitchChange: (v: number) => void
   onVolumeChange: (v: number) => void
 }) {
   return (
@@ -181,28 +172,6 @@ function VoiceSettingsPopover({
           </div>
         </div>
 
-        {/* 音调 */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-foreground">音调</Label>
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md tabular-nums">
-              {pitch > 0 ? `+${pitch}` : pitch}
-            </span>
-          </div>
-          <Slider
-            value={[pitch]}
-            onValueChange={(vals) => onPitchChange(vals[0])}
-            min={-10}
-            max={10}
-            step={1}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>-10 低沉</span>
-            <span>+10 高亢</span>
-          </div>
-        </div>
-
         {/* 音量 */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
@@ -240,10 +209,8 @@ function VoiceRow({
   onSelect,
   onTogglePlay,
   speed,
-  pitch,
   volume,
   onSpeedChange,
-  onPitchChange,
   onVolumeChange,
 }: {
   voice: (typeof voicePresets)[number]
@@ -252,10 +219,8 @@ function VoiceRow({
   onSelect: () => void
   onTogglePlay: () => void
   speed: number
-  pitch: number
   volume: number
   onSpeedChange: (v: number) => void
-  onPitchChange: (v: number) => void
   onVolumeChange: (v: number) => void
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -333,10 +298,8 @@ function VoiceRow({
           </PopoverTrigger>
           <VoiceSettingsPopover
             speed={speed}
-            pitch={pitch}
             volume={volume}
             onSpeedChange={onSpeedChange}
-            onPitchChange={onPitchChange}
             onVolumeChange={onVolumeChange}
           />
         </Popover>
@@ -383,14 +346,9 @@ export function TextToSpeechExperienceArea({
   // AI写悬浮卡片
   const [aiWriteKeyword, setAiWriteKeyword] = useState('')
   const [aiWriteGenerating, setAiWriteGenerating] = useState(false)
-  // 翻译悬浮卡片
-  const [translateLang, setTranslateLang] = useState('zh-CN')
-  const [translateOpen, setTranslateOpen] = useState(false)
-  const [translateGenerating, setTranslateGenerating] = useState(false)
 
   const currentVoice = paramValues.voice || 'female-gentle'
   const currentSpeed = paramValues.speed ?? 1.0
-  const currentPitch = paramValues.pitch ?? 0
   const currentVolume = paramValues.volume ?? 100
   const currentBgm = paramValues.bgm || 'none'
 
@@ -407,25 +365,6 @@ export function TextToSpeechExperienceArea({
     (actionId: string) => {
       if (actionId === 'random-story') {
         onTextChange('萤火虫的秘密\n深夜，九岁的阿布悄悄溜出外婆家，提着一盏熄灭的马灯走向神秘的黑森林。\n他想抓住传说中能实现愿望的"黄金萤火虫"，来治好外婆的眼睛。林子里静得只能听到他自己的心跳，微风吹过，树叶沙沙作响。突然，前方亮起了一团温暖的微光。那不是一只，而是成千上万只萤火虫聚在一起，宛如地上的银河。\n当它们围绕着阿布翩翩起舞时，阿布闭上眼睛，在心里虔诚地许愿。等他再次睁开眼，手里的马灯竟然自己亮了起来，散发出永不熄灭的柔和光芒。阿布开心地笑了，他捧着这盏希望之灯，朝着外婆家的方向飞奔而去。')
-        return
-      }
-      if (actionId === 'pause') {
-        const ta = document.getElementById('tts-experience-textarea') as HTMLTextAreaElement | null
-        if (ta) {
-          const cursorPos = ta.selectionEnd ?? ta.value.length
-          const before = text.slice(0, cursorPos)
-          const after = text.slice(cursorPos)
-          const newText = before + '((⏰=1s))' + after
-          onTextChange(newText)
-          requestAnimationFrame(() => {
-            const newPos = cursorPos + '((⏰=1s))'.length
-            ta.selectionStart = newPos
-            ta.selectionEnd = newPos
-            ta.focus()
-          })
-          return
-        }
-        onTextChange(text + '((⏰=1s))')
         return
       }
     },
@@ -446,40 +385,6 @@ export function TextToSpeechExperienceArea({
     },
     [onTextChange]
   )
-
-  // 语言选项（翻译用）
-  const languageOptions = [
-    { label: '简体中文', value: 'zh-CN' },
-    { label: 'English', value: 'en' },
-    { label: '繁體中文', value: 'zh-TW' },
-    { label: 'Español', value: 'es' },
-    { label: 'Português', value: 'pt' },
-    { label: '日本語', value: 'ja' },
-    { label: 'Français', value: 'fr' },
-    { label: 'Deutsch', value: 'de' },
-    { label: '한국어', value: 'ko' },
-  ]
-
-  const handleTranslateApply = () => {
-    if (translateGenerating || !text.trim()) return
-    setTranslateGenerating(true)
-    setTranslateOpen(false)
-    const mockTranslations: Record<string, string> = {
-      'zh-CN': text,
-      'en': '[English Translation]\n\n' + (text || 'No content to translate.'),
-      'zh-TW': '【繁體中文翻譯】\n\n' + (text || '暫無內容可翻譯。'),
-      'es': '[Traducción al Español]\n\n' + (text || 'No hay contenido para traducir.'),
-      'pt': '[Tradução para Português]\n\n' + (text || 'Sem conteúdo para traduzir.'),
-      'ja': '【日本語翻訳】\n\n' + (text || '翻訳するコンテンツがありません。'),
-      'fr': '[Traduction Française]\n\n' + (text || 'Aucun contenu à traduire.'),
-      'de': '[Deutsche Übersetzung]\n\n' + (text || 'Kein Inhalt zum Übersetzen.'),
-      'ko': '[한국어 번역]\n\n' + (text || '번역할 내용이 없습니다.'),
-    }
-    setTimeout(() => {
-      onTextChange(mockTranslations[translateLang] || text)
-      setTranslateGenerating(false)
-    }, 1200)
-  }
 
   // AI写生成处理
   const handleAiWriteGenerate = () => {
@@ -575,60 +480,6 @@ export function TextToSpeechExperienceArea({
                   <FileText className="h-3 w-3" />
                   上传txt
                 </Button>
-
-                {/* 翻译 — Popover 气泡卡片 */}
-                <Popover open={translateOpen} onOpenChange={setTranslateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all text-muted-foreground hover:text-foreground">
-                      {translateGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3" />}
-                      翻译
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="w-56 p-0 overflow-hidden shadow-xl border-border/80">
-                    <div className="p-3">
-                      <div className="max-h-[220px] overflow-y-auto space-y-0.5 mb-3">
-                        {languageOptions.map((lang) => (
-                          <button
-                            key={lang.value}
-                            onClick={() => setTranslateLang(lang.value)}
-                            className={cn(
-                              'w-full text-xs py-2 px-3 rounded-md text-left transition-colors',
-                              translateLang === lang.value
-                                ? 'bg-primary text-primary-foreground font-medium'
-                                : 'hover:bg-secondary text-foreground'
-                            )}
-                          >
-                            {lang.label}
-                          </button>
-                        ))}
-                      </div>
-                      <Button
-                        className="w-full h-9 text-sm gap-2 rounded-lg"
-                        onClick={handleTranslateApply}
-                        disabled={translateGenerating}
-                      >
-                        {translateGenerating ? (
-                          <><Loader2 className="h-3.5 w-3.5 animate-spin" />翻译中...</>
-                        ) : (
-                          <>
-                            <Languages className="h-3.5 w-3.5" />
-                            开始翻译
-                            <span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70">
-                              <span className="w-px h-3 bg-primary-foreground/30" />
-                              <Zap className="h-3 w-3" />2
-                            </span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* 插入停顿 */}
-                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all text-muted-foreground hover:text-foreground" onClick={() => handleQuickFill('pause')}>
-                  <Type className="h-3 w-3" />
-                  插入停顿
-                </Button>
               </div>
               <input
                 id="tts-txt-upload"
@@ -701,10 +552,8 @@ export function TextToSpeechExperienceArea({
                   onSelect={() => onParamChange('voice', voice.value)}
                   onTogglePlay={() => togglePreview(voice.value)}
                   speed={currentSpeed}
-                  pitch={currentPitch}
                   volume={currentVolume}
                   onSpeedChange={(v) => onParamChange('speed', v)}
-                  onPitchChange={(v) => onParamChange('pitch', v)}
                   onVolumeChange={(v) => onParamChange('volume', v)}
                 />
               ))}

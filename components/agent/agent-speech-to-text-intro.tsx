@@ -33,7 +33,7 @@ function HeroSection() {
         AI语音转文字
       </h1>
       <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
-        上传音视频或实时录音，AI自动转写为文字，支持自动区分发言人、智能摘要提炼。
+        上传音视频，AI自动转写为文字，支持自动区分发言人、智能摘要提炼。
       </p>
     </div>
   )
@@ -47,7 +47,7 @@ const steps = [
   {
     icon: Upload,
     title: '上传音视频',
-    desc: '点击上传或拖拽文件上传，支持MP3、MP4、WAV等格式，也可实时录音转换。',
+    desc: '点击上传或拖拽文件上传，支持MP3、MP4、WAV等格式。',
   },
   {
     icon: Wand2,
@@ -115,8 +115,8 @@ const features = [
   },
   {
     icon: Cpu,
-    title: '实时录音转写',
-    desc: '边录边转，录音结束即刻获得完整文字稿',
+    title: '高速转写引擎',
+    desc: '领先的AI加速技术，转写速度比播放快10倍，大幅节省等待时间',
   },
   {
     icon: Users,
@@ -287,10 +287,6 @@ const faqs = [
   {
     q: '支持多语种吗？',
     a: '支持英语、日语、法语等99种语言及四川话、粤语等方言，满足全球化场景需求。',
-  },
-  {
-    q: '支持实时转写吗？',
-    a: '提供实时录音转写模式，边说边转，适用于会议、访谈、课堂等即时记录场景。',
   },
 ]
 

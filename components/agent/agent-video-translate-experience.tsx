@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -27,6 +28,8 @@ import {
   Subtitles,
   Zap,
   CheckCircle2,
+  Volume2,
+  Pause,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Agent } from '@/lib/mock-data'
@@ -90,11 +93,10 @@ const TARGET_LANGUAGES = LANGUAGES.filter(l => l.value !== 'auto')
 
 const DEFAULT_PARAMS = {
   translateMode: 'full', // 'full' | 'subtitle-only'
-  subtitleSource: 'asr', // 'asr' | 'ocr'
   sourceLang: 'auto',
   targetLang: 'en',
-  aiDubbing: 'clone', // 'clone' | 'ai'
-  removeOriginal: false,
+  voice: 'female-gentle',
+  volume: 100,
 }
 
 // ============================================================
@@ -335,40 +337,7 @@ function VideoEditor({
               </div>
             </div>
 
-            {/* ---- Section: 字幕来源 ---- */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                字幕来源
-              </Label>
-              <div className="flex rounded-lg bg-secondary/50 p-1 gap-1">
-                <button
-                  onClick={() => updateParam('subtitleSource', 'asr')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    params.subtitleSource === 'asr'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  <Mic2 className="h-3.5 w-3.5" />
-                  语音识别（ASR）
-                </button>
-                <button
-                  onClick={() => updateParam('subtitleSource', 'ocr')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    params.subtitleSource === 'ocr'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  <ScanText className="h-3.5 w-3.5" />
-                  画面识别（OCR）
-                </button>
-              </div>
-            </div>
-
-            {/* ---- Section: 源语言 & 目标语言 ---- */}
+            {/* ---- Section: 语言设置 ---- */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 语言设置
@@ -421,69 +390,52 @@ function VideoEditor({
               </div>
             </div>
 
-            {/* ---- Section: 智能配音 (仅在翻译字幕+配音模式显示) ---- */}
-            {!isSubtitleOnly && (
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  智能配音
-                </Label>
-                <div className="flex rounded-lg bg-secondary/50 p-1 gap-1">
-                  <button
-                    onClick={() => updateParam('aiDubbing', 'clone')}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                      params.aiDubbing === 'clone'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    <Music className="h-3.5 w-3.5" />
-                    克隆原声
-                  </button>
-                  <button
-                    onClick={() => updateParam('aiDubbing', 'ai')}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                      params.aiDubbing === 'ai'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    AI配音
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ---- Section: 去除原字幕/水印 ---- */}
+            {/* ---- Section: AI配音音色 ---- */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                视频处理
+                配音音色
               </Label>
-              <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground">去除原字幕/水印</span>
-                </div>
-                <button
-                  role="switch"
-                  aria-checked={params.removeOriginal}
-                  onClick={() => updateParam('removeOriginal', !params.removeOriginal)}
-                  className={cn(
-                    'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                    params.removeOriginal ? 'bg-primary' : 'bg-muted-foreground/30'
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform',
-                      params.removeOriginal ? 'translate-x-4' : 'translate-x-0'
-                    )}
-                  />
-                </button>
+              <Select
+                value={params.voice}
+                onValueChange={(v) => updateParam('voice', v)}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="female-gentle">女声-温柔</SelectItem>
+                  <SelectItem value="female-lively">女声-活泼</SelectItem>
+                  <SelectItem value="male-calm">男声-沉稳</SelectItem>
+                  <SelectItem value="male-deep">男声-磁性</SelectItem>
+                  <SelectItem value="child">童声</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* ---- Section: 音量 ---- */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  配音音量
+                </Label>
+                <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md tabular-nums">
+                  {params.volume}%
+                </span>
+              </div>
+              <Slider
+                value={[params.volume]}
+                onValueChange={(vals) => updateParam('volume', vals[0])}
+                min={50}
+                max={150}
+                step={10}
+                className="w-full"
+              />
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>50%</span>
+                <span>150%</span>
               </div>
             </div>
+
           </CardContent>
         </Card>
 

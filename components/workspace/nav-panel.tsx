@@ -60,6 +60,7 @@ interface NavPanelProps {
   onTabChange?: (tab: 'models' | 'agents') => void
   recentAgents?: string[]
   onSelectAgent?: (agentId: string) => void
+  selectedAgentId?: string | null
 }
 
 function formatTime(date: Date): string {
@@ -93,6 +94,7 @@ export function NavPanel({
   onTabChange,
   recentAgents = [],
   onSelectAgent,
+  selectedAgentId,
 }: NavPanelProps) {
   const { isLoggedIn, user, setShowLoginModal, setShowRechargeModal } = useAuth()
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -470,10 +472,16 @@ export function NavPanel({
                       const agent = getAgentById(agentId)
                       if (!agent) return null
                       const AgentIcon = (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
+                      const isSelected = selectedAgentId === agentId
                       return (
                         <div
                           key={agentId}
-                          className="group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
+                          className={cn(
+                            'group flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors',
+                            isSelected
+                              ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                              : 'hover:bg-sidebar-accent'
+                          )}
                           onClick={() => onSelectAgent?.(agentId)}
                         >
                           <div
@@ -484,7 +492,10 @@ export function NavPanel({
                           >
                             <AgentIcon className="h-3.5 w-3.5 text-white" />
                           </div>
-                          <p className="text-sm font-medium text-sidebar-foreground truncate flex-1">
+                          <p className={cn(
+                            'text-sm font-medium truncate flex-1',
+                            isSelected ? 'text-primary' : 'text-sidebar-foreground'
+                          )}>
                             {agent.name}
                           </p>
                         </div>
@@ -507,10 +518,16 @@ export function NavPanel({
                     <div className="space-y-0.5">
                       {agents.map((agent) => {
                         const AgentIcon = (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
+                        const isSelected = selectedAgentId === agent.id
                         return (
                           <div
                             key={agent.id}
-                            className="group flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent cursor-pointer transition-colors"
+                            className={cn(
+                              'group flex items-center gap-2.5 px-2 py-2 rounded-lg cursor-pointer transition-colors',
+                              isSelected
+                                ? 'bg-primary/10 ring-1 ring-primary/20'
+                                : 'hover:bg-sidebar-accent'
+                            )}
                             onClick={() => onSelectAgent?.(agent.id)}
                           >
                             <div
@@ -522,7 +539,10 @@ export function NavPanel({
                               <AgentIcon className="h-3.5 w-3.5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                              <p className={cn(
+                                'text-sm font-medium truncate',
+                                isSelected ? 'text-primary' : 'text-sidebar-foreground'
+                              )}>
                                 {agent.name}
                               </p>
                               <p className="text-[11px] text-muted-foreground truncate">

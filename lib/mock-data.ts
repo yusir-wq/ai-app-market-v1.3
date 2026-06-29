@@ -1396,7 +1396,6 @@ export const mockAgents: Agent[] = [
     parameters: [
       { id: 'voice', type: 'select', label: '配音音色', defaultValue: 'female-gentle', options: [{ label: '女声-温柔', value: 'female-gentle' }, { label: '女声-活泼', value: 'female-lively' }, { label: '男声-沉稳', value: 'male-calm' }, { label: '男声-磁性', value: 'male-deep' }, { label: '童声', value: 'child' }] },
       { id: 'speed', type: 'slider', label: '语速', defaultValue: 1.0, min: 0.5, max: 2.0, step: 0.1 },
-      { id: 'pitch', type: 'slider', label: '音调', defaultValue: 0, min: -10, max: 10, step: 1 },
       { id: 'volume', type: 'slider', label: '音量', defaultValue: 100, min: 50, max: 150, step: 10 },
       { id: 'outputFormat', type: 'select', label: '输出格式', defaultValue: 'mp3', options: [{ label: 'MP3', value: 'mp3' }, { label: 'WAV', value: 'wav' }, { label: 'M4A', value: 'm4a' }] },
     ],

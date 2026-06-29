@@ -140,11 +140,9 @@ function UploadZone({ agent, onFileSelected }: { agent: Agent; onFileSelected: (
 function EditorPage({
   agent, file, onBack, onFileChange, onGenerate,
 }: { agent: Agent; file: File; onBack: () => void; onFileChange: (f: File) => void; onGenerate: (params: Record<string, any>) => void }) {
-  const [subtitleSource, setSubtitleSource] = useState<'asr' | 'ocr'>('asr')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('en')
   const [bilingual, setBilingual] = useState(true)
-  const [removeOriginal, setRemoveOriginal] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -231,23 +229,7 @@ function EditorPage({
       <div className="flex flex-col gap-4">
         <Card className="border-border/60 shadow-sm">
           <CardContent className="p-4 space-y-4">
-            {/* 字幕来源 */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">字幕来源</Label>
-              <div className="flex rounded-lg bg-secondary/50 p-1 gap-1">
-                <button onClick={() => setSubtitleSource('asr')}
-                  className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    subtitleSource === 'asr' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
-                  <Mic2 className="h-3.5 w-3.5" />语音识别（ASR）
-                </button>
-                <button onClick={() => setSubtitleSource('ocr')}
-                  className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-md text-sm font-medium transition-all',
-                    subtitleSource === 'ocr' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
-                  <ScanText className="h-3.5 w-3.5" />画面识别（OCR）
-                </button>
-              </div>
-            </div>
-            {/* 源语言 / 目标语言 */}
+            {/* 源语言 */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">语言设置</Label>
               <div className="grid grid-cols-2 gap-3">
@@ -258,6 +240,7 @@ function EditorPage({
                     <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                {bilingual && (
                 <div className="space-y-1.5">
                   <Label className="text-[11px] text-muted-foreground flex items-center gap-1"><Type className="h-3 w-3" />目标语言</Label>
                   <Select value={targetLang} onValueChange={setTargetLang}>
@@ -265,6 +248,7 @@ function EditorPage({
                     <SelectContent>{TARGET_LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                )}
               </div>
             </div>
             {/* 双语字幕 */}
@@ -275,21 +259,12 @@ function EditorPage({
                 <span className={cn('pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform', bilingual ? 'translate-x-4' : 'translate-x-0')} />
               </button>
             </div>
-            {/* 去除原字幕/水印 */}
-            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
-              <span className="text-sm text-foreground">去除原字幕/水印</span>
-              <button role="switch" aria-checked={removeOriginal} onClick={() => setRemoveOriginal(!removeOriginal)}
-                className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors', removeOriginal ? 'bg-primary' : 'bg-muted-foreground/30')}>
-                <span className={cn('pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform', removeOriginal ? 'translate-x-4' : 'translate-x-0')} />
-              </button>
-            </div>
           </CardContent>
         </Card>
         {/* 立即生成 */}
-        <Button className="w-full h-12 text-base gap-2" onClick={() => onGenerate({ subtitleSource, sourceLang, targetLang, bilingual, removeOriginal })}>
-          <Sparkles className="h-4 w-4" />立即生成
+        <Button className="w-full h-12 text-base gap-2" onClick={() => onGenerate({ subtitleSource: 'asr', sourceLang, targetLang: bilingual ? targetLang : '', bilingual })}>
+          <Sparkles className="h-4 w-4" />立即生成<span className="text-xs font-normal opacity-70 ml-1">{agent.costPoints} 智点</span>
         </Button>
-        <p className="text-center text-xs text-muted-foreground">预计消耗：{agent.costPoints} 智点 · 预计耗时 {agent.avgProcessTime}</p>
       </div>
     </div>
   )
@@ -423,7 +398,6 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
         {/* Action buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Type className="h-3 w-3" />字幕样式</Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Globe className="h-3 w-3" />查找/替换</Button>
           <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5 ml-auto">
             <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2 bg-background shadow-sm">原文</Button>
             <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2">译文</Button>

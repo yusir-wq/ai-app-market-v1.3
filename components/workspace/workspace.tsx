@@ -1321,6 +1321,7 @@ export function Workspace() {
             onTabChange={handleNavTabChange}
             recentAgents={recentAgents}
             onSelectAgent={handleSelectAgent}
+            selectedAgentId={selectedAgentId}
           />
         </div>
         )}
@@ -1439,6 +1440,7 @@ export function Workspace() {
             onTabChange={handleNavTabChange}
             recentAgents={recentAgents}
             onSelectAgent={handleSelectAgent}
+            selectedAgentId={selectedAgentId}
           />
         </div>
 

@@ -27,7 +27,6 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  Plus as PlusIcon,
   X,
   Crown,
 } from 'lucide-react'
@@ -52,11 +51,6 @@ interface CopywritingToVideoExperienceProps {
 // ============================================================
 // Options
 // ============================================================
-
-const modeOptions = [
-  { value: 'text-to-video', label: '文生视频' },
-  { value: 'image-to-video', label: '图生视频' },
-]
 
 const ratioOptions = [
   { value: 'auto', label: '自适应' },
@@ -217,12 +211,10 @@ export function CopywritingToVideoExperienceArea({
   isProcessing,
   onStartProcess,
 }: CopywritingToVideoExperienceProps) {
-  const mode = paramValues.mode || 'text-to-video'
   const ratio = paramValues.ratio || 'auto'
   const resolution = paramValues.resolution || '540p'
   const duration = String(paramValues.duration || '5')
   const bgm = !!paramValues.bgm
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
 
   const progressSteps = [
     { label: '分析文案结构', status: 'done' as const },
@@ -235,15 +227,6 @@ export function CopywritingToVideoExperienceArea({
     if (isProcessing) return
     onStartProcess()
   }, [isProcessing, onStartProcess])
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // 创建图片预览 URL
-      const imageUrl = URL.createObjectURL(file)
-      setUploadedImage(imageUrl)
-    }
-  }
 
   return (
     <div className="w-full space-y-6">
@@ -309,43 +292,7 @@ export function CopywritingToVideoExperienceArea({
                 </div>
               </div>
             ) : (
-              <div className={cn(
-                'min-h-[260px] h-full p-5',
-                mode === 'image-to-video' ? 'flex gap-4' : ''
-              )}>
-                {/* Image Upload Area (only for image-to-video) */}
-                {mode === 'image-to-video' && (
-                  <div className="w-40 flex-shrink-0">
-                    {uploadedImage ? (
-                      <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-border/60">
-                        <img
-                          src={uploadedImage}
-                          alt="上传的图片"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setUploadedImage(null)}
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
-                        >
-                          <span className="text-xs">✕</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="w-full aspect-[3/4] rounded-xl border-2 border-dashed border-border/60 bg-secondary/10 flex flex-col items-center justify-center gap-2 hover:bg-secondary/30 hover:border-border transition-colors cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageUpload}
-                        />
-                        <PlusIcon className="h-8 w-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">上传图片</span>
-                      </label>
-                    )}
-                  </div>
-                )}
-
+              <div className="min-h-[260px] h-full p-5">
                 {/* Textarea */}
                 <div className="flex-1">
                   <Textarea
@@ -364,23 +311,6 @@ export function CopywritingToVideoExperienceArea({
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border/40 bg-card">
             {/* Left controls */}
             <div className="flex items-center gap-2 flex-wrap">
-              {/* 模式切换 */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <ToolbarSelect
-                      value={mode}
-                      options={modeOptions}
-                      onChange={(v) => onParamChange('mode', v)}
-                      className="min-w-[6rem]"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>选择生成模式</TooltipContent>
-              </Tooltip>
-
-              <div className="w-px h-4 bg-border/60" />
-
               {/* 画面比例 */}
               <Tooltip>
                 <TooltipTrigger asChild>
