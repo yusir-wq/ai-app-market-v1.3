@@ -5,19 +5,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Agent, AgentCategory, mockAgents, agentCategories } from '@/lib/mock-data'
-import {
-  Search,
-  Mic,
-  Film,
-  PenTool,
-  Image,
-  ArrowRight,
-  Zap,
-  Clock,
-} from 'lucide-react'
+import { AgentGridCard } from '@/components/agent/agent-grid-card'
+import { AgentCategory, mockAgents, agentCategories } from '@/lib/mock-data'
 import * as LucideIcons from 'lucide-react'
+import { Search, Sparkles } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function AgentListPage() {
   const router = useRouter()
@@ -42,103 +34,103 @@ export default function AgentListPage() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-background">
-      <div className="flex flex-col max-w-7xl mx-auto w-full p-4 md:p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground mb-1">
-            AI智能体广场
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            选择智能体，一键处理音视频、文案、图片
+      <div className="flex flex-col max-w-[1440px] mx-auto w-full px-4 md:px-6 py-8">
+        {/* ─── Header ─── */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="h-8 w-1 rounded-full bg-primary" />
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              AI 智能体广场
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground pl-3.5">
+            选择智能体，一键处理音视频、文案、图片 — 探索 AI 生产力的无限可能
           </p>
         </div>
 
-        {/* Search + Filter */}
-        <div className="flex items-center gap-3 mb-6">
+        {/* ─── Search + Filter ─── */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-7">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
             <Input
-              placeholder="搜索智能体..."
+              placeholder="搜索智能体名称或描述..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 rounded-xl"
+              className={cn(
+                'pl-10 h-11 rounded-xl',
+                'border-border/60 bg-muted/40',
+                'focus-visible:ring-primary/30',
+              )}
             />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
               size="sm"
-              className="h-9"
+              className="h-9 rounded-lg font-medium"
               onClick={() => setSelectedCategory('all')}
             >
-              全部 {mockAgents.length}
+              全部
+              <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                {mockAgents.length}
+              </Badge>
             </Button>
             {agentCategories.map((cat) => {
+              const CatIcon = (LucideIcons as any)[cat.icon] || LucideIcons.Circle
               const count = mockAgents.filter((a) => a.category === cat.id).length
               return (
                 <Button
                   key={cat.id}
                   variant={selectedCategory === cat.id ? 'default' : 'outline'}
                   size="sm"
-                  className="h-9"
+                  className="h-9 rounded-lg font-medium"
                   onClick={() => setSelectedCategory(cat.id)}
                 >
-                  {cat.name} {count}
+                  <CatIcon className="h-3.5 w-3.5 mr-1.5" />
+                  {cat.name}
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-[10px]">
+                    {count}
+                  </Badge>
                 </Button>
               )
             })}
           </div>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredAgents.map((agent) => {
-            const IconComponent =
-              (LucideIcons as any)[agent.icon] || LucideIcons.Sparkles
-            return (
-              <Card
+        {/* ─── Grid ─── */}
+        {filteredAgents.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+            {filteredAgents.map((agent) => (
+              <AgentGridCard
                 key={agent.id}
-                className="border-border/60 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group"
-                onClick={() => router.push(`/agent/${agent.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div
-                      className={`w-11 h-11 rounded-xl bg-gradient-to-br ${agent.gradient} flex items-center justify-center shrink-0`}
-                    >
-                      <IconComponent className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                        {agent.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
-                        {agent.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Zap className="h-3 w-3" />
-                        {agent.costPoints} 智点
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {agent.avgProcessTime}
-                      </span>
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-
-        {filteredAgents.length === 0 && (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="text-sm">未找到匹配的智能体</p>
+                agent={agent}
+                onClick={(id) => router.push(`/agent/${id}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="mb-4 h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center">
+              <Search className="h-7 w-7 text-muted-foreground/40" />
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">
+              未找到匹配的智能体
+            </p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              试试调整搜索关键词或切换分类
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 rounded-lg"
+              onClick={() => {
+                setSearchQuery('')
+                setSelectedCategory('all')
+              }}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              重置筛选
+            </Button>
           </div>
         )}
       </div>

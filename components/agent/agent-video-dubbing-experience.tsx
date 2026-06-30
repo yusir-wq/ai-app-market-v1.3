@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import {
   Select,
@@ -33,6 +32,7 @@ import {
   Download,
   SkipBack,
   SkipForward,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Agent } from '@/lib/mock-data'
@@ -71,22 +71,57 @@ function formatFileSize(bytes: number): string {
 // ============================================================
 
 const voicePresets = [
-  { value: 'female-gentle', label: '温柔女声', tag: '女声', desc: '温暖知性，情感细腻，适合有声读物、产品解说', color: 'bg-rose-100 text-rose-700 border-rose-200' },
-  { value: 'female-lively', label: '活泼女声', tag: '女声', desc: '俏皮灵动，元气满满，适合短视频、带货广告', color: 'bg-pink-100 text-pink-700 border-pink-200' },
-  { value: 'male-calm', label: '沉稳男声', tag: '男声', desc: '大气稳重，字正腔圆，适合新闻播报、品牌视频', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { value: 'male-deep', label: '磁性男声', tag: '男声', desc: '低沉醇厚，感染力强，适合广告配音、播客开场', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-  { value: 'child', label: '可爱童声', tag: '童声', desc: '天真烂漫，自然灵动，适合儿童内容、在线教育', color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  {
+    value: 'female-gentle',
+    label: 'Bella',
+    avatar: 'B',
+    avatarBg: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300',
+    tags: '温暖，知性，细腻',
+    tagColor: 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
+  },
+  {
+    value: 'female-lively',
+    label: 'Luna',
+    avatar: 'L',
+    avatarBg: 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-300',
+    tags: '欢快，明亮，自信',
+    tagColor: 'bg-pink-50 text-pink-600 dark:bg-pink-950/30 dark:text-pink-400',
+  },
+  {
+    value: 'male-calm',
+    label: 'Alex',
+    avatar: 'A',
+    avatarBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
+    tags: '沉稳，大气，字正腔圆',
+    tagColor: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
+  },
+  {
+    value: 'male-deep',
+    label: 'Marcus',
+    avatar: 'M',
+    avatarBg: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
+    tags: '低沉，醇厚，富有感染力',
+    tagColor: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400',
+  },
+  {
+    value: 'child',
+    label: 'Milo',
+    avatar: 'M',
+    avatarBg: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
+    tags: '天真，灵动，自然',
+    tagColor: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
+  },
 ]
 
 const bgmOptions = [
-  { value: 'none', label: '无背景音乐' },
-  { value: 'light', label: '轻音乐 - 温馨舒缓' },
-  { value: 'inspire', label: '励志 - 昂扬向上' },
-  { value: 'upbeat', label: '欢快 - 活泼灵动' },
-  { value: 'cinematic', label: '电影感 - 大气磅礴' },
-  { value: 'lofi', label: 'Lo-fi - 休闲放松' },
-  { value: 'classical', label: '古典 - 优雅庄重' },
-  { value: 'electronic', label: '电子 - 科技律动' },
+  { value: 'none', label: '无背景音乐', duration: '', sub: '' },
+  { value: 'light', label: '阳光明媚', duration: '01:18', sub: '轻快自然' },
+  { value: 'inspire', label: '逐梦前行', duration: '02:05', sub: '积极向上' },
+  { value: 'upbeat', label: '元气满满', duration: '00:52', sub: '活泼灵动' },
+  { value: 'cinematic', label: '史诗之旅', duration: '01:45', sub: '大气沉稳' },
+  { value: 'lofi', label: '午后咖啡馆', duration: '02:30', sub: '悠闲放松' },
+  { value: 'classical', label: '月光花园', duration: '03:12', sub: '优雅温婉' },
+  { value: 'electronic', label: '未来脉搏', duration: '01:33', sub: '科技节奏' },
 ]
 
 // ============================================================
@@ -94,32 +129,28 @@ const bgmOptions = [
 // ============================================================
 
 function VoiceSettingsPopover({
-  speed, pitch, volume,
-  onSpeedChange, onPitchChange, onVolumeChange,
+  speed, volume,
+  onSpeedChange, onVolumeChange,
 }: {
-  speed: number; pitch: number; volume: number
-  onSpeedChange: (v: number) => void; onPitchChange: (v: number) => void; onVolumeChange: (v: number) => void
+  speed: number; volume: number
+  onSpeedChange: (v: number) => void; onVolumeChange: (v: number) => void
 }) {
   return (
-    <PopoverContent side="left" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
-      <div className="px-4 py-3 border-b border-border/50 bg-secondary/30">
-        <div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold text-foreground">声音参数设置</span></div>
-      </div>
-      <div className="p-4 space-y-5">
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between"><Label className="text-xs font-medium text-foreground">语速</Label><span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{speed}x</span></div>
-          <Slider value={[speed]} onValueChange={v => onSpeedChange(v[0])} min={0.5} max={2.0} step={0.1} className="w-full" />
-          <div className="flex justify-between text-[10px] text-muted-foreground"><span>0.5x 慢速</span><span>2.0x 快速</span></div>
+    <PopoverContent side="left" align="start" className="w-56 p-0 overflow-hidden shadow-md border border-border/30 bg-white dark:bg-[#1A1A1E]">
+      <div className="p-3 space-y-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-7">语速</span>
+            <Slider value={[speed]} onValueChange={v => onSpeedChange(v[0])} min={0.5} max={2.0} step={0.1} className="flex-1" />
+            <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-7 text-right">{speed}x</span>
+          </div>
         </div>
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between"><Label className="text-xs font-medium text-foreground">音调</Label><span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{pitch > 0 ? `+${pitch}` : pitch}</span></div>
-          <Slider value={[pitch]} onValueChange={v => onPitchChange(v[0])} min={-10} max={10} step={1} className="w-full" />
-          <div className="flex justify-between text-[10px] text-muted-foreground"><span>-10 低沉</span><span>+10 高亢</span></div>
-        </div>
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between"><Label className="text-xs font-medium text-foreground">音量</Label><span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{volume}%</span></div>
-          <Slider value={[volume]} onValueChange={v => onVolumeChange(v[0])} min={50} max={150} step={10} className="w-full" />
-          <div className="flex justify-between text-[10px] text-muted-foreground"><span>50%</span><span>150%</span></div>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-7">音量</span>
+            <Slider value={[volume]} onValueChange={v => onVolumeChange(v[0])} min={50} max={150} step={10} className="flex-1" />
+            <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-7 text-right">{volume}%</span>
+          </div>
         </div>
       </div>
     </PopoverContent>
@@ -146,16 +177,16 @@ function UploadZone({ agent, onFileSelected }: { agent: Agent; onFileSelected: (
   }, [onFileSelected])
 
   return (
-    <Card className="border-border/60 shadow-sm overflow-hidden">
+    <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden">
       <CardContent className="p-0">
         <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-          className={cn('p-4 text-center transition-all flex flex-col items-center gap-5', 'bg-secondary/20', isDragging && 'bg-primary/5')}>
+          className={cn('p-4 text-center transition-all flex flex-col items-center gap-5', 'bg-[#FAFAFC] dark:bg-[#111115]', isDragging && 'bg-primary/5')}>
           <div onClick={() => inputRef.current?.click()}
             className={cn('w-full border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center gap-5',
               isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-accent/30')}>
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center"><Upload className="h-6 w-6 text-primary" /></div>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><Upload className="h-4 w-4 text-primary" /></div>
             <p className="text-sm text-muted-foreground">拖拽本地音视频文件到这里</p>
-            <Button className="h-11 gap-2 px-8" onClick={e => { e.stopPropagation(); inputRef.current?.click() }}><Upload className="h-4 w-4" />上传文件</Button>
+            <Button className="h-8 text-[12px] gap-2 px-8" onClick={e => { e.stopPropagation(); inputRef.current?.click() }}><Upload className="h-4 w-4" />上传文件</Button>
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>mp3/mp4/mov/webm/wav等30种格式</span>
               <span className="text-border/60">|</span><span>视频 ≤ 4GB；音频 ≤ 500M</span>
@@ -179,7 +210,6 @@ function ConfigPanel({
   selectedVoice, setSelectedVoice,
   selectedBgm, setSelectedBgm,
   speed, setSpeed,
-  pitch, setPitch,
   vol, setVol,
   isProcessing, onStart,
   onBack,
@@ -188,58 +218,64 @@ function ConfigPanel({
   selectedVoice: string; setSelectedVoice: (v: string) => void
   selectedBgm: string; setSelectedBgm: (v: string) => void
   speed: number; setSpeed: (v: number) => void
-  pitch: number; setPitch: (v: number) => void
   vol: number; setVol: (v: number) => void
   isProcessing?: boolean
   onStart?: () => void
   onBack?: () => void
 }) {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null)
+  const [playingBgm, setPlayingBgm] = useState<string | null>(null)
+  const [bgmSelectOpen, setBgmSelectOpen] = useState(false)
 
   const togglePlayVoice = (voice: string) => {
     setPlayingVoice(prev => prev === voice ? null : voice)
   }
+  const toggleBgmPreview = (bgmValue: string) => {
+    setPlayingBgm(prev => prev === bgmValue ? null : bgmValue)
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="border-border/60 shadow-sm">
+      <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0">
         <CardContent className="p-4 space-y-5">
-          {/* 配音音色 */}
+          {/* 选择声音 */}
           <div className="space-y-3">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">配音音色</Label>
+            <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider">选择声音</span>
             <div className="space-y-2">
               {voicePresets.map(voice => {
                 const isSelected = selectedVoice === voice.value
                 const isPlaying = playingVoice === voice.value
                 return (
                   <div key={voice.value} onClick={() => setSelectedVoice(voice.value)}
-                    className={cn('group flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200',
-                      isSelected ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/25 shadow-sm' : 'border-border/50 bg-card hover:border-primary/20 hover:bg-accent/30')}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className={cn('text-sm font-semibold', isSelected ? 'text-primary' : 'text-foreground')}>{voice.label}</span>
-                        <span className={cn('inline-flex items-center rounded-md px-1.5 py-px text-[10px] font-medium border', voice.color)}>{voice.tag}</span>
+                    className={cn('group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200',
+                      isSelected ? 'bg-white dark:bg-muted/20 ring-1 ring-border/20' : 'hover:bg-white/60 dark:hover:bg-muted/20')}>
+                    <div className="shrink-0">
+                      <div className={cn('w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-200', voice.avatarBg)}>
+                        {voice.avatar}
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed truncate">{voice.desc}</p>
+                    </div>
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <span className={cn('text-[13px] font-medium transition-colors tracking-tight', isSelected ? 'text-foreground' : 'text-foreground/80')}>{voice.label}</span>
+                      <span className={cn('inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-md font-medium', voice.tagColor)}>{voice.tags}</span>
                     </div>
                     {isPlaying && (
                       <div className="flex items-end gap-px h-4 opacity-60 shrink-0">
                         {[3, 6, 4, 8, 5, 7, 4].map((h, i) => <div key={i} className="w-0.5 bg-primary rounded-full animate-pulse" style={{ height: `${h * 2}px`, animationDelay: `${i * 0.1}s` }} />)}
                       </div>
                     )}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button onClick={e => e.stopPropagation()} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted">
+                          <button onClick={e => e.stopPropagation()} className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/60 transition-all duration-200">
                             <Settings2 className="h-3.5 w-3.5" />
                           </button>
                         </PopoverTrigger>
-                        <VoiceSettingsPopover speed={speed} pitch={pitch} volume={vol}
-                          onSpeedChange={setSpeed} onPitchChange={setPitch} onVolumeChange={setVol} />
+                        <VoiceSettingsPopover speed={speed} volume={vol}
+                          onSpeedChange={setSpeed} onVolumeChange={setVol} />
                       </Popover>
                       <button onClick={e => { e.stopPropagation(); togglePlayVoice(voice.value) }}
-                        className={cn('w-8 h-8 rounded-lg flex items-center justify-center', isPlaying ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground hover:bg-muted')}>
-                        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                        className={cn('w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200', isPlaying ? 'bg-foreground/10 text-foreground' : 'text-muted-foreground/50 hover:text-foreground hover:bg-muted/60')}>
+                        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
                       </button>
                     </div>
                   </div>
@@ -248,19 +284,68 @@ function ConfigPanel({
             </div>
           </div>
 
-          {/* 背景音乐 */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">背景音乐</Label>
-            <Select value={selectedBgm} onValueChange={setSelectedBgm}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>{bgmOptions.map(b => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
-            </Select>
+          {/* 背景音乐 — TTS 风格：标题同行 + 2 列网格气泡 */}
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-[12px] font-medium text-muted-foreground/60 shrink-0">背景音乐</span>
+              <Select open={bgmSelectOpen} onOpenChange={setBgmSelectOpen} value={selectedBgm} onValueChange={(v) => { setSelectedBgm(v); setBgmSelectOpen(false) }}>
+                <SelectTrigger className="flex-1 h-8 rounded-md border border-border/30 bg-white dark:bg-[#0A0A0E] text-[12px] hover:border-border/50 transition-colors px-3 shadow-none focus-visible:ring-0">
+                  {selectedBgm !== 'none' ? (
+                    <span className="text-foreground">{bgmOptions.find(o => o.value === selectedBgm)?.label || selectedBgm}</span>
+                  ) : (
+                    <span className="text-muted-foreground/50">选择背景音乐</span>
+                  )}
+                </SelectTrigger>
+                <SelectContent align="start" sideOffset={4} className="min-w-[340px] p-2">
+                  <div className="grid grid-cols-2 gap-1">
+                    {bgmOptions.map((opt) => {
+                      const isBgmPlaying = playingBgm === opt.value
+                      return (
+                        <div
+                          key={opt.value}
+                          onClick={() => { setSelectedBgm(opt.value); setBgmSelectOpen(false) }}
+                          className={cn(
+                            'group flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer transition-colors text-foreground',
+                            selectedBgm === opt.value ? 'bg-muted/60' : 'hover:bg-muted/40'
+                          )}
+                        >
+                          <div
+                            className="shrink-0 relative w-5 h-5"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (opt.value !== 'none') toggleBgmPreview(opt.value)
+                            }}
+                          >
+                            {opt.value === 'none' ? (
+                              <span className="absolute inset-0 flex items-center justify-center text-[10px]">—</span>
+                            ) : (
+                              <>
+                                <Music className={cn('absolute inset-0 h-5 w-5 transition-opacity duration-200', isBgmPlaying ? 'opacity-0' : 'opacity-100 group-hover:opacity-0')} />
+                                <div className={cn('absolute inset-0 h-5 w-5 rounded flex items-center justify-center transition-opacity duration-200', isBgmPlaying ? 'opacity-100 bg-foreground/10' : 'opacity-0 group-hover:opacity-100 group-hover:bg-foreground/5')}>
+                                  {isBgmPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-px" />}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[12px] font-medium block truncate">{opt.label}</span>
+                            {opt.sub && (
+                              <span className="text-[10px] text-muted-foreground/50 block">{opt.sub} · {opt.duration}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* 开始处理 按钮 */}
-      <Button className="w-full h-12 text-base gap-2" onClick={onStart} disabled={isProcessing}>
+      <Button className="w-full h-10 text-sm gap-2" onClick={onStart} disabled={isProcessing}>
         {isProcessing ? (
           <><div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />处理中...</>
         ) : (
@@ -275,7 +360,7 @@ function ConfigPanel({
 // Video Preview Card (左侧视频播放器)
 // ============================================================
 
-function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFileChange, subtitles, showControls, originalSrc, beforeAfterMode }: {
+function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFileChange, subtitles, showControls, originalSrc, beforeAfterMode, showDownloadButtons }: {
   file?: File
   src: string
   fileName: string
@@ -287,6 +372,7 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
   showControls?: boolean
   originalSrc?: string
   beforeAfterMode?: boolean
+  showDownloadButtons?: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -334,7 +420,7 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
 
   return (
     <div className="flex flex-col gap-3">
-      <Card className="border-border/60 shadow-sm overflow-hidden flex flex-col">
+      <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden flex flex-col">
         <div className="relative bg-black">
           {/* Before/After switch tabs */}
           {beforeAfterMode && originalSrc && (
@@ -378,7 +464,7 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
             </div>
           )}
         </div>
-        <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+        <div className="p-3 space-y-2 border-t border-border/40 bg-[#F8F9FB] dark:bg-[#131418]">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground w-10">{ft(currentTime)}</span>
             <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek}
@@ -415,6 +501,7 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
         <FileVideo className="h-4 w-4 text-primary shrink-0" />
         <span className="text-sm font-medium text-foreground truncate">{fileName}</span>
         {fileSize !== undefined && <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(fileSize)}</span>}
+        {showDownloadButtons && (
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
           <a href={src} download={`dubbed_${fileName}`}>
             <Button variant="outline" size="sm" className="h-7 text-[11px] gap-1">
@@ -427,6 +514,7 @@ function VideoPreview({ file, src, fileName, fileSize, onBack, onReplace, onFile
             下载音频
           </Button>
         </div>
+        )}
       </div>
     </div>
   )
@@ -445,7 +533,6 @@ function EditorPage({
   const [selectedVoice, setSelectedVoice] = useState('female-gentle')
   const [selectedBgm, setSelectedBgm] = useState('none')
   const [speed, setSpeed] = useState(1)
-  const [pitch, setPitch] = useState(0)
   const [vol, setVol] = useState(100)
 
   return (
@@ -455,8 +542,8 @@ function EditorPage({
       <ConfigPanel agent={agent}
         selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice}
         selectedBgm={selectedBgm} setSelectedBgm={setSelectedBgm}
-        speed={speed} setSpeed={setSpeed} pitch={pitch} setPitch={setPitch} vol={vol} setVol={setVol}
-        onStart={() => onProcess({ voice: selectedVoice, bgm: selectedBgm, speed, pitch, vol })} />
+        speed={speed} setSpeed={setSpeed} vol={vol} setVol={setVol}
+        onStart={() => onProcess({ voice: selectedVoice, bgm: selectedBgm, speed, vol })} />
     </div>
   )
 }
@@ -473,14 +560,12 @@ function LoadingState({ progress, currentStep }: { progress: number; currentStep
     "正在进行最后的细节优化与渲染",
   ]
   return (
-    <Card className="border-border/60 shadow-sm overflow-hidden">
+    <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden">
       <CardContent className="p-8">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center"><Sparkles className="h-6 w-6 text-white" /></div>
-              </div>
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
             </div>
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-medium px-3 py-1 rounded-full">{progress}%</div>
           </div>
@@ -520,36 +605,33 @@ const MOCK_SUBTITLES: SubtitleTrack[] = [
 
 function ResultPage({
   agent, src, originalSrc, fileName,
-  initialVoice, initialBgm, initialSpeed, initialPitch, initialVol,
+  initialVoice, initialBgm, initialSpeed, initialVol,
   onProcess, onBack,
 }: {
   agent: Agent; src: string; originalSrc: string; fileName: string
-  initialVoice: string; initialBgm: string; initialSpeed: number; initialPitch: number; initialVol: number
+  initialVoice: string; initialBgm: string; initialSpeed: number; initialVol: number
   onProcess: (params: Record<string, any>) => void; onBack: () => void
 }) {
   const [selectedVoice, setSelectedVoice] = useState(initialVoice)
   const [selectedBgm, setSelectedBgm] = useState(initialBgm)
   const [speed, setSpeed] = useState(initialSpeed)
-  const [pitch, setPitch] = useState(initialPitch)
   const [vol, setVol] = useState(initialVol)
   const [isProcessing, setIsProcessing] = useState(false)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="flex flex-col gap-3">
-        <VideoPreview src={src} originalSrc={originalSrc} fileName={fileName} subtitles={MOCK_SUBTITLES} beforeAfterMode />
-
-        <Button variant="outline" size="sm" className="w-full" onClick={onBack}>返回重选文件</Button>
+        <VideoPreview src={src} originalSrc={originalSrc} fileName={fileName} subtitles={MOCK_SUBTITLES} beforeAfterMode showDownloadButtons />
       </div>
       <ConfigPanel agent={agent}
         selectedVoice={selectedVoice} setSelectedVoice={setSelectedVoice}
         selectedBgm={selectedBgm} setSelectedBgm={setSelectedBgm}
-        speed={speed} setSpeed={setSpeed} pitch={pitch} setPitch={setPitch} vol={vol} setVol={setVol}
+        speed={speed} setSpeed={setSpeed} vol={vol} setVol={setVol}
         isProcessing={isProcessing}
         onStart={() => {
           setIsProcessing(true)
           setTimeout(() => setIsProcessing(false), 2000)
-          onProcess({ voice: selectedVoice, bgm: selectedBgm, speed, pitch, vol })
+          onProcess({ voice: selectedVoice, bgm: selectedBgm, speed, vol })
         }}
         onBack={onBack}
       />
@@ -601,7 +683,6 @@ export function VideoDubbingExperienceArea({ agent, onStartProcess }: VideoDubbi
         initialVoice={lastParams.voice || 'female-gentle'}
         initialBgm={lastParams.bgm || 'none'}
         initialSpeed={lastParams.speed || 1}
-        initialPitch={lastParams.pitch || 0}
         initialVol={lastParams.vol || 100}
         onProcess={handleProcess}
         onBack={() => { setFile(null); setPhase('upload') }}

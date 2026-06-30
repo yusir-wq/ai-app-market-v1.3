@@ -82,18 +82,48 @@ const mockHistoryTasks: Record<string, HistoryTask[]> = {
     { id: 'ht-15', title: '亲子露营VLOG脚本', status: 'completed', createdAt: '2024-01-03 14:00', resultPreview: '已生成4段温馨脚本及12个关键词：#亲子时光 #周末露营 #治愈系VLOG...', resultId: 'result-topic-to-copywriting' },
   ],
   'copywriting-to-video': [
-    { id: 'ht-5', title: '品牌宣传片生成', status: 'completed', createdAt: '2024-01-08 09:00', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video1/400/225' },
-    { id: 'ht-16', title: '产品介绍视频', status: 'completed', createdAt: '2024-01-07 15:30', resultPreview: '已生成8镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video2/400/225' },
-    { id: 'ht-17', title: '企业文化宣传', status: 'completed', createdAt: '2024-01-06 10:45', resultPreview: '已生成5镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video3/400/225' },
-    { id: 'ht-18', title: '节日祝福视频', status: 'completed', createdAt: '2024-01-05 14:20', resultPreview: '已生成7镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video4/400/225' },
-    { id: 'ht-19', title: '新品发布预告', status: 'completed', createdAt: '2024-01-04 09:15', resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video', videoThumbnail: 'https://picsum.photos/seed/video5/400/225' },
+    { id: 'ht-5', title: '真实的质感，画质细腻清晰，电脑屏幕里的女生在车里坐着，突然女生开心的朝屏幕前面挥了挥手，然后把手伸了出来打破了屏幕的界限，将手放在了屏幕外面的手上，光聚焦在了手上，两只手互相紧握，真实感与动画的无缝融合，动作细腻流畅',
+      status: 'completed', createdAt: '2024-01-08 09:00',
+      resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video',
+      videoThumbnail: 'https://picsum.photos/seed/video1/400/225' },
+    { id: 'ht-16', title: '让图片中的人喝口饮料 旁白: 啊~真甜',
+      status: 'completed', createdAt: '2024-01-07 15:30',
+      resultPreview: '已生成8镜分镜脚本...', resultId: 'result-copywriting-to-video',
+      videoThumbnail: 'https://picsum.photos/seed/video2/400/225' },
+    { id: 'ht-17', title: '一个女生在森林里奔跑，阳光透过树叶洒在她身上，镜头跟随她穿过溪流，画面唯美治愈，电影质感',
+      status: 'completed', createdAt: '2024-01-06 10:45',
+      resultPreview: '已生成5镜分镜脚本...', resultId: 'result-copywriting-to-video',
+      videoThumbnail: 'https://picsum.photos/seed/video3/400/225' },
+    { id: 'ht-18', title: '产品展示：新款智能手表特写旋转镜头，屏幕亮起显示心率、步数等数据，表盘细节金属光泽清晰可见',
+      status: 'completed', createdAt: '2024-01-05 14:20',
+      resultPreview: '已生成7镜分镜脚本...', resultId: 'result-copywriting-to-video',
+      videoThumbnail: 'https://picsum.photos/seed/video4/400/225' },
+    { id: 'ht-19', title: '猫咪在窗台上晒太阳，慵懒地打了个哈欠，尾巴轻轻摇晃，柔和的午后阳光营造温馨氛围',
+      status: 'completed', createdAt: '2024-01-04 09:15',
+      resultPreview: '已生成6镜分镜脚本...', resultId: 'result-copywriting-to-video',
+      videoThumbnail: 'https://picsum.photos/seed/video5/400/225' },
   ],
   'image-to-video': [
-    { id: 'ht-6', title: '旅行相册MV', status: 'completed', createdAt: '2024-01-12 10:30', resultPreview: '已生成15秒运镜视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-travel/400/225' },
-    { id: 'ht-20', title: '产品动态展示', status: 'completed', createdAt: '2024-01-11 09:15', resultPreview: '已生成10秒产品运镜...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-product/400/225' },
-    { id: 'ht-21', title: '风景延时摄影', status: 'completed', createdAt: '2024-01-09 16:40', resultPreview: '已生成8秒延时视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-landscape/400/225' },
-    { id: 'ht-22', title: '人物肖像动画', status: 'completed', createdAt: '2024-01-07 14:20', resultPreview: '已生成5秒人像动态...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-portrait/400/225' },
-    { id: 'ht-23', title: '美食制作过程', status: 'completed', createdAt: '2024-01-05 11:00', resultPreview: '已生成12秒美食视频...', resultId: 'result-image-to-video', videoThumbnail: 'https://picsum.photos/seed/itv-food/400/225' },
+    { id: 'ht-6', title: '让图片中的瀑布动起来，水流倾泻而下，水雾在阳光下形成彩虹，画面气势磅礴',
+      status: 'completed', createdAt: '2024-01-12 10:30',
+      resultPreview: '已生成15秒运镜视频...', resultId: 'result-image-to-video-1',
+      videoThumbnail: 'https://picsum.photos/seed/itv-travel/400/225' },
+    { id: 'ht-20', title: '这张产品图，让镜头从左到右缓慢推进，灯光逐一亮起，营造科技感揭幕仪式',
+      status: 'completed', createdAt: '2024-01-11 09:15',
+      resultPreview: '已生成10秒产品运镜...', resultId: 'result-image-to-video-2',
+      videoThumbnail: 'https://picsum.photos/seed/itv-product/400/225' },
+    { id: 'ht-21', title: '让风景照中的云朵缓缓飘动，湖面泛起微波，打造延时摄影效果',
+      status: 'completed', createdAt: '2024-01-09 16:40',
+      resultPreview: '已生成8秒延时视频...', resultId: 'result-image-to-video-3',
+      videoThumbnail: 'https://picsum.photos/seed/itv-landscape/400/225' },
+    { id: 'ht-22', title: '让人物肖像的眼睛慢慢睁开，嘴角微微上扬，头发轻轻飘动，赋予静态照片生命',
+      status: 'completed', createdAt: '2024-01-07 14:20',
+      resultPreview: '已生成5秒人像动态...', resultId: 'result-image-to-video-4',
+      videoThumbnail: 'https://picsum.photos/seed/itv-portrait/400/225' },
+    { id: 'ht-23', title: '让美食照片中的热气缓缓上升，汤汁轻轻晃动，筷子夹起食物的瞬间慢动作',
+      status: 'completed', createdAt: '2024-01-05 11:00',
+      resultPreview: '已生成12秒美食视频...', resultId: 'result-image-to-video-5',
+      videoThumbnail: 'https://picsum.photos/seed/itv-food/400/225' },
   ],
   'video-translate': [
     { id: 'ht-7', title: 'product_launch_2024.mp4', status: 'completed', createdAt: '2025-01-15 14:30', resultPreview: '已生成12条中英双语字幕', resultId: 'result-video-translate', videoThumbnail: 'https://picsum.photos/seed/vt-product/400/225' },
@@ -379,54 +409,36 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
             <TabsContent value="experience" className="mt-0 space-y-4">
               {/* 文字转语音：自定义左右布局 */}
               {agent.id === 'text-to-speech' ? (
-                <div className="space-y-4">
-                  <TextToSpeechExperienceArea
-                    agent={agent}
-                    text={text}
-                    paramValues={paramValues}
-                    onTextChange={setText}
-                    onParamChange={handleParamChange}
-                    error={uploadError}
-                    isProcessing={isProcessing}
-                    onStartProcess={handleProcess}
-                  />
-                  {/* 结果区：仅展示处理进度动画 */}
-                  {isProcessing && (
-                    <AgentResultArea
-                      isProcessing={true}
-                      progress={progress}
-                      progressSteps={progressSteps}
-                      costPoints={agent.costPoints}
-                      processTime={agent.avgProcessTime}
-                    />
-                  )}
-                </div>
+                <TextToSpeechExperienceArea
+                  agent={agent}
+                  text={text}
+                  paramValues={paramValues}
+                  onTextChange={setText}
+                  onParamChange={handleParamChange}
+                  error={uploadError}
+                  isProcessing={isProcessing}
+                  progress={progress}
+                  progressSteps={progressSteps}
+                  costPoints={agent.costPoints}
+                  processTime={agent.avgProcessTime}
+                  onStartProcess={handleProcess}
+                />
               ) : agent.id === 'topic-to-copywriting' ? (
-                /* AI生成视频文案：自定义左右布局 */
-                <div className="space-y-4">
-                  <CopywritingExperienceArea
-                    agent={agent}
-                    text={text}
-                    paramValues={paramValues}
-                    onTextChange={setText}
-                    onParamChange={handleParamChange}
-                    error={uploadError}
-                    isProcessing={isProcessing}
-                    onStartProcess={handleProcess}
-                  />
-                  {/* 结果区：仅展示处理进度动画 */}
-                  {isProcessing && (
-                    <AgentResultArea
-                      isProcessing={true}
-                      progress={progress}
-                      progressSteps={progressSteps}
-                      costPoints={agent.costPoints}
-                      processTime={agent.avgProcessTime}
-                    />
-                  )}
-                </div>
+                <CopywritingExperienceArea
+                  agent={agent}
+                  text={text}
+                  paramValues={paramValues}
+                  onTextChange={setText}
+                  onParamChange={handleParamChange}
+                  error={uploadError}
+                  isProcessing={isProcessing}
+                  progress={progress}
+                  progressSteps={progressSteps}
+                  costPoints={agent.costPoints}
+                  processTime={agent.avgProcessTime}
+                  onStartProcess={handleProcess}
+                />
               ) : agent.id === 'copywriting-to-video' ? (
-                /* AI文案生视频：顶部标题 + 大输入卡片 + 底部工具栏 */
                 <CopywritingToVideoExperienceArea
                   agent={agent}
                   text={text}
@@ -435,10 +447,13 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                   onParamChange={handleParamChange}
                   error={uploadError}
                   isProcessing={isProcessing}
+                  progress={progress}
+                  progressSteps={progressSteps}
+                  costPoints={agent.costPoints}
+                  processTime={agent.avgProcessTime}
                   onStartProcess={handleProcess}
                 />
               ) : agent.id === 'image-to-video' ? (
-                /* AI图生视频：顶部标题 + 大输入卡片 + 底部工具栏 */
                 <ImageToVideoExperienceArea
                   agent={agent}
                   text={text}
@@ -447,6 +462,10 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                   onParamChange={handleParamChange}
                   error={uploadError}
                   isProcessing={isProcessing}
+                  progress={progress}
+                  progressSteps={progressSteps}
+                  costPoints={agent.costPoints}
+                  processTime={agent.avgProcessTime}
                   onStartProcess={handleProcess}
                 />
               ) : agent.id === 'video-translate' ? (
@@ -573,7 +592,7 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                   tasks.map((task) => (
                     <Card
                       key={task.id}
-                      className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group flex flex-col overflow-hidden"
+                      className="border-border/60 hover:border-primary/30 transition-all duration-300 cursor-pointer group flex flex-col overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 gap-0"
                       onClick={() => onViewResult?.(task.resultId, task.title)}
                     >
                       {/* AI 文案生视频 / AI 图生视频 / AI 视频翻译 / AI 字幕生成 / AI 视频配音 / AI 视频去水印：显示视频预览图 */}
@@ -625,13 +644,19 @@ export function AgentDetailView({ agent, onBack, onViewResult, prefillText }: Ag
                         /* 其他应用：保持原卡片样式 */
                         <CardContent className="p-4 flex flex-col flex-1">
                           <div className="flex items-start gap-3 flex-1">
-                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                              task.status === 'completed'
+                                ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                                : task.status === 'failed'
+                                  ? 'bg-gradient-to-br from-red-400 to-rose-600'
+                                  : 'bg-gradient-to-br from-blue-400 to-indigo-600'
+                            }`}>
                               {task.status === 'completed' ? (
-                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                <CheckCircle2 className="h-5 w-5 text-white" />
                               ) : task.status === 'failed' ? (
-                                <Loader2 className="h-5 w-5 text-destructive" />
+                                <X className="h-5 w-5 text-white" />
                               ) : (
-                                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                <Loader2 className="h-5 w-5 text-white animate-spin" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0 flex flex-col">

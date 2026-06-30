@@ -18,6 +18,7 @@ import {
   Clock,
   CheckCircle2,
   Loader2,
+  X,
   FileText,
   Calendar,
   Play,
@@ -394,14 +395,18 @@ export function AgentShell({ agent }: { agent: Agent }) {
             <TabsContent value="history" className="mt-0">
               <div className="space-y-3">
                 {mockHistoryTasks.map((task) => (
-                  <Card key={task.id} className="border-border/60 hover:border-primary/30 transition-colors cursor-pointer group">
+                  <Card key={task.id} className="border-border/60 hover:border-primary/30 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-md hover:-translate-y-0.5">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                          task.status === 'completed'
+                            ? 'bg-gradient-to-br from-emerald-400 to-emerald-600'
+                            : 'bg-gradient-to-br from-red-400 to-rose-600'
+                        }`}>
                           {task.status === 'completed' ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            <CheckCircle2 className="h-5 w-5 text-white" />
                           ) : (
-                            <Loader2 className="h-5 w-5 text-destructive" />
+                            <X className="h-5 w-5 text-white" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">

@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -11,6 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Upload,
   FileVideo,
@@ -18,7 +23,6 @@ import {
   AlertCircle,
   Sparkles,
   Mic2,
-  ScanText,
   Globe,
   Type,
   Play,
@@ -26,6 +30,7 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
+  Loader2,
   Download,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -50,6 +55,199 @@ export interface VideoSubtitleResult {
   sourceLang: string
   targetLang: string
   subtitleSource: string
+}
+
+interface SubtitleStyle {
+  font: string
+  position: string
+  customPosition: number
+  color: string
+  size: string
+  strokeColor: string
+  strokeWidth: number
+  background: boolean
+  bgColor: string
+  rounded: boolean
+}
+
+const FONT_OPTIONS = [
+  { value: 'system', label: '系统默认' },
+  { value: 'songti', label: '宋体' },
+  { value: 'heiti', label: '黑体' },
+  { value: 'kaiti', label: '楷体' },
+  { value: 'arial', label: 'Arial' },
+  { value: 'helvetica', label: 'Helvetica' },
+  { value: 'roboto', label: 'Roboto' },
+]
+
+const SIZE_OPTIONS = [
+  { value: '12', label: '12px (小)' },
+  { value: '14', label: '14px' },
+  { value: '16', label: '16px (默认)' },
+  { value: '18', label: '18px' },
+  { value: '20', label: '20px' },
+  { value: '24', label: '24px (大)' },
+  { value: '28', label: '28px' },
+  { value: '32', label: '32px' },
+]
+
+const POSITION_OPTIONS = [
+  { value: 'bottom', label: '底部（默认）' },
+  { value: 'middle', label: '中间' },
+  { value: 'top', label: '顶部' },
+  { value: 'custom', label: '自定义位置' },
+]
+
+const COLOR_PRESETS = [
+  '#FFFFFF', '#FFD700', '#00FF00', '#00BFFF', '#FF6347',
+  '#FF69B4', '#9400D3', '#FFA500', '#808080', '#000000',
+]
+
+const STROKE_COLOR_PRESETS = [
+  '#000000', '#1A1A2E', '#333333', '#666666', '#FFFFFF',
+  '#FF0000', '#0000FF', '#00AA00', '#8B4513', '#FFD700',
+]
+
+// ============================================================
+// Subtitle Style Popover
+// ============================================================
+
+function SubtitleStylePopover({
+  style, onChange,
+}: {
+  style: SubtitleStyle
+  onChange: (s: SubtitleStyle) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const u = (key: keyof SubtitleStyle, value: any) => onChange({ ...style, [key]: value })
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
+          <Type className="h-3 w-3" />字幕样式
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" side="bottom" className="w-[300px] p-0 shadow-md border border-border/30 bg-white dark:bg-[#1A1A1E]">
+        <div className="flex items-center px-4 py-2.5 border-b border-border/20 bg-[#F8F9FB] dark:bg-[#131418]">
+          <span className="w-1.5 h-4 rounded-full bg-rose-400/60 dark:bg-rose-500/60 shrink-0" />
+          <h3 className="text-[13px] font-medium text-foreground/80 tracking-tight ml-2">字幕样式设置</h3>
+        </div>
+        <div className="p-3 space-y-3 max-h-[420px] overflow-y-auto">
+          {/* 字幕字体 */}
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-medium text-muted-foreground/60 shrink-0 w-16">字幕字体</span>
+            <Select value={style.font} onValueChange={v => u('font', v)}>
+              <SelectTrigger className="h-7 text-[12px] flex-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{FONT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          {/* 字幕位置 */}
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-medium text-muted-foreground/60 shrink-0 w-16">字幕位置</span>
+            <Select value={style.position} onValueChange={v => u('position', v)}>
+              <SelectTrigger className="h-7 text-[12px] flex-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{POSITION_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          {/* 自定义位置滑块 */}
+          {style.position === 'custom' && (
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-medium text-muted-foreground/60 shrink-0 w-16">距顶部</span>
+              <Slider value={[style.customPosition]} onValueChange={v => u('customPosition', v[0])} min={10} max={90} step={5} className="flex-1" />
+              <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-8 text-right">{style.customPosition}%</span>
+            </div>
+          )}
+
+          {/* 字幕颜色 */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-medium text-muted-foreground/60">字幕颜色</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {COLOR_PRESETS.map(c => (
+                <button key={c} onClick={() => u('color', c)}
+                  className={cn('w-6 h-6 rounded-md border-2 transition-all', style.color === c ? 'border-primary scale-110' : 'border-transparent hover:scale-105')}
+                  style={{ backgroundColor: c }} />
+              ))}
+              <div className="relative ml-1">
+                <input type="color" value={style.color} onChange={e => u('color', e.target.value)} className="absolute inset-0 opacity-0 w-6 h-6 cursor-pointer" />
+                <div className="w-6 h-6 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* 字幕大小 */}
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-medium text-muted-foreground/60 shrink-0 w-16">字幕大小</span>
+            <Select value={style.size} onValueChange={v => u('size', v)}>
+              <SelectTrigger className="h-7 text-[12px] flex-1"><SelectValue /></SelectTrigger>
+              <SelectContent>{SIZE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          {/* 描边颜色 */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-medium text-muted-foreground/60">描边颜色</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {STROKE_COLOR_PRESETS.map(c => (
+                <button key={c} onClick={() => u('strokeColor', c)}
+                  className={cn('w-6 h-6 rounded-md border-2 transition-all', style.strokeColor === c ? 'border-primary scale-110' : 'border-transparent hover:scale-105')}
+                  style={{ backgroundColor: c }} />
+              ))}
+              <div className="relative ml-1">
+                <input type="color" value={style.strokeColor} onChange={e => u('strokeColor', e.target.value)} className="absolute inset-0 opacity-0 w-6 h-6 cursor-pointer" />
+                <div className="w-6 h-6 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* 描边粗细 */}
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-medium text-muted-foreground/60 shrink-0 w-16">描边粗细</span>
+            <Slider value={[style.strokeWidth]} onValueChange={v => u('strokeWidth', v[0])} min={0} max={8} step={1} className="flex-1" />
+            <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-6 text-right">{style.strokeWidth}px</span>
+          </div>
+
+          {/* 字幕背景 */}
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground/60">字幕背景</span>
+            <button role="switch" aria-checked={style.background} onClick={() => u('background', !style.background)}
+              className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors', style.background ? 'bg-primary' : 'bg-muted-foreground/30')}>
+              <span className={cn('pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform', style.background ? 'translate-x-4' : 'translate-x-0')} />
+            </button>
+          </div>
+
+          {/* 字幕背景颜色 */}
+          {style.background && (
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-medium text-muted-foreground/60">背景颜色</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {COLOR_PRESETS.map(c => (
+                  <button key={c} onClick={() => u('bgColor', c)}
+                    className={cn('w-6 h-6 rounded-md border-2 transition-all', style.bgColor === c ? 'border-primary scale-110' : 'border-transparent hover:scale-105')}
+                    style={{ backgroundColor: c }} />
+                ))}
+                <div className="relative ml-1">
+                  <input type="color" value={style.bgColor} onChange={e => u('bgColor', e.target.value)} className="absolute inset-0 opacity-0 w-6 h-6 cursor-pointer" />
+                  <div className="w-6 h-6 rounded-md border-2 border-dashed border-border/50 flex items-center justify-center bg-gradient-to-br from-red-400 via-green-400 to-blue-400" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 圆角半透明背景 */}
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground/60">圆角半透明背景</span>
+            <button role="switch" aria-checked={style.rounded} onClick={() => u('rounded', !style.rounded)}
+              className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors', style.rounded ? 'bg-primary' : 'bg-muted-foreground/30')}>
+              <span className={cn('pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform', style.rounded ? 'translate-x-4' : 'translate-x-0')} />
+            </button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 interface VideoSubtitleExperienceProps {
@@ -107,16 +305,16 @@ function UploadZone({ agent, onFileSelected }: { agent: Agent; onFileSelected: (
   }, [onFileSelected])
 
   return (
-    <Card className="border-border/60 shadow-sm overflow-hidden">
+    <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden">
       <CardContent className="p-0">
         <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-          className={cn('p-4 text-center transition-all flex flex-col items-center gap-5', 'bg-secondary/20', isDragging && 'bg-primary/5')}>
+          className={cn('p-4 text-center transition-all flex flex-col items-center gap-5', 'bg-[#FAFAFC] dark:bg-[#111115]', isDragging && 'bg-primary/5')}>
           <div onClick={() => inputRef.current?.click()}
             className={cn('w-full border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center gap-5',
               isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30 hover:bg-accent/30')}>
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center"><Upload className="h-6 w-6 text-primary" /></div>
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><Upload className="h-4 w-4 text-primary" /></div>
             <p className="text-sm text-muted-foreground">拖拽本地音视频文件到这里</p>
-            <Button className="h-11 gap-2 px-8" onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}>
+            <Button className="h-8 text-[12px] gap-2 px-8" onClick={(e) => { e.stopPropagation(); inputRef.current?.click() }}>
               <Upload className="h-4 w-4" />上传文件
             </Button>
             <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -171,7 +369,7 @@ function EditorPage({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* LEFT: Video Preview */}
       <div className="flex flex-col gap-3">
-        <Card className="border-border/60 shadow-sm overflow-hidden flex flex-col">
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden flex flex-col">
           <div className="relative bg-black">
             <video ref={videoRef} src={URL.createObjectURL(file)} className="w-full aspect-video"
               onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
@@ -179,23 +377,22 @@ function EditorPage({
               onEnded={() => setIsPlaying(false)} />
           </div>
           {/* Video controls */}
-          <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+          <div className="p-3 space-y-2 border-t border-border/40 bg-[#F8F9FB] dark:bg-[#131418]">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground w-10">{formatTime(currentTime)}</span>
+              <span className="text-[11px] text-muted-foreground/50 w-10">{formatTime(currentTime)}</span>
               <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek}
-                className="flex-1 h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" />
-              <span className="text-xs text-muted-foreground w-10 text-right">{duration ? formatTime(duration) : '00:00'}</span>
+                className="flex-1 h-1.5 bg-muted/40 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary" />
+              <span className="text-[11px] text-muted-foreground/50 w-10 text-right">{duration ? formatTime(duration) : '00:00'}</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={togglePlay}>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={togglePlay}>
                   {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                 </Button>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setVolume(v => { const nv = v > 0 ? 0 : 1; if (videoRef.current) videoRef.current.volume = nv; return nv })}>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground/60 hover:text-foreground" onClick={() => setVolume(v => { const nv = v > 0 ? 0 : 1; if (videoRef.current) videoRef.current.volume = nv; return nv })}>
                   {volume > 0 ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
                 </Button>
-                {/* Playback speed */}
-                <div className="flex items-center gap-0.5 ml-2">
+                <div className="flex items-center gap-0.5 ml-1">
                   {[0.5, 1, 1.5, 2].map(rate => (
                     <Button key={rate} size="sm" variant={playbackRate === rate ? 'secondary' : 'ghost'}
                       className="h-6 text-[10px] px-1.5" onClick={() => changeSpeed(rate)}>
@@ -227,33 +424,29 @@ function EditorPage({
 
       {/* RIGHT: Config Panel */}
       <div className="flex flex-col gap-4">
-        <Card className="border-border/60 shadow-sm">
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0">
           <CardContent className="p-4 space-y-4">
             {/* 源语言 */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">语言设置</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground flex items-center gap-1"><Globe className="h-3 w-3" />源语言</Label>
-                  <Select value={sourceLang} onValueChange={setSourceLang}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                {bilingual && (
-                <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground flex items-center gap-1"><Type className="h-3 w-3" />目标语言</Label>
-                  <Select value={targetLang} onValueChange={setTargetLang}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{TARGET_LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                )}
-              </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[13px] font-medium text-foreground/70 shrink-0 w-16">源语言</span>
+              <Select value={sourceLang} onValueChange={setSourceLang}>
+                <SelectTrigger className="h-8 text-[13px] flex-1 border-border/30 bg-white dark:bg-[#1A1A1E] shadow-none"><SelectValue /></SelectTrigger>
+                <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
+
+            {/* 目标语言 */}
+            <div className="flex items-center gap-3">
+              <span className="text-[13px] font-medium text-foreground/70 shrink-0 w-16">目标语言</span>
+              <Select value={targetLang} onValueChange={setTargetLang}>
+                <SelectTrigger className="h-8 text-[13px] flex-1 border-border/30 bg-white dark:bg-[#1A1A1E] shadow-none"><SelectValue /></SelectTrigger>
+                <SelectContent>{TARGET_LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+
             {/* 双语字幕 */}
-            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
-              <span className="text-sm text-foreground">双语字幕</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[13px] font-medium text-foreground/70 shrink-0 w-16">双语字幕</span>
               <button role="switch" aria-checked={bilingual} onClick={() => setBilingual(!bilingual)}
                 className={cn('relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors', bilingual ? 'bg-primary' : 'bg-muted-foreground/30')}>
                 <span className={cn('pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform', bilingual ? 'translate-x-4' : 'translate-x-0')} />
@@ -262,7 +455,7 @@ function EditorPage({
           </CardContent>
         </Card>
         {/* 立即生成 */}
-        <Button className="w-full h-12 text-base gap-2" onClick={() => onGenerate({ subtitleSource: 'asr', sourceLang, targetLang: bilingual ? targetLang : '', bilingual })}>
+        <Button className="w-full h-10 text-sm gap-2" onClick={() => onGenerate({ subtitleSource: 'asr', sourceLang, targetLang: bilingual ? targetLang : '', bilingual })}>
           <Sparkles className="h-4 w-4" />立即生成<span className="text-xs font-normal opacity-70 ml-1">{agent.costPoints} 智点</span>
         </Button>
       </div>
@@ -282,15 +475,11 @@ function LoadingState({ progress, currentStep }: { progress: number; currentStep
     "正在进行最后的细节优化与渲染",
   ]
   return (
-    <Card className="border-border/60 shadow-sm overflow-hidden">
+    <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden">
       <CardContent className="p-8">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center"><Sparkles className="h-6 w-6 text-white" /></div>
-              </div>
-            </div>
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-medium px-3 py-1 rounded-full">{progress}%</div>
           </div>
           <div><p className="text-lg font-semibold text-foreground">预计共需1分钟，内容即将呈现</p>
@@ -323,6 +512,10 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingText, setEditingText] = useState('')
   const [subtitles, setSubtitles] = useState(result.subtitles)
+  const [subtitleStyle, setSubtitleStyle] = useState<SubtitleStyle>({
+    font: 'system', position: 'bottom', customPosition: 70, color: '#FFFFFF',
+    size: '16', strokeColor: '#000000', strokeWidth: 2, background: false, bgColor: '#000000', rounded: false,
+  })
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -349,7 +542,7 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* LEFT: Video with subtitles overlay */}
       <div className="flex flex-col gap-3">
-        <Card className="border-border/60 shadow-sm overflow-hidden flex flex-col">
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 overflow-hidden flex flex-col">
           <div className="relative bg-black">
             <video ref={videoRef} src={result.videoUrl} className="w-full aspect-video"
               onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
@@ -373,7 +566,7 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
               })()}
             </div>
           </div>
-          <div className="p-3 space-y-2 border-t border-border/40 bg-secondary/20">
+          <div className="p-3 space-y-2 border-t border-border/40 bg-[#F8F9FB] dark:bg-[#131418]">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground w-10">{formatTime(currentTime)}</span>
               <input type="range" min="0" max={duration || 100} value={currentTime} onChange={handleSeek}
@@ -397,7 +590,7 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
       <div className="flex flex-col gap-4">
         {/* Action buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1"><Type className="h-3 w-3" />字幕样式</Button>
+          <SubtitleStylePopover style={subtitleStyle} onChange={setSubtitleStyle} />
           <div className="flex rounded-lg bg-secondary/50 p-0.5 gap-0.5 ml-auto">
             <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2 bg-background shadow-sm">原文</Button>
             <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2">译文</Button>
@@ -406,7 +599,7 @@ function ResultPage({ result, onBack }: { result: VideoSubtitleResult; onBack: (
         </div>
 
         {/* Subtitle list */}
-        <Card className="border-border/60 shadow-sm flex-1">
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] gap-0 flex-1">
           <CardContent className="p-4 max-h-[420px] overflow-y-auto">
             <div className="space-y-2">
               {subtitles.map(sub => (

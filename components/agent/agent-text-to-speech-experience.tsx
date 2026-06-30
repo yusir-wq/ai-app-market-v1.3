@@ -10,7 +10,6 @@ import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -23,9 +22,11 @@ import {
   Play,
   Pause,
   Settings2,
+  CheckCircle2,
   Wand2,
   BookOpen,
   FileText,
+  Upload,
   Music,
   Volume2,
   Zap,
@@ -49,6 +50,8 @@ interface TextToSpeechExperienceProps {
   isProcessing?: boolean
   progress?: number
   progressSteps?: { label: string; status: 'pending' | 'running' | 'done' }[]
+  costPoints?: number
+  processTime?: string
   onStartProcess: () => void
 }
 
@@ -69,38 +72,43 @@ const quickFillActions = [
 const voicePresets = [
   {
     value: 'female-gentle',
-    label: '温柔女声',
-    tag: '女声',
-    desc: '温暖知性，情感细腻，适合有声读物、产品解说',
-    color: 'bg-rose-100 text-rose-700 border-rose-200',
+    label: 'Bella',
+    avatar: 'B',
+    avatarBg: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300',
+    tags: '温暖，知性，细腻',
+    tagColor: 'bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400',
   },
   {
     value: 'female-lively',
-    label: '活泼女声',
-    tag: '女声',
-    desc: '俏皮灵动，元气满满，适合短视频、带货广告',
-    color: 'bg-pink-100 text-pink-700 border-pink-200',
+    label: 'Luna',
+    avatar: 'L',
+    avatarBg: 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-300',
+    tags: '欢快，明亮，自信',
+    tagColor: 'bg-pink-50 text-pink-600 dark:bg-pink-950/30 dark:text-pink-400',
   },
   {
     value: 'male-calm',
-    label: '沉稳男声',
-    tag: '男声',
-    desc: '大气稳重，字正腔圆，适合新闻播报、品牌视频',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    label: 'Alex',
+    avatar: 'A',
+    avatarBg: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300',
+    tags: '沉稳，大气，字正腔圆',
+    tagColor: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400',
   },
   {
     value: 'male-deep',
-    label: '磁性男声',
-    tag: '男声',
-    desc: '低沉醇厚，感染力强，适合广告配音、播客开场',
-    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    label: 'Marcus',
+    avatar: 'M',
+    avatarBg: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300',
+    tags: '低沉，醇厚，富有感染力',
+    tagColor: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400',
   },
   {
     value: 'child',
-    label: '可爱童声',
-    tag: '童声',
-    desc: '天真烂漫，自然灵动，适合儿童内容、在线教育',
-    color: 'bg-amber-100 text-amber-700 border-amber-200',
+    label: 'Milo',
+    avatar: 'M',
+    avatarBg: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300',
+    tags: '天真，灵动，自然',
+    tagColor: 'bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400',
   },
 ]
 
@@ -109,14 +117,14 @@ const voicePresets = [
 // ============================================================
 
 const bgmOptions = [
-  { value: 'none', label: '无背景音乐' },
-  { value: 'light', label: '轻音乐 - 温馨舒缓' },
-  { value: 'inspire', label: '励志 - 昂扬向上' },
-  { value: 'upbeat', label: '欢快 - 活泼灵动' },
-  { value: 'cinematic', label: '电影感 - 大气磅礴' },
-  { value: 'lofi', label: 'Lo-fi - 休闲放松' },
-  { value: 'classical', label: '古典 - 优雅庄重' },
-  { value: 'electronic', label: '电子 - 科技律动' },
+  { value: 'none', label: '无背景音乐', duration: '' },
+  { value: 'light', label: '阳光明媚', duration: '01:18', sub: '轻快自然' },
+  { value: 'inspire', label: '逐梦前行', duration: '02:05', sub: '积极向上' },
+  { value: 'upbeat', label: '元气满满', duration: '00:52', sub: '活泼灵动' },
+  { value: 'cinematic', label: '史诗之旅', duration: '01:45', sub: '大气沉稳' },
+  { value: 'lofi', label: '午后咖啡馆', duration: '02:30', sub: '悠闲放松' },
+  { value: 'classical', label: '月光花园', duration: '03:12', sub: '优雅温婉' },
+  { value: 'electronic', label: '未来脉搏', duration: '01:33', sub: '科技节奏' },
 ]
 
 // ============================================================
@@ -138,59 +146,37 @@ function VoiceSettingsPopover({
     <PopoverContent
       side="left"
       align="start"
-      className="w-72 p-0 overflow-hidden shadow-xl border-border/80"
+      className="w-56 p-0 overflow-hidden shadow-xl border-border/80"
     >
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-border/50 bg-secondary/30">
-        <div className="flex items-center gap-2">
-          <Settings2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-semibold text-foreground">声音参数设置</span>
-        </div>
-      </div>
-
-      {/* Sliders */}
-      <div className="p-4 space-y-5">
-        {/* 语速 */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-foreground">语速</Label>
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md tabular-nums">
-              {speed}x
-            </span>
-          </div>
-          <Slider
-            value={[speed]}
-            onValueChange={(vals) => onSpeedChange(vals[0])}
-            min={0.5}
-            max={2.0}
-            step={0.1}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>0.5x 慢速</span>
-            <span>2.0x 快速</span>
+      <div className="p-3 space-y-3">
+        {/* 语速：标签 + 进度条 + 当前值 一行 */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-7">语速</span>
+            <Slider
+              value={[speed]}
+              onValueChange={(vals) => onSpeedChange(vals[0])}
+              min={0.5}
+              max={2.0}
+              step={0.1}
+              className="flex-1"
+            />
+            <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-7 text-right">{speed}x</span>
           </div>
         </div>
-
-        {/* 音量 */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium text-foreground">音量</Label>
-            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md tabular-nums">
-              {volume}%
-            </span>
-          </div>
-          <Slider
-            value={[volume]}
-            onValueChange={(vals) => onVolumeChange(vals[0])}
-            min={50}
-            max={150}
-            step={10}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>50%</span>
-            <span>150%</span>
+        {/* 音量：标签 + 进度条 + 当前值 一行 */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-muted-foreground shrink-0 w-7">音量</span>
+            <Slider
+              value={[volume]}
+              onValueChange={(vals) => onVolumeChange(vals[0])}
+              min={50}
+              max={150}
+              step={10}
+              className="flex-1"
+            />
+            <span className="text-[11px] font-medium tabular-nums text-foreground/70 shrink-0 w-7 text-right">{volume}%</span>
           </div>
         </div>
       </div>
@@ -229,56 +215,57 @@ function VoiceRow({
     <div
       onClick={onSelect}
       className={cn(
-        'group flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200',
+        'group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200',
         isSelected
-          ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/25 shadow-sm'
-          : 'border-border/50 bg-card hover:border-primary/20 hover:bg-accent/30'
+          ? 'bg-white dark:bg-muted/20 ring-1 ring-border/20'
+          : 'hover:bg-white/60 dark:hover:bg-muted/20'
       )}
     >
-      {/* Voice info - left side, always visible */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span
-            className={cn(
-              'text-sm font-semibold transition-colors',
-              isSelected ? 'text-primary' : 'text-foreground'
-            )}
-          >
-            {voice.label}
-          </span>
-          <span
-            className={cn(
-              'inline-flex items-center rounded-md px-1.5 py-px text-[10px] font-medium border',
-              voice.color
-            )}
-          >
-            {voice.tag}
-          </span>
+      {/* 左侧：彩色首字母头像 */}
+      <div className="shrink-0">
+        <div className={cn(
+          'w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-200',
+          voice.avatarBg
+        )}>
+          {voice.avatar}
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed truncate">
-          {voice.desc}
-        </p>
       </div>
 
-      {/* Play wave indicator */}
-      {isPlaying && (
-        <div className="flex items-end gap-px h-4 opacity-60 shrink-0">
-          {[3, 6, 4, 8, 5, 7, 4].map((h, i) => (
-            <div
-              key={i}
-              className="w-0.5 bg-primary rounded-full animate-pulse"
-              style={{
-                height: `${h * 2}px`,
-                animationDelay: `${i * 0.1}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {/* 中间：人名 + 声音标签徽章 */}
+      <div className="flex-1 min-w-0 flex items-center gap-2">
+        <span className={cn(
+          'text-[13px] font-medium transition-colors tracking-tight',
+          isSelected ? 'text-foreground' : 'text-foreground/80'
+        )}>
+          {voice.label}
+        </span>
+        <span className={cn('inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-md font-medium', voice.tagColor)}>
+          {voice.tags}
+        </span>
+      </div>
 
-      {/* Buttons - right side, hidden by default, shown on hover */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0">
-        {/* Settings button */}
+      {/* 右侧：试听 + 设置按钮（hover 显示） */}
+      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* 试听按钮 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onTogglePlay()
+          }}
+          className={cn(
+            'w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200',
+            isPlaying
+              ? 'bg-foreground/10 text-foreground'
+              : 'text-muted-foreground/50 hover:text-foreground hover:bg-muted/60'
+          )}
+        >
+          {isPlaying ? (
+            <Pause className="h-3.5 w-3.5" />
+          ) : (
+            <Play className="h-3.5 w-3.5 ml-0.5" />
+          )}
+        </button>
+        {/* 设置按钮 */}
         <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
           <PopoverTrigger asChild>
             <button
@@ -287,10 +274,10 @@ function VoiceRow({
                 setSettingsOpen(!settingsOpen)
               }}
               className={cn(
-                'w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200',
+                'w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200',
                 settingsOpen
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground/50 hover:text-foreground hover:bg-muted/60'
               )}
             >
               <Settings2 className="h-3.5 w-3.5" />
@@ -303,27 +290,14 @@ function VoiceRow({
             onVolumeChange={onVolumeChange}
           />
         </Popover>
-
-        {/* Play button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onTogglePlay()
-          }}
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200',
-            isPlaying
-              ? 'bg-primary text-primary-foreground shadow-md'
-              : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
-          )}
-        >
-          {isPlaying ? (
-            <Pause className="h-3.5 w-3.5" />
-          ) : (
-            <Play className="h-3.5 w-3.5 ml-0.5" />
-          )}
-        </button>
       </div>
+
+      {/* 播放中波形指示 — 底部微条 */}
+      {isPlaying && (
+        <div className="absolute bottom-0 inset-x-3 h-0.5 bg-foreground/10 rounded-full overflow-hidden">
+          <div className="h-full bg-foreground/30 rounded-full animate-pulse" style={{ width: '60%' }} />
+        </div>
+      )}
     </div>
   )
 }
@@ -340,9 +314,15 @@ export function TextToSpeechExperienceArea({
   onParamChange,
   error,
   isProcessing,
+  progress,
+  progressSteps,
+  costPoints,
+  processTime,
   onStartProcess,
 }: TextToSpeechExperienceProps) {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null)
+  const [playingBgm, setPlayingBgm] = useState<string | null>(null)
+  const [bgmSelectOpen, setBgmSelectOpen] = useState(false)
   // AI写悬浮卡片
   const [aiWriteKeyword, setAiWriteKeyword] = useState('')
   const [aiWriteGenerating, setAiWriteGenerating] = useState(false)
@@ -350,7 +330,7 @@ export function TextToSpeechExperienceArea({
   const currentVoice = paramValues.voice || 'female-gentle'
   const currentSpeed = paramValues.speed ?? 1.0
   const currentVolume = paramValues.volume ?? 100
-  const currentBgm = paramValues.bgm || 'none'
+  const currentBgm = paramValues.bgm || ''
 
   const togglePreview = (voiceValue: string) => {
     if (playingVoice === voiceValue) {
@@ -360,6 +340,27 @@ export function TextToSpeechExperienceArea({
       setTimeout(() => setPlayingVoice(null), 2000)
     }
   }
+
+  const toggleBgmPreview = (bgmValue: string) => {
+    if (playingBgm === bgmValue) {
+      setPlayingBgm(null)
+    } else {
+      setPlayingBgm(bgmValue)
+      setTimeout(() => setPlayingBgm(null), 2000)
+    }
+  }
+
+  const handleBgmUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const uploadedFile = e.target.files?.[0]
+      if (uploadedFile) {
+        onParamChange('bgm', 'custom-' + uploadedFile.name)
+        onParamChange('customBgmName', uploadedFile.name)
+      }
+      e.target.value = ''
+    },
+    [onParamChange]
+  )
 
   const handleQuickFill = useCallback(
     (actionId: string) => {
@@ -407,46 +408,37 @@ export function TextToSpeechExperienceArea({
   return (
     <div className="flex flex-col lg:flex-row gap-6 w-full">
       {/* ========================================== */}
-      {/* LEFT: 输入内容卡片                                    */}
+      {/* LEFT: 输入内容                                                    */}
       {/* ========================================== */}
-      <div className="flex-1 min-w-0">
-        <Card className="border-border/60 shadow-sm overflow-hidden h-full">
+      <div className="flex-1 min-w-0 relative">
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] overflow-hidden h-full">
           <CardContent className="p-0 flex flex-col h-full">
-            {/* Card Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-secondary/20">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">输入内容</p>
-                  <p className="text-xs text-muted-foreground">
-                    输入文案，AI 即刻生成自然语音
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Fill Bar */}
-            <div className="px-5 py-3 border-b border-border/30 bg-secondary/10">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {/* AI帮我写 — Popover 气泡卡片 */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all text-muted-foreground hover:text-foreground">
-                      <Wand2 className="h-3 w-3" />
-                      AI帮我写
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
-                    <div className="p-4 space-y-3">
-                      <Input
-                        value={aiWriteKeyword}
-                        onChange={(e) => setAiWriteKeyword(e.target.value)}
-                        placeholder="输入关键词，使用AI帮写生成完整故事内容"
-                        className="h-9 text-sm rounded-lg"
-                        onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()}
-                      />
+            {/* 标题栏 — 精简到只有标题 + 工具按钮 */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/20 bg-[#F8F9FB] dark:bg-[#131418]">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-1.5 h-4 rounded-full bg-violet-400 dark:bg-violet-500 shrink-0" />
+                <h3 className="text-[13px] font-medium text-foreground/80 tracking-tight">输入内容</h3>
+                <div className="hidden sm:flex items-center gap-0.5 ml-1 pl-2 border-l border-border/30">
+                  {/* AI帮我写 — Popover */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors">
+                        <Wand2 className="h-3 w-3" />
+                        AI帮我写
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
+                      <div className="px-4 py-3 border-b border-border/20 bg-secondary/30">
+                        <span className="text-xs font-semibold text-foreground">AI 智能写作</span>
+                      </div>
+                      <div className="p-4 space-y-3">
+                        <Input
+                          value={aiWriteKeyword}
+                          onChange={(e) => setAiWriteKeyword(e.target.value)}
+                          placeholder="输入关键词，使用AI帮写生成完整故事内容"
+                          className="h-9 text-sm rounded-lg"
+                          onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()}
+                        />
                       <Button
                         className="w-full h-9 text-sm gap-2 rounded-lg"
                         onClick={handleAiWriteGenerate}
@@ -470,133 +462,240 @@ export function TextToSpeechExperienceArea({
                 </Popover>
 
                 {/* 随机故事 */}
-                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all text-muted-foreground hover:text-foreground" onClick={() => handleQuickFill('random-story')}>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => handleQuickFill('random-story')}>
                   <BookOpen className="h-3 w-3" />
                   随机故事
                 </Button>
 
                 {/* 上传txt */}
-                <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all text-muted-foreground hover:text-foreground" onClick={() => document.getElementById('tts-txt-upload')?.click()}>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => document.getElementById('tts-txt-upload')?.click()}>
                   <FileText className="h-3 w-3" />
                   上传txt
                 </Button>
               </div>
-              <input
-                id="tts-txt-upload"
-                type="file"
-                accept=".txt"
-                className="hidden"
-                onChange={handleTxtUpload}
-              />
             </div>
+            <input
+              id="tts-txt-upload"
+              type="file"
+              accept=".txt"
+              className="hidden"
+              onChange={handleTxtUpload}
+            />
+          </div>
 
-            {/* Textarea */}
-            <div className="flex-1 p-5">
-              <Textarea
-                id="tts-experience-textarea"
-                placeholder="输入你想要的配音文案，AI 即刻生成带情感的自然人声…"
-                value={text}
-                onChange={(e) => onTextChange(e.target.value)}
-                className="min-h-[280px] h-full resize-none rounded-xl border-border/40 bg-secondary/10 focus:bg-background focus-visible:ring-1 focus-visible:ring-primary/30 text-sm leading-relaxed placeholder:text-muted-foreground/50"
-              />
-            </div>
+          {/* 移动端工具条 */}
+          <div className="sm:hidden flex items-center gap-1 flex-wrap px-4 py-2 border-b border-border/20 bg-[#FAFAFC] dark:bg-[#111115]">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors">
+                  <Wand2 className="h-3 w-3" />
+                  AI帮我写
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
+                <div className="px-4 py-3 border-b border-border/20 bg-secondary/30">
+                  <span className="text-xs font-semibold text-foreground">AI 智能写作</span>
+                </div>
+                <div className="p-4 space-y-3">
+                  <Input value={aiWriteKeyword} onChange={(e) => setAiWriteKeyword(e.target.value)} placeholder="输入关键词，使用AI帮写生成完整故事内容" className="h-9 text-sm rounded-lg" onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()} />
+                  <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleAiWriteGenerate} disabled={aiWriteGenerating}>
+                    {aiWriteGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />生成中...</> : (<><Sparkles className="h-3.5 w-3.5" />生成<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />1</span></>)}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => handleQuickFill('random-story')}>
+              <BookOpen className="h-3 w-3" />
+              随机故事
+            </Button>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => document.getElementById('tts-txt-upload')?.click()}>
+              <FileText className="h-3 w-3" />
+              上传txt
+            </Button>
+          </div>
 
-            {/* Card Footer: character count */}
-            <div className="flex items-center justify-between px-5 py-3 border-t border-border/40 bg-secondary/10">
-              <span className="text-xs text-muted-foreground">
-                支持中英文混合输入，最多 5000 字
-              </span>
-              <span
-                className={cn(
-                  'text-xs font-medium tabular-nums',
-                  text.length > 4500
-                    ? 'text-destructive'
-                    : 'text-muted-foreground'
-                )}
-              >
-                {text.length}/5000
-              </span>
+          {/* Textarea — 无边框无底色，字数在右下角 */}
+          <div className="flex-1 relative p-4">
+            <Textarea
+              id="tts-experience-textarea"
+              placeholder="输入你想要的配音文案，AI 即刻生成带情感的自然人声…"
+              value={text}
+              onChange={(e) => onTextChange(e.target.value)}
+              className="min-h-[280px] h-full resize-none rounded-lg border-0 shadow-none bg-white dark:bg-[#0A0A0E] focus-visible:ring-0 text-[13px] leading-7 placeholder:text-muted-foreground/35"
+            />
+            <span className={cn(
+              'absolute bottom-6 right-6 text-[10px] font-medium tabular-nums tracking-tight',
+              text.length > 4500
+                ? 'text-destructive/80'
+                : 'text-muted-foreground/40'
+            )}>
+              {text.length}/5000
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loading 覆盖层 */}
+      {isProcessing && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl overflow-hidden">
+          <div className="absolute inset-0 bg-[#FBFBFD]/80 dark:bg-[#0F0F12]/80 backdrop-blur-[2px]" />
+          <div className="relative z-10 text-center space-y-4">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/60" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            {progressSteps && progressSteps.length > 0 ? (
+              <div className="space-y-1.5">
+                {progressSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    {step.status === 'done' ? (
+                      <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
+                    ) : step.status === 'running' ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
+                    ) : (
+                      <div className="w-3 h-3 rounded-full border border-border shrink-0" />
+                    )}
+                    <span className={cn(
+                      step.status === 'done' ? 'text-emerald-600' : step.status === 'running' ? 'text-foreground/80' : 'text-muted-foreground/50'
+                    )}>
+                      {step.label}
+                      {step.status === 'running' && progress != null && ` ${Math.round(progress)}%`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground/50">处理中…{progress != null ? ` ${Math.round(progress)}%` : ''}</p>
+            )}
+            {costPoints && processTime && (
+              <p className="text-[10px] text-muted-foreground/40">预计消耗 {costPoints} 智点 · 约 {processTime}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
 
       {/* ========================================== */}
-      {/* RIGHT: 配音音色 + 背景音乐 + 开始处理按钮                */}
-      {/* ========================================== */}
-      <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-5">
-        {/* 配音音色 Card */}
-        <Card className="border-border/60 shadow-sm overflow-hidden">
+      {/* RIGHT: 选择声音 + 背景音乐 + 开始处理                              */}
+      <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-4">
+        {/* 配音设置 Card — 音色 + BGM 合为一张卡片 */}
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] overflow-hidden">
           <CardContent className="p-0">
-            {/* Header */}
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40 bg-secondary/20">
-              <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
-                <Volume2 className="h-4 w-4 text-rose-600" />
+            {/* 选择声音 Section */}
+            <div>
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/20 bg-[#F8F9FB] dark:bg-[#131418]">
+                <span className="w-1.5 h-4 rounded-full bg-rose-400/60 dark:bg-rose-500/60" />
+                <h3 className="text-[13px] font-medium text-foreground/80 tracking-tight">选择声音</h3>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">配音音色</p>
-                <p className="text-xs text-muted-foreground">
-                  选择最适合你内容风格的声音
-                </p>
+              <div className="px-3 py-2 space-y-1.5">
+                {voicePresets.map((voice) => (
+                  <VoiceRow
+                    key={voice.value}
+                    voice={voice}
+                    isSelected={currentVoice === voice.value}
+                    isPlaying={playingVoice === voice.value}
+                    onSelect={() => onParamChange('voice', voice.value)}
+                    onTogglePlay={() => togglePreview(voice.value)}
+                    speed={currentSpeed}
+                    volume={currentVolume}
+                    onSpeedChange={(v) => onParamChange('speed', v)}
+                    onVolumeChange={(v) => onParamChange('volume', v)}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* Voice List: 1 column, 5 rows */}
-            <div className="p-4 space-y-2.5">
-              {voicePresets.map((voice) => (
-                <VoiceRow
-                  key={voice.value}
-                  voice={voice}
-                  isSelected={currentVoice === voice.value}
-                  isPlaying={playingVoice === voice.value}
-                  onSelect={() => onParamChange('voice', voice.value)}
-                  onTogglePlay={() => togglePreview(voice.value)}
-                  speed={currentSpeed}
-                  volume={currentVolume}
-                  onSpeedChange={(v) => onParamChange('speed', v)}
-                  onVolumeChange={(v) => onParamChange('volume', v)}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 背景音乐 */}
-        <Card className="border-border/60 shadow-sm overflow-hidden">
-          <CardContent className="p-0">
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border/40 bg-secondary/20">
-              <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                <Music className="h-4 w-4 text-violet-600" />
+            {/* 背景音乐 — 降为子选项，标题 + 下拉同行 */}
+            <div className="px-4 py-2.5 border-t border-border/20">
+              <div className="flex items-center gap-3">
+                <span className="text-[12px] font-medium text-muted-foreground/60 shrink-0">背景音乐</span>
+                <Select
+                  open={bgmSelectOpen}
+                  onOpenChange={setBgmSelectOpen}
+                  value={currentBgm}
+                  onValueChange={(v) => {
+                    onParamChange('bgm', v)
+                    setBgmSelectOpen(false)
+                  }}
+                >
+                  <SelectTrigger className="flex-1 h-8 rounded-md border border-border/30 bg-white dark:bg-[#0A0A0E] text-[12px] hover:border-border/50 transition-colors px-3 shadow-none focus-visible:ring-0">
+                    {currentBgm ? (
+                      <span className="text-foreground">{bgmOptions.find(o => o.value === currentBgm)?.label || currentBgm}</span>
+                    ) : (
+                      <span className="text-muted-foreground/50">选择背景音乐</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent align="start" className="w-[340px] p-2">
+                    <div className="grid grid-cols-2 gap-1">
+                      {/* 上传本地音乐 */}
+                      <label
+                        className="flex items-center gap-2 px-2.5 py-2 rounded-md cursor-pointer hover:bg-muted/60 transition-colors text-muted-foreground/60 hover:text-foreground border border-dashed border-border/40"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Upload className="h-3.5 w-3.5 shrink-0" />
+                        <span className="text-[12px]">上传本地音乐</span>
+                        <input
+                          type="file"
+                          accept=".mp3,.wav,.m4a,.flac"
+                          className="hidden"
+                          onChange={handleBgmUpload}
+                        />
+                      </label>
+                      {/* BGM 选项：2 列网格 */}
+                      {bgmOptions.map((opt) => {
+                        const isBgmPlaying = playingBgm === opt.value
+                        return (
+                          <div
+                            key={opt.value}
+                            onClick={() => { onParamChange('bgm', opt.value); setBgmSelectOpen(false) }}
+                            className={cn(
+                              'group flex items-center gap-2.5 px-2.5 py-2 rounded-md cursor-pointer transition-colors text-foreground',
+                              currentBgm === opt.value
+                                ? 'bg-muted/60'
+                                : 'hover:bg-muted/40'
+                            )}
+                          >
+                            {/* 音乐 icon + 播放 icon 同位置叠加 */}
+                            <div
+                              className="shrink-0 relative w-5 h-5"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (opt.value !== 'none') toggleBgmPreview(opt.value)
+                              }}
+                            >
+                              {opt.value === 'none' ? (
+                                <span className="absolute inset-0 flex items-center justify-center text-[10px]">—</span>
+                              ) : (
+                                <>
+                                  <Music className={cn(
+                                    'absolute inset-0 h-5 w-5 transition-opacity duration-200',
+                                    isBgmPlaying ? 'opacity-0' : 'opacity-100 group-hover:opacity-0'
+                                  )} />
+                                  <div className={cn(
+                                    'absolute inset-0 h-5 w-5 rounded flex items-center justify-center transition-opacity duration-200',
+                                    isBgmPlaying ? 'opacity-100 bg-foreground/10' : 'opacity-0 group-hover:opacity-100 group-hover:bg-foreground/5'
+                                  )}>
+                                    {isBgmPlaying ? (
+                                      <Pause className="h-4 w-4" />
+                                    ) : (
+                                      <Play className="h-4 w-4 ml-px" />
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[12px] font-medium block truncate">{opt.label}</span>
+                              {opt.sub && (
+                                <span className="text-[10px] text-muted-foreground/50 block">{opt.sub} · {opt.duration}</span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">背景音乐</p>
-                <p className="text-xs text-muted-foreground">
-                  为你的配音添加背景音乐
-                </p>
-              </div>
-            </div>
-            <div className="p-4">
-              <Select
-                value={currentBgm}
-                onValueChange={(v) => onParamChange('bgm', v)}
-              >
-                <SelectTrigger className="w-full h-11 rounded-xl border-border/60 bg-secondary/20 hover:bg-secondary/30 transition-colors">
-                  <Music className="h-4 w-4 text-muted-foreground mr-2" />
-                  <SelectValue placeholder="选择背景音乐" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bgmOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex items-center gap-2">
-                        {opt.value === 'none' && (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                        <span>{opt.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>

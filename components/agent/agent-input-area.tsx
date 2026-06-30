@@ -329,19 +329,8 @@ function VoiceSelector({
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-          <Volume2 className="h-4 w-4 text-primary" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground">配音音色</p>
-          <p className="text-xs text-muted-foreground">选择最适合你内容风格的声音</p>
-        </div>
-      </div>
-
       {/* Voice cards grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {voicePresets.map((voice) => {
           const isSelected = value === voice.value
           const isPlaying = playingVoice === voice.value
@@ -350,18 +339,17 @@ function VoiceSelector({
               key={voice.value}
               onClick={() => onChange(voice.value)}
               className={cn(
-                'group relative rounded-xl border p-4 text-left transition-all duration-200',
-                'hover:-translate-y-0.5',
+                'group relative rounded-lg border p-3 text-left transition-all duration-200',
                 isSelected
-                  ? 'border-primary bg-primary/[0.06] ring-1 ring-primary/30 shadow-sm'
-                  : 'border-border/60 bg-card hover:border-primary/25 hover:shadow-sm'
+                  ? 'border-border/50 bg-[#F8F9FB] dark:bg-[#131418] ring-1 ring-border/30'
+                  : 'border-border/20 bg-white dark:bg-[#0A0A0E] hover:border-border/40 hover:bg-[#FAFAFC] dark:hover:bg-[#111115]'
               )}
             >
               {/* Top: Tag + Play preview */}
-              <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center justify-between mb-2">
                 <span
                   className={cn(
-                    'inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium leading-none',
+                    'inline-flex items-center rounded-md px-1.5 py-px text-[10px] font-medium leading-none',
                     voice.color
                   )}
                 >
@@ -373,16 +361,16 @@ function VoiceSelector({
                     togglePreview(voice.value)
                   }}
                   className={cn(
-                    'w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200',
+                    'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200',
                     isPlaying
-                      ? 'bg-primary text-primary-foreground scale-110 shadow-sm'
-                      : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                      ? 'bg-foreground/10 text-foreground scale-110'
+                      : 'bg-muted/60 text-muted-foreground/60 group-hover:bg-muted group-hover:text-foreground/70'
                   )}
                 >
                   {isPlaying ? (
-                    <Pause className="h-3.5 w-3.5" />
+                    <Pause className="h-3 w-3" />
                   ) : (
-                    <Play className="h-3.5 w-3.5 ml-0.5" />
+                    <Play className="h-3 w-3 ml-0.5" />
                   )}
                 </div>
               </div>
@@ -390,26 +378,26 @@ function VoiceSelector({
               {/* Name */}
               <p
                 className={cn(
-                  'text-sm font-semibold mb-1 transition-colors',
-                  isSelected ? 'text-primary' : 'text-foreground'
+                  'text-[13px] font-medium mb-1 transition-colors tracking-tight',
+                  isSelected ? 'text-foreground' : 'text-foreground/80'
                 )}
               >
                 {voice.label}
               </p>
 
               {/* Description */}
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
                 {voice.desc}
               </p>
 
               {/* Waveform decoration */}
-              <div className="flex items-end gap-px mt-3 h-5 opacity-20 group-hover:opacity-40 transition-opacity">
+              <div className="flex items-end gap-px mt-2 h-4 opacity-20 group-hover:opacity-30 transition-opacity">
                 {[3, 6, 4, 8, 5, 7, 4, 9, 5, 3, 6, 4, 7, 5, 8, 4, 6, 3, 5, 7].map((h, i) => (
                   <div
                     key={i}
                     className={cn(
                       'w-0.5 rounded-full transition-colors',
-                      isSelected ? 'bg-primary' : 'bg-foreground/40'
+                      isSelected ? 'bg-foreground/70' : 'bg-foreground/30'
                     )}
                     style={{ height: `${h * 2}px` }}
                   />
@@ -418,10 +406,8 @@ function VoiceSelector({
 
               {/* Selected indicator */}
               {isSelected && (
-                <div className="absolute top-3 right-3">
-                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
-                    <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
-                  </div>
+                <div className="absolute top-2.5 right-2.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-foreground/70" />
                 </div>
               )}
             </button>
@@ -556,9 +542,9 @@ function ParamField({
     case 'select':
       return (
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-foreground">{param.label}</Label>
+          <span className="text-[13px] text-foreground/70">{param.label}</span>
           <Select value={String(value ?? param.options?.[0]?.value ?? '')} onValueChange={onChange}>
-            <SelectTrigger className="w-full h-10 rounded-xl border-border/60 bg-secondary/30 hover:bg-background transition-colors">
+            <SelectTrigger className="w-full h-9 rounded-lg border-border/30 bg-white dark:bg-[#0A0A0E] text-[13px] hover:border-border/50 transition-colors">
               <SelectValue placeholder={param.label} />
             </SelectTrigger>
             <SelectContent>
@@ -574,18 +560,18 @@ function ParamField({
 
     case 'switch':
       return (
-        <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-          <Label className="text-sm font-medium">{param.label}</Label>
+        <div className="flex items-center justify-between py-1">
+          <span className="text-[13px] text-foreground/70">{param.label}</span>
           <Switch checked={!!value} onCheckedChange={onChange} />
         </div>
       )
 
     case 'slider':
       return (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-foreground">{param.label}</Label>
-            <span className="inline-flex items-center justify-center min-w-[44px] h-6 px-2 text-xs font-semibold text-primary bg-primary/10 rounded-md tabular-nums">
+            <span className="text-[13px] text-foreground/70">{param.label}</span>
+            <span className="inline-flex items-center justify-center min-w-[42px] h-5 px-1.5 text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md tabular-nums">
               {value}
               {param.label === '音量' && '%'}
               {param.label === '语速' && 'x'}
@@ -599,9 +585,9 @@ function ParamField({
             step={param.step}
             className="w-full"
           />
-          <div className="flex items-center justify-between px-0.5">
-            <span className="text-[10px] text-muted-foreground tabular-nums">{param.min}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
-            <span className="text-[10px] text-muted-foreground tabular-nums">{param.max}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-muted-foreground/50 tabular-nums">{param.min}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
+            <span className="text-[10px] text-muted-foreground/50 tabular-nums">{param.max}{param.label === '音量' ? '%' : param.label === '语速' ? 'x' : ''}</span>
           </div>
         </div>
       )
@@ -1101,99 +1087,135 @@ export function AgentInputArea({
 
       {/* === Text Input === */}
       {(agent.inputType === 'text' || agent.inputType === 'both') && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              输入内容
-            </Label>
-            <span className={cn(
-              'text-xs font-medium tabular-nums',
-              text.length > 4500 ? 'text-destructive' : 'text-muted-foreground'
-            )}>
-              {text.length}/5000
-            </span>
-          </div>
-
-          {/* Quick fill bar */}
-          {showQuickFill && (
-            <div className="flex items-center gap-1 flex-wrap p-1 rounded-xl bg-secondary/50 border border-border/40">
-              {/* AI帮我写 — Popover */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all">
-                    <Wand2 className="h-3 w-3 text-muted-foreground" />
-                    AI帮我写
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
-                  <div className="p-4 space-y-3">
-                    <Input value={aiWriteKeyword} onChange={(e) => setAiWriteKeyword(e.target.value)} placeholder="输入关键词，使用AI帮写生成完整故事内容" className="h-9 text-sm rounded-lg" onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()} />
-                    <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleAiWriteGenerate} disabled={aiWriteGenerating}>
-                      {aiWriteGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />生成中...</> : (<><Sparkles className="h-3.5 w-3.5" />生成<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />1</span></>)}
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] overflow-hidden">
+          <CardContent className="p-0">
+            {/* 标题栏 */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/20 bg-[#F8F9FB] dark:bg-[#131418]">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 rounded-full bg-violet-400 dark:bg-violet-500" />
+                <h3 className="text-[13px] font-medium text-foreground/80 tracking-tight">输入内容</h3>
+                {showQuickFill && (
+                  <div className="hidden sm:flex items-center gap-0.5 ml-2 pl-2 border-l border-border/30">
+                    {/* AI帮我写 — Popover */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors">
+                          <Wand2 className="h-3 w-3" />
+                          AI帮我写
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
+                        <div className="px-4 py-3 border-b border-border/20 bg-secondary/30">
+                          <span className="text-xs font-semibold text-foreground">AI 智能写作</span>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <Input value={aiWriteKeyword} onChange={(e) => setAiWriteKeyword(e.target.value)} placeholder="输入关键词，使用AI帮写生成完整故事内容" className="h-9 text-sm rounded-lg" onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()} />
+                          <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleAiWriteGenerate} disabled={aiWriteGenerating}>
+                            {aiWriteGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />生成中...</> : (<><Sparkles className="h-3.5 w-3.5" />生成<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />1</span></>)}
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    {/* 随机故事 */}
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => handleQuickFill('random-story')}>
+                      <BookOpen className="h-3 w-3" />
+                      随机故事
+                    </Button>
+                    {/* 上传txt */}
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => document.getElementById('txt-upload')?.click()}>
+                      <FileText className="h-3 w-3" />
+                      上传txt
                     </Button>
                   </div>
-                </PopoverContent>
-              </Popover>
-
-              {/* 随机故事 */}
-              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => handleQuickFill('random-story')}>
-                <BookOpen className="h-3 w-3 text-muted-foreground" />
-                随机故事
-              </Button>
-
-              {/* 上传txt */}
-              <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5 rounded-lg hover:bg-background hover:shadow-sm transition-all" onClick={() => document.getElementById('txt-upload')?.click()}>
-                <FileText className="h-3 w-3 text-muted-foreground" />
-                上传txt
-              </Button>
-
-
+                )}
+              </div>
+              <span className={cn(
+                'text-[10px] font-medium tabular-nums tracking-tight',
+                text.length > 4500 ? 'text-destructive' : 'text-muted-foreground/50'
+              )}>
+                {text.length}/5000
+              </span>
             </div>
-          )}
-          <input
-            id="txt-upload"
-            type="file"
-            accept=".txt"
-            className="hidden"
-            onChange={handleTxtUpload}
-          />
 
-          <Textarea
-            id="agent-input-textarea"
-            placeholder={
-              agent.id === 'text-to-speech'
-                ? '输入你想要的配音文案，AI 即刻生成带情感的自然人声…'
-                : '请输入内容...'
-            }
-            value={text}
-            onChange={(e) => onTextChange(e.target.value)}
-            className="min-h-[160px] resize-none rounded-xl border-border/60 bg-secondary/30 focus:bg-background focus-visible:ring-1 focus-visible:ring-primary/30 transition-colors text-sm leading-relaxed"
-          />
-        </div>
+            {/* Quick fill bar — 移动端单独显示 */}
+            {showQuickFill && (
+              <div className="sm:hidden flex items-center gap-1 flex-wrap px-4 py-2 border-b border-border/20 bg-[#FAFAFC] dark:bg-[#111115]">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors">
+                      <Wand2 className="h-3 w-3" />
+                      AI帮我写
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" align="start" className="w-72 p-0 overflow-hidden shadow-xl border-border/80">
+                    <div className="px-4 py-3 border-b border-border/20 bg-secondary/30">
+                      <span className="text-xs font-semibold text-foreground">AI 智能写作</span>
+                    </div>
+                    <div className="p-4 space-y-3">
+                      <Input value={aiWriteKeyword} onChange={(e) => setAiWriteKeyword(e.target.value)} placeholder="输入关键词，使用AI帮写生成完整故事内容" className="h-9 text-sm rounded-lg" onKeyDown={(e) => e.key === 'Enter' && handleAiWriteGenerate()} />
+                      <Button className="w-full h-9 text-sm gap-2 rounded-lg" onClick={handleAiWriteGenerate} disabled={aiWriteGenerating}>
+                        {aiWriteGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />生成中...</> : (<><Sparkles className="h-3.5 w-3.5" />生成<span className="flex items-center gap-1 ml-1 text-xs font-normal opacity-70"><span className="w-px h-3 bg-primary-foreground/30" /><Zap className="h-3 w-3" />1</span></>)}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => handleQuickFill('random-story')}>
+                  <BookOpen className="h-3 w-3" />
+                  随机故事
+                </Button>
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] gap-1 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-colors" onClick={() => document.getElementById('txt-upload')?.click()}>
+                  <FileText className="h-3 w-3" />
+                  上传txt
+                </Button>
+              </div>
+            )}
+            <input
+              id="txt-upload"
+              type="file"
+              accept=".txt"
+              className="hidden"
+              onChange={handleTxtUpload}
+            />
+
+            <div className="px-4 py-3">
+              <Textarea
+                id="agent-input-textarea"
+                placeholder={
+                  agent.id === 'text-to-speech'
+                    ? '输入你想要的配音文案，AI 即刻生成带情感的自然人声…'
+                    : '请输入内容...'
+                }
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
+                className="min-h-[160px] resize-none rounded-lg border-0 shadow-none bg-white dark:bg-[#0A0A0E] focus-visible:ring-0 text-[13px] leading-7 placeholder:text-muted-foreground/40"
+              />
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* === Parameters === */}
       {agent.parameters.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-border/50" />
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest select-none">
-              参数设置
-            </span>
-            <div className="h-px flex-1 bg-border/50" />
-          </div>
-          <div className="space-y-4">
-            {agent.parameters.map((param) => (
-              <ParamField
-                key={param.id}
-                param={param}
-                value={paramValues[param.id]}
-                onChange={(value) => onParamChange(param.id, value)}
-              />
-            ))}
-          </div>
-        </div>
+        <Card className="border border-border/30 shadow-none bg-[#FBFBFD] dark:bg-[#0F0F12] overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/20 bg-[#F8F9FB] dark:bg-[#131418]">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 rounded-full bg-slate-400/60 dark:bg-slate-500/60" />
+                <h3 className="text-[13px] font-medium text-foreground/80 tracking-tight">参数设置</h3>
+              </div>
+            </div>
+            <div className="p-4 space-y-4">
+              {agent.parameters.map((param) => (
+                <ParamField
+                  key={param.id}
+                  param={param}
+                  value={paramValues[param.id]}
+                  onChange={(value) => onParamChange(param.id, value)}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* === Error === */}

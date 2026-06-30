@@ -1342,6 +1342,10 @@ export interface Agent {
   parameters: AgentParameter[]
   costPoints: number
   avgProcessTime: string
+  /** 封面图片路径（放在 public/ 下，如 /covers/agent-audio.jpg） */
+  coverImage?: string
+  /** 可选悬停视频封面路径 */
+  coverVideo?: string
 }
 
 export const agentCategories: { id: AgentCategory; name: string; icon: string }[] = [
@@ -1377,6 +1381,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 20,
     avgProcessTime: '30秒-2分钟',
+    coverImage: '/covers/agent-speech-to-text.jpg',
   },
   {
     id: 'text-to-speech',
@@ -1401,6 +1406,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 15,
     avgProcessTime: '10-30秒',
+    coverImage: '/covers/agent-text-to-speech.jpg',
   },
   {
     id: 'video-to-text',
@@ -1425,6 +1431,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 25,
     avgProcessTime: '1-3分钟',
+    coverImage: '/covers/agent-video-to-text.jpg',
   },
 
   // ===== 文案生成 =====
@@ -1448,6 +1455,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 10,
     avgProcessTime: '5-15秒',
+    coverImage: '/covers/agent-topic-to-copywriting.jpg',
   },
   {
     id: 'copywriting-to-video',
@@ -1464,7 +1472,7 @@ export const mockAgents: Agent[] = [
     inputType: 'text',
     parameters: [
       { id: 'videoStyle', type: 'select', label: '视频风格', defaultValue: 'modern', options: [{ label: '现代简约', value: 'modern' }, { label: '科技感', value: 'tech' }, { label: '温馨治愈', value: 'warm' }, { label: '商务专业', value: 'business' }] },
-      { id: 'duration', type: 'select', label: '视频时长', defaultValue: '30', options: [{ label: '15秒', value: '15' }, { label: '30秒', value: '30' }, { label: '60秒', value: '60' }] },
+      { id: 'duration', type: 'select', label: '视频时长', defaultValue: '5', options: [{ label: '3秒', value: '3' }, { label: '5秒', value: '5' }, { label: '10秒', value: '10' }, { label: '15秒', value: '15' }] },
       { id: 'ratio', type: 'select', label: '画面比例', defaultValue: '9:16', options: [{ label: '竖屏 9:16', value: '9:16' }, { label: '横屏 16:9', value: '16:9' }] },
       { id: 'resolution', type: 'select', label: '清晰度', defaultValue: '540p', options: [{ label: '540P', value: '540p' }, { label: '720P', value: '720p' }, { label: '1080P', value: '1080p' }] },
       { id: 'bgm', type: 'switch', label: '自动配背景音乐', defaultValue: true },
@@ -1473,6 +1481,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 120,
     avgProcessTime: '3-8分钟',
+    coverImage: '/covers/agent-copywriting-to-video.jpg',
   },
 
   // ===== 视频处理 =====
@@ -1499,6 +1508,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 80,
     avgProcessTime: '1-3分钟',
+    coverImage: '/covers/agent-image-to-video.jpg',
   },
   {
     id: 'video-translate',
@@ -1523,6 +1533,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 60,
     avgProcessTime: '2-5分钟',
+    coverImage: '/covers/agent-video-translate.jpg',
   },
   {
     id: 'video-dubbing',
@@ -1547,6 +1558,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 40,
     avgProcessTime: '1-2分钟',
+    coverImage: '/covers/agent-video-dubbing.jpg',
   },
   {
     id: 'video-subtitle',
@@ -1571,6 +1583,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 30,
     avgProcessTime: '30秒-2分钟',
+    coverImage: '/covers/agent-video-subtitle.jpg',
   },
   {
     id: 'video-watermark-removal',
@@ -1593,6 +1606,7 @@ export const mockAgents: Agent[] = [
     ],
     costPoints: 50,
     avgProcessTime: '1-3分钟',
+    coverImage: '/covers/agent-video-watermark-removal.jpg',
   },
 ]
 

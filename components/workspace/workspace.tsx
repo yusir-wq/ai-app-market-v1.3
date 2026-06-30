@@ -1364,11 +1364,6 @@ export function Workspace() {
             onViewResult={(resultId, fileName) => {
               setSelectedResultId(resultId)
               setSelectedResultFileName(fileName || null)
-              setViewMode('result-detail')
-            }}
-            onHistoryTaskClick={(resultId, fileName) => {
-              setSelectedResultId(resultId)
-              setSelectedResultFileName(fileName || null)
               // 从历史任务进入AI文案生视频，直接显示合成视频结果页
               const agent = getAgentById(selectedAgentId)
               if (agent?.id === 'copywriting-to-video') {
